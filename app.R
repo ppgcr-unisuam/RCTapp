@@ -1,6 +1,6 @@
 # create dir
 dir.name <- 'www'
-if (!dir.exists(dir.name)){
+if (!dir.exists(dir.name)) {
   dir.create(dir.name, recursive = TRUE, showWarnings = FALSE)
 }
 shiny::addResourcePath(prefix = "www", directoryPath = "www")
@@ -35,7 +35,7 @@ ui <- shiny::fluidPage(
     shiny::tags$link(rel = "icon", href = "www/favicon_io/favicon-32x32.png"),
     shiny::tags$link(rel = "shortcut icon", href = "www/favicon_io/favicon.ico"),
   ),
-
+  
   # add font awesome
   tags$head(
     tags$link(rel = "stylesheet", href = "https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css")
@@ -92,303 +92,316 @@ ui <- shiny::fluidPage(
     shiny::HTML(".btn-file {background-color: #2C3E50;}")
   )),
   
-    # Main panel for displaying outputs ----
-      shiny::tabsetPanel(
-        id = "tabs",
-        type = "tabs",
-        shiny::tabPanel(
-          title = list(fontawesome::fa("right-to-bracket"), "Input"),
-          shiny::br(),
-          # input Excel file data
-          shiny::fileInput(
-            inputId = "InputFile",
-            label = NULL,
-            multiple = FALSE,
-            buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
-            accept = c(".xlsx"),
-            width = "100%",
+  # Main panel for displaying outputs ----
+  shiny::tabsetPanel(
+    id = "tabs",
+    type = "tabs",
+    shiny::tabPanel(
+      title = list(fontawesome::fa("right-to-bracket"), "Input"),
+      shiny::br(),
+      # input Excel file data
+      shiny::fileInput(
+        inputId = "InputFile",
+        label = NULL,
+        multiple = FALSE,
+        buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
+        accept = c(".xlsx"),
+        width = "100%",
+      ),
+      DT::DTOutput(outputId = "rawtable"),
+    ),
+    shiny::tabPanel(
+      title = list(fontawesome::fa("list-check"), "Variables"),
+      shiny::br(),
+      # split panel into two columns
+      shiny::fluidRow(
+        shiny::column(
+          3,
+          # add checkbox for subject variables (ID)
+          shinyWidgets::pickerInput(
+            inputId = "ID",
+            label = "Subject ID",
+            choices = NULL,
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              size = 10,
+              selectedTextFormat = "count > 0"
+            ),
+            multiple = TRUE,
+            width = "100%"
           ),
-          shiny::dataTableOutput(outputId = "rawtable"),
+          # show dataframe of selected ID with renderTable
+          shiny::tableOutput(outputId = "IDtable")
         ),
-        
-        
-        
-        
-        
-        
-        
-        # shiny::tabPanel(
-        #   title = list(fontawesome::fa("ruler"), "Measure"),
-        #   shiny::br(),
-        #   shiny::tabsetPanel(
-        #     id = "tabMeasure",
-        #     type = "tabs",
-        #     shiny::tabPanel(
-        #       title = list(fontawesome::fa("image"), "Frame"),
-        #       shiny::br(),
-        #       # split two columns
-        #       shiny::fluidRow(
-        #         shiny::column(
-        #           4,
-        #           shiny::sliderInput(
-        #             inputId = "imgEdit",
-        #             label = "Frame",
-        #             min = 1,
-        #             max = 100,
-        #             value = 1,
-        #             step = 1,
-        #             ticks = FALSE,
-        #             animate = TRUE,
-        #             width = "100%"
-        #           ),
-        #           shiny::numericInput(
-        #             inputId = "imgScale",
-        #             label = "Scale (mm)",
-        #             value = 1,
-        #             min = 0.1,
-        #             max = 10,
-        #             step = 0.1,
-        #             width = "100%"
-        #           ),
-        #           shiny::br(),
-        #           shiny::actionButton(
-        #             inputId = "reset",
-        #             label = "Reset ROI",
-        #             width = "100%"),
-        #           shiny::br(),
-        #           htmltools::h5(htmltools::strong("Click"), " on plot to start. ", htmltools::strong("Move"), " the cursor to draw the ROI. ", htmltools::strong("Click"), " again to stop."),
-        #           shiny::br(),
-        #           align = "center"
-        #         ),
-        #         shiny::column(
-        #           8,
-        #           shiny::plotOutput(
-        #             outputId = "plotMeasure",
-        #             width = "auto",
-        #             click = "img_click",
-        #             hover = shiny::hoverOpts(
-        #               id = "hover",
-        #               delay = 100,
-        #               delayType = "throttle",
-        #               clip = TRUE,
-        #               nullOutside = TRUE
-        #             )
-        #           ),
-        #         ),
-        #       ),
-        #       align = "center"
-        #     ),
-        #     shiny::tabPanel(
-        #       title = list(fontawesome::fa("table"), "Tables"),
-        #       shiny::br(),
-        #       DT::dataTableOutput("tableMeasure", width = "100%"),
-        #       align = "center"
-        #     ),
-        #   ),
-        # ),
-        # shiny::tabPanel(
-        #   title = list(fontawesome::fa("arrow-trend-up"), "Track"),
-        #   shiny::br(),
-        #   shiny::tabsetPanel(
-        #     id = "tabTrack",
-        #     type = "tabs",
-        #     shiny::tabPanel(
-        #       title = list(fontawesome::fa("sliders"), "Setup"),
-        #       shiny::br(),
-        #       # split two columns
-        #       shiny::fluidRow(
-        #         shiny::column(
-        #           4,
-        #           shiny::sliderInput(
-        #             inputId = "KernelSizeTrack",
-        #             label = "Object (px)",
-        #             min = 1,
-        #             max = 201,
-        #             value = 50,
-        #             step = 2,
-        #             ticks = FALSE,
-        #             width = "100%",
-        #           ),
-        #           shiny::sliderInput(
-        #             inputId = "Overlap",
-        #             label = "ROI (%)",
-        #             min = 0,
-        #             max = 100,
-        #             value = 50,
-        #             step = 5,
-        #             ticks = FALSE,
-        #             width = "100%",
-        #           ),
-        #           shiny::radioButtons(
-        #             inputId = "FilterType",
-        #             label = "Filter",
-        #             choices = c("none", "mean", "median"),
-        #             selected = "none",
-        #             inline = TRUE,
-        #             width = "100%"
-        #           ),
-        #           shiny::sliderInput(
-        #             inputId = "FilterSize",
-        #             label = "Size (px)",
-        #             min = 1,
-        #             max = 11,
-        #             value = 1,
-        #             step = 2,
-        #             ticks = FALSE,
-        #             width = "100%",
-        #           ),
-        #           shiny::sliderInput(
-        #             inputId = "Jump",
-        #             label = "Jump (frames)",
-        #             min = 0,
-        #             max = 5,
-        #             value = 0,
-        #             ticks = FALSE,
-        #             width = "100%",
-        #           ),
-        #           shiny::br(),
-        #           shiny::actionButton(
-        #             inputId = "buttAnalyze",
-        #             label = "Analyze",
-        #             class = "btn-primary",
-        #             style = "width:100%; border-color:white; border-radius: 10px",
-        #             icon("play")
-        #           ),
-        #           shiny::br(),
-        #           align = "center"
-        #         ),
-        #         shiny::column(
-        #           8,
-        #           shiny::tabPanel(
-        #             title = list(fontawesome::fa("crop"), "ROI"),
-        #             shiny::br(),
-        #             shiny::plotOutput(
-        #               outputId = "plotROI",
-        #               width = "auto",
-        #               click = "roi_click"
-        #             ),
-        #             align = "center"
-        #           ),
-        #         ),
-        #       ),
-        #     ),
-        #     shiny::tabPanel(
-        #       value = "track",
-        #       title = list(fontawesome::fa("right-from-bracket"), "Output"),
-        #       shiny::br(),
-        #       shiny::downloadButton(
-        #         outputId = "downloadMP4",
-        #         label = "Video",
-        #         class = "btn-primary",
-        #         style = "width:100%; border-color:white; border-radius: 10px;",
-        #       ),
-        #       shiny::br(),
-        #       shiny::br(),
-        #       shiny::uiOutput(outputId = "videooutput"),
-        #       align = "center"
-        #     ),
-        #     shiny::tabPanel(
-        #       title = list(fontawesome::fa("chart-line"), "Plots"),
-        #       shiny::br(),
-        #       shiny::fluidPage(
-        #         shiny::fluidRow(
-        #           shiny::column(
-        #             4,
-        #             shiny::downloadButton(
-        #               outputId = "downloadPATH",
-        #               label = "Trajectory data",
-        #               class = "btn-primary",
-        #               style = "width:100%; border-color:white; border-radius: 10px;",
-        #             ),
-        #           ),
-        #           shiny::column(
-        #             4,
-        #             shiny::downloadButton(
-        #               outputId = "downloadDISPL",
-        #               label = "Displacement data",
-        #               class = "btn-primary",
-        #               style = "width:100%; border-color:white; border-radius: 10px;",
-        #             ),
-        #           ),
-        #           shiny::column(
-        #             4,
-        #             shiny::downloadButton(
-        #               outputId = "downloadCC",
-        #               label = "Cross-correlation data",
-        #               class = "btn-primary",
-        #               style = "width:100%; border-color:white; border-radius: 10px;",
-        #             ),
-        #             align = "center"
-        #           ),
-        #         ),
-        #       ),
-        #       shiny::br(),
-        #       shiny::br(),
-        #       shiny::plotOutput("plotTrack",  width = "100%"),
-        #       align = "center"
-        #     ),
-        #     shiny::tabPanel(
-        #       title = list(fontawesome::fa("table"), "Tables"),
-        #       shiny::br(),
-        #       DT::dataTableOutput("tableTrack", width = "100%"),
-        #       align = "center"
-        #     ),
-        #   ),
-        # ),
-        shiny::tabPanel(
-          title = list(fontawesome::fa("circle-info")),
-          shiny::br(),
-          shiny::HTML(
-            "<p>1. Upload an Excel file (.xlsx) with the <b>Upload</b> button.</p>
+        shiny::column(
+          3,
+          # add checkbox for between-subject factors (BGF)
+          shinyWidgets::pickerInput(
+            inputId = "BGF",
+            label = "Between-subject factors",
+            choices = NULL,
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              size = 10,
+              selectedTextFormat = "count > 0"
+            ),
+            multiple = TRUE,
+            width = "100%"
+          ),
+          # show dataframe of selected BGF with renderTable
+          shiny::tableOutput(outputId = "BGFtable")
+        ),
+        shiny::column(
+          3,
+          # add checkbox for covariates (CV)
+          shinyWidgets::pickerInput(
+            inputId = "CV",
+            label = "Covariates",
+            choices = NULL,
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              size = 10,
+              selectedTextFormat = "count > 0"
+            ),
+            multiple = TRUE,
+            width = "100%"
+          ),
+          # show dataframe of selected CV with renderTable
+          shiny::tableOutput(outputId = "CVtable")
+        ),
+        shiny::column(
+          3,
+          # add checkbox for outcome variables (OV)
+          shinyWidgets::pickerInput(
+            inputId = "OV",
+            label = "Outcome variables",
+            choices = NULL,
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              size = 10,
+              selectedTextFormat = "count > 0"
+            ),
+            multiple = TRUE,
+            width = "100%"
+          ),
+          # show dataframe of selected OV with renderTable
+          shiny::tableOutput(outputId = "OVtable")
+        )
+      ),
+    ),
+    
+    # shiny::tabPanel(
+    #   title = list(fontawesome::fa("arrow-trend-up"), "Track"),
+    #   shiny::br(),
+    #   shiny::tabsetPanel(
+    #     id = "tabTrack",
+    #     type = "tabs",
+    #     shiny::tabPanel(
+    #       title = list(fontawesome::fa("sliders"), "Setup"),
+    #       shiny::br(),
+    #       # split two columns
+    #       shiny::fluidRow(
+    #         shiny::column(
+    #           4,
+    #           shiny::sliderInput(
+    #             inputId = "KernelSizeTrack",
+    #             label = "Object (px)",
+    #             min = 1,
+    #             max = 201,
+    #             value = 50,
+    #             step = 2,
+    #             ticks = FALSE,
+    #             width = "100%",
+    #           ),
+    #           shiny::sliderInput(
+    #             inputId = "Overlap",
+    #             label = "ROI (%)",
+    #             min = 0,
+    #             max = 100,
+    #             value = 50,
+    #             step = 5,
+    #             ticks = FALSE,
+    #             width = "100%",
+    #           ),
+    #           shiny::radioButtons(
+    #             inputId = "FilterType",
+    #             label = "Filter",
+    #             choices = c("none", "mean", "median"),
+    #             selected = "none",
+    #             inline = TRUE,
+    #             width = "100%"
+    #           ),
+    #           shiny::sliderInput(
+    #             inputId = "FilterSize",
+    #             label = "Size (px)",
+    #             min = 1,
+    #             max = 11,
+    #             value = 1,
+    #             step = 2,
+    #             ticks = FALSE,
+    #             width = "100%",
+    #           ),
+    #           shiny::sliderInput(
+    #             inputId = "Jump",
+    #             label = "Jump (frames)",
+    #             min = 0,
+    #             max = 5,
+    #             value = 0,
+    #             ticks = FALSE,
+    #             width = "100%",
+    #           ),
+    #           shiny::br(),
+    #           shiny::actionButton(
+    #             inputId = "buttAnalyze",
+    #             label = "Analyze",
+    #             class = "btn-primary",
+    #             style = "width:100%; border-color:white; border-radius: 10px",
+    #             icon("play")
+    #           ),
+    #           shiny::br(),
+    #           align = "center"
+    #         ),
+    #         shiny::column(
+    #           8,
+    #           shiny::tabPanel(
+    #             title = list(fontawesome::fa("crop"), "ROI"),
+    #             shiny::br(),
+    #             shiny::plotOutput(
+    #               outputId = "plotROI",
+    #               width = "auto",
+    #               click = "roi_click"
+    #             ),
+    #             align = "center"
+    #           ),
+    #         ),
+    #       ),
+    #     ),
+    #     shiny::tabPanel(
+    #       value = "track",
+    #       title = list(fontawesome::fa("right-from-bracket"), "Output"),
+    #       shiny::br(),
+    #       shiny::downloadButton(
+    #         outputId = "downloadMP4",
+    #         label = "Video",
+    #         class = "btn-primary",
+    #         style = "width:100%; border-color:white; border-radius: 10px;",
+    #       ),
+    #       shiny::br(),
+    #       shiny::br(),
+    #       shiny::uiOutput(outputId = "videooutput"),
+    #       align = "center"
+    #     ),
+    #     shiny::tabPanel(
+    #       title = list(fontawesome::fa("chart-line"), "Plots"),
+    #       shiny::br(),
+    #       shiny::fluidPage(
+    #         shiny::fluidRow(
+    #           shiny::column(
+    #             4,
+    #             shiny::downloadButton(
+    #               outputId = "downloadPATH",
+    #               label = "Trajectory data",
+    #               class = "btn-primary",
+    #               style = "width:100%; border-color:white; border-radius: 10px;",
+    #             ),
+    #           ),
+    #           shiny::column(
+    #             4,
+    #             shiny::downloadButton(
+    #               outputId = "downloadDISPL",
+    #               label = "Displacement data",
+    #               class = "btn-primary",
+    #               style = "width:100%; border-color:white; border-radius: 10px;",
+    #             ),
+    #           ),
+    #           shiny::column(
+    #             4,
+    #             shiny::downloadButton(
+    #               outputId = "downloadCC",
+    #               label = "Cross-correlation data",
+    #               class = "btn-primary",
+    #               style = "width:100%; border-color:white; border-radius: 10px;",
+    #             ),
+    #             align = "center"
+    #           ),
+    #         ),
+    #       ),
+    #       shiny::br(),
+    #       shiny::br(),
+    #       shiny::plotOutput("plotTrack",  width = "100%"),
+    #       align = "center"
+    #     ),
+    #     shiny::tabPanel(
+    #       title = list(fontawesome::fa("table"), "Tables"),
+    #       shiny::br(),
+    #       DT::dataTableOutput("tableTrack", width = "100%"),
+    #       align = "center"
+    #     ),
+    #   ),
+    # ),
+    shiny::tabPanel(
+      title = list(fontawesome::fa("circle-info")),
+      shiny::br(),
+      shiny::HTML(
+        "<p>1. Upload an Excel file (.xlsx) with the <b>Upload</b> button.</p>
             <p>2. Choose variables for analysis.</p>
             <p>3. Click <b>Plan</b> to configure the statistial analysis.</p>
             <p>4. Click <b>Analyze</b>. Wait until the red progress bar on the top stops blinking.</p>
             <p>5. Check <b>Table</b> tab to visualize the results in tabular format.</p>
             <p>6. Check <b>Plot</b> tab to visualize the results in image format</p>
             <p>7. Click <b>restart</b> icon before running new analisys.",
-          ),
-        ),
-        shiny::tabPanel(
-          title = list(fontawesome::fa("people-group")),
-          shiny::br(),
-          shiny::HTML("<a href=\"mailto:arthurde@souunisuam.com.br\">Arthur de Sá Ferreira, DSc</a>"),
-          shiny::HTML("<b> (Developer)</b>"),
-          shiny::br(),
-          shiny::br(),
-          shiny::HTML("<a href=\"mailto:ney.filho@souunisuam.com.br\">Ney Meziat Filho, DSc</a>"),
-          shiny::HTML("; "),
-          shiny::HTML("<a href=\"mailto:fabianaterracunha@gmail.com\">Fabiana Terra Cunha, DSc</a>"),
-          shiny::HTML("; "),
-          shiny::HTML("<a href=\"mailto:jessicafmg@gmail.com\">Jessica Fernandez, DSc</a>"),
-          shiny::HTML("; "),
-          shiny::HTML("<a href=\"mailto:julia.d.castro@hotmail.com\">Julia Castro, DSc</a>"),
-          shiny::HTML("<b> (Contributors)</b>"),
-          shiny::br(),
-          shiny::br(),
-          shiny::HTML(
-            "<a href=\"https://www.unisuam.edu.br/programa-pos-graduacao-ciencias-da-reabilitacao\">PPGCR</a> | Programa de Pós-graduação em Ciências da Reabilitação, Centro Universitário Augusto Motta, Rio de Janeiro, RJ, Brazil"
-          ),
-          shiny::HTML("<b> (Affiliation)</b>"),
-          shiny::br(),
-          shiny::br(),
-          shiny::HTML("<b>License</b>"),
-          shiny::HTML(
-            "This work is licensed under an <a rel=\"license\" data-spdx=\"Apache-2.0\" href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>."
-          ),
-          shiny::br(),
-          shiny::HTML("<b>Cite as</b>"),
-          shiny::HTML("Ferreira, A. de S., & Meziat Filho, N. (2024). RCTapp Randomized Clinical Trial (1.0.0). Zenodo. https://doi.org/10.5281/zenodo.13848816"),
-        ),
       ),
+    ),
+    shiny::tabPanel(
+      title = list(fontawesome::fa("people-group")),
+      shiny::br(),
+      shiny::HTML(
+        "<a href=\"mailto:arthurde@souunisuam.com.br\">Arthur de Sá Ferreira, DSc</a>"
+      ),
+      shiny::HTML("<b> (Developer)</b>"),
+      shiny::br(),
+      shiny::br(),
+      shiny::HTML(
+        "<a href=\"mailto:ney.filho@souunisuam.com.br\">Ney Meziat Filho, DSc</a>"
+      ),
+      shiny::HTML("; "),
+      shiny::HTML(
+        "<a href=\"mailto:fabianaterracunha@gmail.com\">Fabiana Terra Cunha, DSc</a>"
+      ),
+      shiny::HTML("; "),
+      shiny::HTML(
+        "<a href=\"mailto:jessicafmg@gmail.com\">Jessica Fernandez, DSc</a>"
+      ),
+      shiny::HTML("; "),
+      shiny::HTML(
+        "<a href=\"mailto:julia.d.castro@hotmail.com\">Julia Castro, DSc</a>"
+      ),
+      shiny::HTML("<b> (Contributors)</b>"),
+      shiny::br(),
+      shiny::br(),
+      shiny::HTML(
+        "<a href=\"https://www.unisuam.edu.br/programa-pos-graduacao-ciencias-da-reabilitacao\">PPGCR</a> | Programa de Pós-graduação em Ciências da Reabilitação, Centro Universitário Augusto Motta, Rio de Janeiro, RJ, Brazil"
+      ),
+      shiny::HTML("<b> (Affiliation)</b>"),
+      shiny::br(),
+      shiny::br(),
+      shiny::HTML("<b>License</b>"),
+      shiny::HTML(
+        "This work is licensed under an <a rel=\"license\" data-spdx=\"Apache-2.0\" href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>."
+      ),
+      shiny::br(),
+      shiny::HTML("<b>Cite as</b>"),
+      shiny::HTML(
+        "Ferreira, A. de S., & Meziat Filho, N. (2024). RCTapp Randomized Clinical Trial (1.0.0). Zenodo. https://doi.org/10.5281/zenodo.13848816"
+      ),
+    ),
+  ),
 )
 
 # Define server script
 server <- function(input, output, session) {
-  
   # upload excel file ---------------------------------------------------------
-  values <- shiny::reactiveValues(
-    upload_state = NULL
-  )
+  values <- shiny::reactiveValues(upload_state = NULL)
   
   shiny::observeEvent(input$InputFile, {
     values$upload_state <- 'uploaded'
@@ -409,34 +422,71 @@ server <- function(input, output, session) {
   })
   
   # show uploaded table ---------------------------------------------------------
-  output[["rawtable"]] <- shiny::renderDataTable({
+  output[["rawtable"]] <- DT::renderDT({
     shiny::req(rawdata())
+    
+    # read file
+    rawdata <- readxl::read_xlsx(rawdata())
+    # remove empty columns
+    rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
+    # remove empty rows
+    rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
+    
+    # update list of subject variables from rawdata header
+    shinyWidgets::updatePickerInput(inputId = "ID", choices = colnames(rawdata), )
+    # update list of between-subject variables from rawdata header
+    shinyWidgets::updatePickerInput(inputId = "BGF", choices = colnames(rawdata), )
+    # update list of covariates from rawdata header
+    shinyWidgets::updatePickerInput(inputId = "CV", choices = colnames(rawdata), )
+    # update list of outcome variables from rawdata header
+    shinyWidgets::updatePickerInput(inputId = "OV", choices = colnames(rawdata), )
+    
     DT::datatable(
-      data = readxl::read_xlsx(rawdata()),
+      data = rawdata,
       rownames = FALSE,
       options = list(
         searching = FALSE,
-        pageLength = 10,
+        pageLength = 5,
         width = "100%",
         scrollX = TRUE,
         autoWidth = TRUE
       )
     )
   })
-    
-
   
+  # show selected ID in IDtable
+  output[["IDtable"]] <- shiny::renderTable({
+    shiny::req(input[["ID"]])
+    data.frame(input[["ID"]])
+  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = FALSE)
   
+  # show selected BGF in BGFtable
+  output[["BGFtable"]] <- shiny::renderTable({
+    shiny::req(input[["BGF"]])
+    data.frame(input[["BGF"]])
+  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = FALSE)
+  
+  # show selected CV in CVtable
+  output[["CVtable"]] <- shiny::renderTable({
+    shiny::req(input[["CV"]])
+    data.frame(input[["CV"]])
+  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = FALSE)
+  
+  # show selected OV in OVtable
+  output[["OVtable"]] <- shiny::renderTable({
+    shiny::req(input[["OV"]])
+    data.frame(input[["OV"]])
+  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = FALSE)
   
   # # play uploaded video ---------------------------------------------------------
   # output[["videoraw"]] <- shiny::renderUI({
   #   shiny::req(Video())
   #   # Get video info such as width, height, format, duration and framerate
   #   info <- av::av_media_info(Video())
-  #   
+  #
   #   # center ROI for the first time
   #   roi_coords$xy[2, ] <- c(info$video$width / 2, info$video$height / 2)
-  #   
+  #
   #   # copy and rename file
   #   file.copy(from = Video(),
   #             to = file.path(dir.name, "rawvideo.mp4"))
@@ -447,14 +497,14 @@ server <- function(input, output, session) {
   #     format = "png",
   #     fps = NULL
   #   )
-  #   
+  #
   #   # copy raw files to edit folder
   #   R.utils::copyDirectory(file.path(dir.name, "0 raw"), file.path(dir.name, "1 edited"))
-  #   
+  #
   #   # copy and rename file
   #   file.copy(from = Video(),
-  #             to = file.path(dir.name, "editedvideo.mp4"))
-  #   
+  #             to = file.path(dir.name, "editeOVideo.mp4"))
+  #
   #   # update max value of slider under event
   #   shiny::updateSliderInput(
   #     inputId = "framesEdit",
@@ -466,7 +516,7 @@ server <- function(input, output, session) {
   #       file.path(dir.name, "0 raw"), pattern = ".png"
   #     ))
   #   )
-  #   
+  #
   #   # update max value of slider under event
   #   shiny::updateSliderInput(
   #     inputId = "imgEdit",
@@ -476,7 +526,7 @@ server <- function(input, output, session) {
   #       file.path(dir.name, "0 raw"), pattern = ".png"
   #     ))
   #   )
-  #   
+  #
   #   # show input video
   #   tags$video(
   #     width = "90%",
@@ -485,14 +535,14 @@ server <- function(input, output, session) {
   #     tags$source(src = "rawvideo.mp4", type = "video/mp4")
   #   )
   # })
-  # 
+  #
   # # edit mp4 video using the sliderEdit input ---------------------------------------------------------
   # output[["videoedit"]] <- shiny::renderUI({
   #   shiny::req(Video())
   #   shiny::req(input$framesEdit)
   #   # Get video info such as width, height, format, duration and framerate
   #   info <- av::av_media_info(Video())
-  #   
+  #
   #   # generate mp4 video using the sliderEdit input
   #   av::av_encode_video(
   #     input = list.files(
@@ -500,10 +550,10 @@ server <- function(input, output, session) {
   #       pattern = ".png",
   #       full.names = TRUE
   #     )[input$framesEdit[1]:input$framesEdit[2]],
-  #     output = file.path(dir.name, "editedvideo.mp4"),
+  #     output = file.path(dir.name, "editeOVideo.mp4"),
   #     framerate = info$video$framerate
   #   )
-  #   
+  #
   #   # delete previous edit files
   #   unlink(
   #     list.files(
@@ -514,15 +564,15 @@ server <- function(input, output, session) {
   #       pattern = "png"
   #     )
   #   )
-  #   
+  #
   #   # Splits a video file in a set of image files. Use format = "png" for losless images
   #   av::av_video_images(
-  #     video = file.path(dir.name, "editedvideo.mp4"),
+  #     video = file.path(dir.name, "editeOVideo.mp4"),
   #     destdir = file.path(dir.name, "1 edited"),
   #     format = "png",
   #     fps = NULL
   #   )
-  #   
+  #
   #   # update max value of slider under event
   #   shiny::updateSliderInput(
   #     inputId = "imgEdit",
@@ -532,16 +582,16 @@ server <- function(input, output, session) {
   #       file.path(dir.name, "1 edited"), pattern = ".png"
   #     ))
   #   )
-  #   
+  #
   #   # show video
   #   tags$video(
   #     width = "90%",
   #     height = "90%",
   #     controls = "",
-  #     tags$source(src = "editedvideo.mp4", type = "video/mp4")
+  #     tags$source(src = "editeOVideo.mp4", type = "video/mp4")
   #   )
   # })
-  # 
+  #
   # # plot single frame of video imgEdit ---------------------------------------------------------
   # output[["plotMeasure"]] <- shiny::renderPlot({
   #   shiny::req(Video())
@@ -549,7 +599,7 @@ server <- function(input, output, session) {
   #   shiny::req(input$imgEdit)
   #   # Get video info such as width, height, format, duration and framerate
   #   info <- av::av_media_info(Video())
-  #   
+  #
   #   # show 1st frame
   #   img <-
   #     magick::image_read(
@@ -558,7 +608,7 @@ server <- function(input, output, session) {
   #         full.names = TRUE,
   #         pattern = "png")[input$imgEdit]
   #     )
-  # 
+  #
   #   # color palette (grayscale)
   #   pal <- grDevices::gray(seq(
   #     from = 0,
@@ -573,7 +623,7 @@ server <- function(input, output, session) {
   #     asp = 1,
   #     col = pal
   #   )
-  #   
+  #
   #   # draw free-hand object
   #   lines(
   #     x = vals$x,
@@ -585,17 +635,17 @@ server <- function(input, output, session) {
   # }, height = function() {
   #   (session$clientData$output_plotMeasure_width) * (0.6584)
   # })
-  # 
+  #
   # # measurements of single frame of video imgEdit ---------------------------------------------------------
   # output[["tableMeasure"]] <- DT::renderDataTable({
   #   shiny::req(Video())
   #   shiny::req(input$framesEdit)
   #   shiny::req(input$imgEdit)
   #   shiny::req(input$imgScale)
-  #   
+  #
   #   # Get video info such as width, height, format, duration and framerate
   #   info <- av::av_media_info(Video())
-  #   
+  #
   #   # show 1st frame
   #   img <-
   #     magick::image_read(
@@ -604,22 +654,22 @@ server <- function(input, output, session) {
   #         full.names = TRUE,
   #         pattern = "png")[input$imgEdit]
   #     )
-  #   
+  #
   #   # get separate channels
   #   img_object <- as.integer(img[[1]])
   #   img_object_R <- img_object[, , 1]
   #   img_object_G <- img_object[, , 2]
   #   img_object_B <- img_object[, , 3]
-  #   
+  #
   #   # flip image vertically
   #   img_object_R <- img_object_R[nrow(img_object_R):1, ]
   #   img_object_G <- img_object_G[nrow(img_object_G):1, ]
   #   img_object_B <- img_object_B[nrow(img_object_B):1, ]
-  #   
+  #
   #   # create closed polygon
   #   poly <- round(concaveman::concaveman(cbind(vals$x, vals$y), concavity = 1, length_threshold = 0), 0)
   #   poly <- poly[complete.cases(poly), ]
-  #   
+  #
   #   # subset the image using polygon coordinates
   #   img_object_R <- img_object_R[
   #     min(poly[, 1]):max(poly[, 1]),
@@ -633,12 +683,12 @@ server <- function(input, output, session) {
   #     min(poly[, 1]):max(poly[, 1]),
   #     min(poly[, 2]):max(poly[, 2])
   #   ]
-  # 
+  #
   #   # custom functions
   #   source("f_meas.R", local = TRUE)
   #   data <- f_measurement(R = img_object_R, G = img_object_G, B = img_object_B, poly = poly)
   #   contour <- data$contour
-  #   
+  #
   #   # draw actual ROI object
   #   lines(
   #     x = contour$x,
@@ -647,13 +697,13 @@ server <- function(input, output, session) {
   #     lty = "solid",
   #     lwd = 2
   #   )
-  #   
+  #
   #   # distance
   #   distancia <- 0
-  #   
+  #
   #   # cross-sectional area
   #   area <- distancia * distancia * pi
-  #   
+  #
   #   # show measurements
   #   df_meas <- data.frame(
   #     "File name" = input$InputFile[1],
@@ -669,7 +719,7 @@ server <- function(input, output, session) {
   #     "Echogenicity, gray (%)" = round(data$ecogenicidade_gray, digits = 2)
   #   )
   #   df_meas <- t(df_meas)
-  #   
+  #
   #   labels <-
   #     c(
   #       "File name",
@@ -686,7 +736,7 @@ server <- function(input, output, session) {
   #     )
   #   rownames(df_meas) <-
   #     labels
-  #   
+  #
   #   # show DT table with buttons
   #   DT::datatable(
   #     df_meas,
@@ -713,15 +763,15 @@ server <- function(input, output, session) {
   #     )
   #   )
   # })
-  # 
+  #
   # # show PNG file of 1st frame ---------------------------------------------------------
   # output[["plotROI"]] <- shiny::renderPlot({
   #   shiny::req(Video())
   #   shiny::req(input$framesEdit)
-  #   
+  #
   #   # Get video info such as width, height, format, duration and framerate
   #   info <- av::av_media_info(Video())
-  #   
+  #
   #   # show 1st frame
   #   img <-
   #     magick::image_read(
@@ -730,7 +780,7 @@ server <- function(input, output, session) {
   #         full.names = TRUE,
   #         pattern = "png")[1]
   #       )
-  #   
+  #
   #   # color palette (grayscale)
   #   pal <- grDevices::gray(seq(
   #     from = 0,
@@ -749,7 +799,7 @@ server <- function(input, output, session) {
   #   round_2_odd <- function(x) {
   #     2 * floor(x / 2) + 1
   #   }
-  #   
+  #
   #   # draw object rectangle
   #   rect(
   #     xleft = roi_coords$xy[2, 1] - floor(input$KernelSizeTrack / 2),
@@ -761,7 +811,7 @@ server <- function(input, output, session) {
   #     lty = "solid",
   #     lwd = 2
   #   )
-  #   
+  #
   #   roi <-
   #     round_2_odd(input$KernelSizeTrack * (1 + as.numeric(input$Overlap) / 100)) # odd numbers only
   #   # draw ROI rectangle
@@ -791,25 +841,25 @@ server <- function(input, output, session) {
   # }, height = function() {
   #   (session$clientData$output_plotROI_width) * (0.6584)
   # })
-  # 
+  #
   # # process, play and export video ---------------------------------------------------------
   # shiny::observeEvent(input[["buttAnalyze"]], {
   #   shiny::req(Video())
   #   # Get video info such as width, height, format, duration and framerate
   #   info <- av::av_media_info(Video())
-  #   
+  #
   #   # Capture the result of us_track function call
   #   us_track(
   #     center.ini <-
   #       list(x = roi_coords$xy[2, 1], y = roi_coords$xy[2, 2]),
-  #     inputfile = file.path(dir.name, "editedvideo.mp4"),
+  #     inputfile = file.path(dir.name, "editeOVideo.mp4"),
   #     filtertype = input$FilterType,
   #     filtersize = input$FilterSize,
   #     overlap = input$Overlap,
   #     jump = input$Jump,
   #     kernel = input$KernelSizeTrack
   #   )
-  #   
+  #
   #   # draw trajectory on images
   #   path <-
   #     read.csv(file.path(dir.name, "CSV", "trajectory_measured.csv"))
@@ -817,7 +867,7 @@ server <- function(input, output, session) {
   #     # read image from file
   #     img <- png::readPNG(file.path(dir.name, "8 output", paste0("image_", sprintf("%06d", i), ".png")))
   #     img <- grDevices::as.raster(img[, , 1:3])
-  #     
+  #
   #     # create a ggplot object with the image in background and trajectory as data points
   #     par(mar = rep(0, 4), oma = rep(0, 4), omi = rep(0, 4), mai = rep(0, 4))
   #     ggplot2::ggplot() +
@@ -841,7 +891,7 @@ server <- function(input, output, session) {
   #                                   expand = c(0, 0)) +
   #       ggplot2::coord_fixed() +
   #       ggplot2::theme_void()
-  #     
+  #
   #     # save ggplot as png
   #     ggplot2::ggsave(
   #       filename = file.path(dir.name, "8 output", paste0("image_", sprintf("%06d", i), ".png")),
@@ -853,7 +903,7 @@ server <- function(input, output, session) {
   #       limitsize = FALSE
   #     )
   #   }
-  #   
+  #
   #   # build mp4 video using av video package from out.dir files
   #   av::av_encode_video(
   #     input = list.files(
@@ -865,13 +915,13 @@ server <- function(input, output, session) {
   #     framerate = info$video$framerate
   #   )
   # })
-  # 
+  #
   # # show MP4 video of output file
   # output[["videooutput"]] <- shiny::renderUI({
   #   shiny::req(Video())
   #   # Get video info such as width, height, format, duration and framerate
   #   info <- av::av_media_info(Video())
-  #   
+  #
   #   # show video
   #   tags$video(
   #     width = "90%",
@@ -880,7 +930,7 @@ server <- function(input, output, session) {
   #     tags$source(src = "outputvideo.mp4", type = "video/mp4")
   #   )
   # })
-  # 
+  #
   # df <-
   #   shiny::reactive(if (file.exists(file.path(
   #     dir.name, "CSV", "max_cross_correlation.csv"
@@ -948,14 +998,14 @@ server <- function(input, output, session) {
   #       "Cross-correlation, min" = NA
   #     )
   #   })
-  # 
+  #
   # # plot results of th CSV files ---------------------------------------------------------
   # output[["plotTrack"]] <- shiny::renderImage({
   #   shiny::req(Video())
   #   # Get video info such as width, height, format, duration and framerate
   #   info <-
   #     av::av_media_info(file.path(dir.name, "outputvideo.mp4"))
-  #   
+  #
   #   source("f_plot.R", local = TRUE)
   #   img <- htmltools::capturePlot({
   #     plot.trajectory(res.dir = file.path(dir.name, "CSV"),
@@ -968,7 +1018,7 @@ server <- function(input, output, session) {
   #     contentType = "image/png"
   #   )
   # }, deleteFile = TRUE)
-  # 
+  #
   # # show datatable of results ---------------------------------------------------------
   # output[["tableTrack"]] <- DT::renderDataTable({
   #   shiny::req(Video())
@@ -1023,7 +1073,7 @@ server <- function(input, output, session) {
   #     )
   #   )
   # })
-  # 
+  #
   # # download MP4 file generated by 8 output files ---------------------------------------------------------
   # output[["downloadMP4"]] <-
   #   shiny::downloadHandler(
@@ -1035,7 +1085,7 @@ server <- function(input, output, session) {
   #                 to = file)
   #     }
   #   )
-  # 
+  #
   # # download TRAJECTORY CSV files ---------------------------------------------------------
   # output[["downloadPATH"]] <-
   #   shiny::downloadHandler(
@@ -1047,7 +1097,7 @@ server <- function(input, output, session) {
   #                 to = file)
   #     }
   #   )
-  # 
+  #
   # # download DISPLACEMENT CSV files ---------------------------------------------------------
   # output[["downloadDISPL"]] <-
   #   shiny::downloadHandler(
@@ -1059,7 +1109,7 @@ server <- function(input, output, session) {
   #                 to = file)
   #     }
   #   )
-  # 
+  #
   # # download CC CSV files ---------------------------------------------------------
   # output[["downloadCC"]] <-
   #   shiny::downloadHandler(
@@ -1071,13 +1121,13 @@ server <- function(input, output, session) {
   #                 to = file)
   #     }
   #   )
-  # 
+  #
   # # restart button ---------------------------------------------------------
   # shinyjs::onclick("restart", {
-  #   
+  #
   #   # clean InputFile
   #   shinyjs::reset("InputFile")
-  #   
+  #
   #   # delete files
   #   unlink(
   #     list.files(
