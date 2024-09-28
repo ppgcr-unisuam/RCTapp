@@ -111,9 +111,9 @@ ui <- shiny::fluidPage(
       DT::DTOutput(outputId = "rawtable"),
     ),
     shiny::tabPanel(
-      title = list(fontawesome::fa("list-check"), "Variables"),
+      title = list(fontawesome::fa("list-check"), "Plan"),
       shiny::br(),
-      # split panel into two columns
+      # split panel into 4 columns
       shiny::fluidRow(
         shiny::column(
           3,
@@ -131,10 +131,7 @@ ui <- shiny::fluidPage(
             width = "100%"
           ),
           # show dataframe of selected ID with renderTable
-          shiny::tableOutput(outputId = "IDtable")
-        ),
-        shiny::column(
-          3,
+          shiny::tableOutput(outputId = "IDtable"),
           # add checkbox for between-subject factors (BGF)
           shinyWidgets::pickerInput(
             inputId = "BGF",
@@ -149,10 +146,7 @@ ui <- shiny::fluidPage(
             width = "100%"
           ),
           # show dataframe of selected BGF with renderTable
-          shiny::tableOutput(outputId = "BGFtable")
-        ),
-        shiny::column(
-          3,
+          shiny::tableOutput(outputId = "BGFtable"),
           # add checkbox for covariates (CV)
           shinyWidgets::pickerInput(
             inputId = "CV",
@@ -167,10 +161,7 @@ ui <- shiny::fluidPage(
             width = "100%"
           ),
           # show dataframe of selected CV with renderTable
-          shiny::tableOutput(outputId = "CVtable")
-        ),
-        shiny::column(
-          3,
+          shiny::tableOutput(outputId = "CVtable"),
           # add checkbox for outcome variables (OV)
           shinyWidgets::pickerInput(
             inputId = "OV",
@@ -185,11 +176,75 @@ ui <- shiny::fluidPage(
             width = "100%"
           ),
           # show dataframe of selected OV with renderTable
-          shiny::tableOutput(outputId = "OVtable")
-        )
+          shiny::tableOutput(outputId = "OVtable"),
+        ),
+        shiny::column(
+          3,
+          # show options for missing data
+          shiny::radioButtons(
+            inputId = "missing",
+            label = "Missing data",
+            choices = c("None", "Complete cases", "Mean imputation", "Multiple imputation"),
+            selected = "none",
+            inline = FALSE,
+            width = "100%"
+          ),
+          # number of resamples
+          shiny::numericInput(
+            inputId = "M",
+            label = "Resamples",
+            value = 50,
+            min = 1,
+            max = 100,
+            step = 1,
+            width = "100%"
+          ),
+        ),
+        shiny::column(
+          6,
+          # show dataframe of selected ID with renderTable
+          DT::DTOutput(outputId = "datatable"),
+          shiny::br(),
+        ),
+        # show button Analyze
+        shiny::actionButton(
+          inputId = "buttAnalyze",
+          label = "Analyze",
+          class = "btn-primary",
+          style = "width:100%; border-color:white; border-radius: 10px",
+          icon("play")
+        ),
       ),
     ),
-    
+    # tab for table 1 of results
+    shiny::tabPanel(
+      title = list(fontawesome::fa("table"), "Table 1"),
+      shiny::br(),
+      # show table of results
+      DT::dataTableOutput("table"),
+    ),
+    # tab for table 2a of results
+    shiny::tabPanel(
+      title = list(fontawesome::fa("table"), "Table 2a"),
+      shiny::br(),
+      # show table of results
+      DT::dataTableOutput("table2a"),
+    ),
+    # tab for table 3 of results
+    shiny::tabPanel(
+      title = list(fontawesome::fa("table"), "Table 3"),
+      shiny::br(),
+      # show table of results
+      DT::dataTableOutput("table3"),
+    ),
+    # tab for plot of results
+    shiny::tabPanel(
+      title = list(fontawesome::fa("chart-line"), "Plot"),
+      shiny::br(),
+      # show plot of results
+      shiny::plotOutput("plot"),
+    ),
+
     # shiny::tabPanel(
     #   title = list(fontawesome::fa("arrow-trend-up"), "Track"),
     #   shiny::br(),
@@ -445,8 +500,9 @@ server <- function(input, output, session) {
       data = rawdata,
       rownames = FALSE,
       options = list(
+        dom = 'tipr',
         searching = FALSE,
-        pageLength = 5,
+        pageLength = 10,
         width = "100%",
         scrollX = TRUE,
         autoWidth = TRUE
@@ -478,120 +534,37 @@ server <- function(input, output, session) {
     data.frame(input[["OV"]])
   }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = FALSE)
   
-  # # play uploaded video ---------------------------------------------------------
-  # output[["videoraw"]] <- shiny::renderUI({
-  #   shiny::req(Video())
-  #   # Get video info such as width, height, format, duration and framerate
-  #   info <- av::av_media_info(Video())
-  #
-  #   # center ROI for the first time
-  #   roi_coords$xy[2, ] <- c(info$video$width / 2, info$video$height / 2)
-  #
-  #   # copy and rename file
-  #   file.copy(from = Video(),
-  #             to = file.path(dir.name, "rawvideo.mp4"))
-  #   # Splits a video file in a set of image files. Use format = "png" for losless images
-  #   av::av_video_images(
-  #     video = file.path(dir.name, "rawvideo.mp4"),
-  #     destdir = file.path(dir.name, "0 raw"),
-  #     format = "png",
-  #     fps = NULL
-  #   )
-  #
-  #   # copy raw files to edit folder
-  #   R.utils::copyDirectory(file.path(dir.name, "0 raw"), file.path(dir.name, "1 edited"))
-  #
-  #   # copy and rename file
-  #   file.copy(from = Video(),
-  #             to = file.path(dir.name, "editeOVideo.mp4"))
-  #
-  #   # update max value of slider under event
-  #   shiny::updateSliderInput(
-  #     inputId = "framesEdit",
-  #     min = 1,
-  #     value = c(1, length(
-  #       list.files(file.path(dir.name, "0 raw"), pattern = ".png")
-  #     )),
-  #     max = length(list.files(
-  #       file.path(dir.name, "0 raw"), pattern = ".png"
-  #     ))
-  #   )
-  #
-  #   # update max value of slider under event
-  #   shiny::updateSliderInput(
-  #     inputId = "imgEdit",
-  #     min = 1,
-  #     value = 1,
-  #     max = length(list.files(
-  #       file.path(dir.name, "0 raw"), pattern = ".png"
-  #     ))
-  #   )
-  #
-  #   # show input video
-  #   tags$video(
-  #     width = "90%",
-  #     height = "90%",
-  #     controls = "",
-  #     tags$source(src = "rawvideo.mp4", type = "video/mp4")
-  #   )
-  # })
-  #
-  # # edit mp4 video using the sliderEdit input ---------------------------------------------------------
-  # output[["videoedit"]] <- shiny::renderUI({
-  #   shiny::req(Video())
-  #   shiny::req(input$framesEdit)
-  #   # Get video info such as width, height, format, duration and framerate
-  #   info <- av::av_media_info(Video())
-  #
-  #   # generate mp4 video using the sliderEdit input
-  #   av::av_encode_video(
-  #     input = list.files(
-  #       file.path(dir.name, "0 raw"),
-  #       pattern = ".png",
-  #       full.names = TRUE
-  #     )[input$framesEdit[1]:input$framesEdit[2]],
-  #     output = file.path(dir.name, "editeOVideo.mp4"),
-  #     framerate = info$video$framerate
-  #   )
-  #
-  #   # delete previous edit files
-  #   unlink(
-  #     list.files(
-  #       path = file.path(dir.name, "1 edited"),
-  #       recursive = TRUE,
-  #       include.dirs = TRUE,
-  #       full.names = TRUE,
-  #       pattern = "png"
-  #     )
-  #   )
-  #
-  #   # Splits a video file in a set of image files. Use format = "png" for losless images
-  #   av::av_video_images(
-  #     video = file.path(dir.name, "editeOVideo.mp4"),
-  #     destdir = file.path(dir.name, "1 edited"),
-  #     format = "png",
-  #     fps = NULL
-  #   )
-  #
-  #   # update max value of slider under event
-  #   shiny::updateSliderInput(
-  #     inputId = "imgEdit",
-  #     min = 1,
-  #     value = 1,
-  #     max = length(list.files(
-  #       file.path(dir.name, "1 edited"), pattern = ".png"
-  #     ))
-  #   )
-  #
-  #   # show video
-  #   tags$video(
-  #     width = "90%",
-  #     height = "90%",
-  #     controls = "",
-  #     tags$source(src = "editeOVideo.mp4", type = "video/mp4")
-  #   )
-  # })
-  #
+  # show table with selected variables
+  output[["datatable"]] <- DT::renderDT({
+    shiny::req(rawdata())
+    
+    # read file
+    rawdata <- readxl::read_xlsx(rawdata())
+    # remove empty columns
+    rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
+    # remove empty rows
+    rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
+    
+    # select columns from checked variables
+    rawdata <- rawdata[, c(input[["ID"]], input[["BGF"]], input[["CV"]], input[["OV"]])]
+    
+    # show datatable
+    DT::datatable(
+      data = rawdata,
+      rownames = FALSE,
+      options = list(
+        dom = 'tipr',
+        searching = FALSE,
+        pageLength = 10,
+        width = "100%",
+        scrollX = TRUE,
+        autoWidth = TRUE
+      )
+    )
+  })
+  
+  
+  
   # # plot single frame of video imgEdit ---------------------------------------------------------
   # output[["plotMeasure"]] <- shiny::renderPlot({
   #   shiny::req(Video())
