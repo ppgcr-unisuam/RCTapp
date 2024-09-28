@@ -184,7 +184,12 @@ ui <- shiny::fluidPage(
           shiny::radioButtons(
             inputId = "missing",
             label = "Missing data",
-            choices = c("None", "Complete cases", "Mean imputation", "Multiple imputation"),
+            choices = c(
+              "None",
+              "Complete cases",
+              "Mean imputation",
+              "Multiple imputation"
+            ),
             selected = "none",
             inline = FALSE,
             width = "100%"
@@ -200,25 +205,22 @@ ui <- shiny::fluidPage(
             width = "100%"
           ),
         ),
-        shiny::column(
-          6,
-          # show dataframe of selected ID with renderTable
-          DT::DTOutput(outputId = "datatable"),
-          shiny::br(),
-        ),
-        # show button Analyze
-        shiny::actionButton(
-          inputId = "buttAnalyze",
-          label = "Analyze",
-          class = "btn-primary",
-          style = "width:100%; border-color:white; border-radius: 10px",
-          icon("play")
-        ),
+        shiny::column(6, # show dataframe of selected ID with renderTable
+                      DT::DTOutput(outputId = "datatable"), shiny::br(), ),
       ),
     ),
     # tab for table 1 of results
     shiny::tabPanel(
       title = list(fontawesome::fa("table"), "Table 1"),
+      shiny::br(),
+      # show button Analyze
+      shiny::actionButton(
+        inputId = "buttAnalyze1",
+        label = "Run Table 1",
+        class = "btn-primary",
+        style = "width:100%; border-color:white; border-radius: 10px",
+        icon("play")
+      ),
       shiny::br(),
       # show table of results
       DT::dataTableOutput("table"),
@@ -227,13 +229,44 @@ ui <- shiny::fluidPage(
     shiny::tabPanel(
       title = list(fontawesome::fa("table"), "Table 2a"),
       shiny::br(),
+      # show button Analyze
+      shiny::actionButton(
+        inputId = "buttAnalyze2a",
+        label = "Run Table 2",
+        class = "btn-primary",
+        style = "width:100%; border-color:white; border-radius: 10px",
+        icon("play")
+      ),
       # show table of results
       DT::dataTableOutput("table2a"),
+    ),
+    # tab for table 2b of results
+    shiny::tabPanel(
+      title = list(fontawesome::fa("table"), "Table 2b"),
+      shiny::br(),
+      # show button Analyze
+      shiny::actionButton(
+        inputId = "buttAnalyze2b",
+        label = "Run Table 2",
+        class = "btn-primary",
+        style = "width:100%; border-color:white; border-radius: 10px",
+        icon("play")
+      ),
+      # show table of results
+      DT::dataTableOutput("table2b"),
     ),
     # tab for table 3 of results
     shiny::tabPanel(
       title = list(fontawesome::fa("table"), "Table 3"),
       shiny::br(),
+      # show button Analyze
+      shiny::actionButton(
+        inputId = "buttAnalyze3",
+        label = "Run Table 3",
+        class = "btn-primary",
+        style = "width:100%; border-color:white; border-radius: 10px",
+        icon("play")
+      ),
       # show table of results
       DT::dataTableOutput("table3"),
     ),
@@ -241,159 +274,17 @@ ui <- shiny::fluidPage(
     shiny::tabPanel(
       title = list(fontawesome::fa("chart-line"), "Plot"),
       shiny::br(),
+      # show button Analyze
+      shiny::actionButton(
+        inputId = "buttAnalyzePlot",
+        label = "Run Plot",
+        class = "btn-primary",
+        style = "width:100%; border-color:white; border-radius: 10px",
+        icon("play")
+      ),
       # show plot of results
       shiny::plotOutput("plot"),
     ),
-
-    # shiny::tabPanel(
-    #   title = list(fontawesome::fa("arrow-trend-up"), "Track"),
-    #   shiny::br(),
-    #   shiny::tabsetPanel(
-    #     id = "tabTrack",
-    #     type = "tabs",
-    #     shiny::tabPanel(
-    #       title = list(fontawesome::fa("sliders"), "Setup"),
-    #       shiny::br(),
-    #       # split two columns
-    #       shiny::fluidRow(
-    #         shiny::column(
-    #           4,
-    #           shiny::sliderInput(
-    #             inputId = "KernelSizeTrack",
-    #             label = "Object (px)",
-    #             min = 1,
-    #             max = 201,
-    #             value = 50,
-    #             step = 2,
-    #             ticks = FALSE,
-    #             width = "100%",
-    #           ),
-    #           shiny::sliderInput(
-    #             inputId = "Overlap",
-    #             label = "ROI (%)",
-    #             min = 0,
-    #             max = 100,
-    #             value = 50,
-    #             step = 5,
-    #             ticks = FALSE,
-    #             width = "100%",
-    #           ),
-    #           shiny::radioButtons(
-    #             inputId = "FilterType",
-    #             label = "Filter",
-    #             choices = c("none", "mean", "median"),
-    #             selected = "none",
-    #             inline = TRUE,
-    #             width = "100%"
-    #           ),
-    #           shiny::sliderInput(
-    #             inputId = "FilterSize",
-    #             label = "Size (px)",
-    #             min = 1,
-    #             max = 11,
-    #             value = 1,
-    #             step = 2,
-    #             ticks = FALSE,
-    #             width = "100%",
-    #           ),
-    #           shiny::sliderInput(
-    #             inputId = "Jump",
-    #             label = "Jump (frames)",
-    #             min = 0,
-    #             max = 5,
-    #             value = 0,
-    #             ticks = FALSE,
-    #             width = "100%",
-    #           ),
-    #           shiny::br(),
-    #           shiny::actionButton(
-    #             inputId = "buttAnalyze",
-    #             label = "Analyze",
-    #             class = "btn-primary",
-    #             style = "width:100%; border-color:white; border-radius: 10px",
-    #             icon("play")
-    #           ),
-    #           shiny::br(),
-    #           align = "center"
-    #         ),
-    #         shiny::column(
-    #           8,
-    #           shiny::tabPanel(
-    #             title = list(fontawesome::fa("crop"), "ROI"),
-    #             shiny::br(),
-    #             shiny::plotOutput(
-    #               outputId = "plotROI",
-    #               width = "auto",
-    #               click = "roi_click"
-    #             ),
-    #             align = "center"
-    #           ),
-    #         ),
-    #       ),
-    #     ),
-    #     shiny::tabPanel(
-    #       value = "track",
-    #       title = list(fontawesome::fa("right-from-bracket"), "Output"),
-    #       shiny::br(),
-    #       shiny::downloadButton(
-    #         outputId = "downloadMP4",
-    #         label = "Video",
-    #         class = "btn-primary",
-    #         style = "width:100%; border-color:white; border-radius: 10px;",
-    #       ),
-    #       shiny::br(),
-    #       shiny::br(),
-    #       shiny::uiOutput(outputId = "videooutput"),
-    #       align = "center"
-    #     ),
-    #     shiny::tabPanel(
-    #       title = list(fontawesome::fa("chart-line"), "Plots"),
-    #       shiny::br(),
-    #       shiny::fluidPage(
-    #         shiny::fluidRow(
-    #           shiny::column(
-    #             4,
-    #             shiny::downloadButton(
-    #               outputId = "downloadPATH",
-    #               label = "Trajectory data",
-    #               class = "btn-primary",
-    #               style = "width:100%; border-color:white; border-radius: 10px;",
-    #             ),
-    #           ),
-    #           shiny::column(
-    #             4,
-    #             shiny::downloadButton(
-    #               outputId = "downloadDISPL",
-    #               label = "Displacement data",
-    #               class = "btn-primary",
-    #               style = "width:100%; border-color:white; border-radius: 10px;",
-    #             ),
-    #           ),
-    #           shiny::column(
-    #             4,
-    #             shiny::downloadButton(
-    #               outputId = "downloadCC",
-    #               label = "Cross-correlation data",
-    #               class = "btn-primary",
-    #               style = "width:100%; border-color:white; border-radius: 10px;",
-    #             ),
-    #             align = "center"
-    #           ),
-    #         ),
-    #       ),
-    #       shiny::br(),
-    #       shiny::br(),
-    #       shiny::plotOutput("plotTrack",  width = "100%"),
-    #       align = "center"
-    #     ),
-    #     shiny::tabPanel(
-    #       title = list(fontawesome::fa("table"), "Tables"),
-    #       shiny::br(),
-    #       DT::dataTableOutput("tableTrack", width = "100%"),
-    #       align = "center"
-    #     ),
-    #   ),
-    # ),
     shiny::tabPanel(
       title = list(fontawesome::fa("circle-info")),
       shiny::br(),
