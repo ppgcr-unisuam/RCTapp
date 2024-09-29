@@ -13,13 +13,13 @@ library(dplyr)
 library(htmltools)
 
 # source all scripts
-source("RCT-Figure1.R", local = TRUE)
-source("RCT-Missingness.R", local = TRUE)
-source("RCT-Table1.R", local = TRUE)
-source("RCT-Table2a.R", local = TRUE)
-source("RCT-Table2b.R", local = TRUE)
-source("RCT-Table3.R", local = TRUE)
-# source("TRIAL.R", local = TRUE)
+# source("packages.R", local = TRUE)
+source("RCT-Figure1.R", local = TRUE) # numeric variables, plot of descriptive analysis (mean and CI)
+source("RCT-Table1.R", local = TRUE) # numeric and ordinal variables, descriptive analysis, between-factor
+source("RCT-Table2a.R", local = TRUE) # numeric variables, linear mixed model analysis, between- AND within-factor WITH baseline adjustment
+source("RCT-Table2b.R", local = TRUE) # numeric variables, linear mixed model analysis, between- AND within-factor WITHOUT baseline adjustment
+source("RCT-Table3.R", local = TRUE) #  ordinal variables, ridit analysis, ONLY within-factor
+source("RCT-Missingness.R", local = TRUE) # missing data analysis
 
 # use this code to debug
 # rsconnect::showLogs()
@@ -122,12 +122,13 @@ ui <- shiny::fluidPage(
             inputId = "ID",
             label = "Subject ID",
             choices = NULL,
+            selected = NA,
             options = shinyWidgets::pickerOptions(
               actionsBox = TRUE,
               size = 10,
-              selectedTextFormat = "count > 0"
+              selectedTextFormat = "count > 1"
             ),
-            multiple = TRUE,
+            multiple = FALSE,
             width = "100%"
           ),
           # show dataframe of selected ID with renderTable
@@ -137,12 +138,13 @@ ui <- shiny::fluidPage(
             inputId = "BGF",
             label = "Between-subject factors",
             choices = NULL,
+            selected = NA,
             options = shinyWidgets::pickerOptions(
               actionsBox = TRUE,
               size = 10,
               selectedTextFormat = "count > 0"
             ),
-            multiple = TRUE,
+            multiple = FALSE,
             width = "100%"
           ),
           # show dataframe of selected BGF with renderTable
@@ -152,6 +154,7 @@ ui <- shiny::fluidPage(
             inputId = "CV",
             label = "Covariates",
             choices = NULL,
+            selected = NA,
             options = shinyWidgets::pickerOptions(
               actionsBox = TRUE,
               size = 10,
@@ -167,6 +170,7 @@ ui <- shiny::fluidPage(
             inputId = "OV",
             label = "Outcome variables",
             choices = NULL,
+            selected = NA,
             options = shinyWidgets::pickerOptions(
               actionsBox = TRUE,
               size = 10,
@@ -180,18 +184,32 @@ ui <- shiny::fluidPage(
         ),
         shiny::column(
           3,
+          # show options for control group
+          shinyWidgets::pickerInput(
+            inputId = "controlgroup",
+            label = "Control group",
+            choices = NULL,
+            selected = NA,
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              size = 10,
+              selectedTextFormat = "count > 0"
+            ),
+            multiple = FALSE,
+            width = "100%"
+          ),
           # show options for missing data
-          shiny::radioButtons(
+          shinyWidgets::pickerInput(
             inputId = "missing",
             label = "Missing data",
-            choices = c(
-              "None",
-              "Complete cases",
-              "Mean imputation",
-              "Multiple imputation"
+            choices = c("None", "Complete cases", "Mean imputation", "Multiple imputation"),
+            selected = NA,
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              size = 10,
+              selectedTextFormat = "count > 0"
             ),
-            selected = "none",
-            inline = FALSE,
+            multiple = FALSE,
             width = "100%"
           ),
           # number of resamples
@@ -379,13 +397,13 @@ server <- function(input, output, session) {
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
     
     # update list of subject variables from rawdata header
-    shinyWidgets::updatePickerInput(inputId = "ID", choices = colnames(rawdata), )
+    shinyWidgets::updatePickerInput(inputId = "ID", choices = colnames(rawdata), selected = NA)
     # update list of between-subject variables from rawdata header
-    shinyWidgets::updatePickerInput(inputId = "BGF", choices = colnames(rawdata), )
+    shinyWidgets::updatePickerInput(inputId = "BGF", choices = colnames(rawdata), selected = NA)
     # update list of covariates from rawdata header
-    shinyWidgets::updatePickerInput(inputId = "CV", choices = colnames(rawdata), )
+    shinyWidgets::updatePickerInput(inputId = "CV", choices = colnames(rawdata), selected = NA)
     # update list of outcome variables from rawdata header
-    shinyWidgets::updatePickerInput(inputId = "OV", choices = colnames(rawdata), )
+    shinyWidgets::updatePickerInput(inputId = "OV", choices = colnames(rawdata), selected = NA)
     
     DT::datatable(
       data = rawdata,
@@ -437,8 +455,14 @@ server <- function(input, output, session) {
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
     
     # select columns from checked variables
-    rawdata <- rawdata[, c(input[["ID"]], input[["BGF"]], input[["CV"]], input[["OV"]])]
+    rawdata <- rawdata[, unique(c(input[["ID"]], input[["BGF"]], input[["CV"]], input[["OV"]]))]
     
+    # update list of control group
+    shinyWidgets::updatePickerInput(
+      inputId = "controlgroup",
+      choices = levels(factor(rawdata[[input[["BGF"]]]]))
+    )
+
     # show datatable
     DT::datatable(
       data = rawdata,

@@ -1,48 +1,4 @@
-# LAST MODIFIED: AGO 22, 2024
-
-# REINICIA TODAS AS VARIÁVEIS
-rm(list = ls(all = TRUE))
-
-# OCULTA TODOS OS AVISOS
-options(warn = -1)
 quartz.options(width = 9, height = 4, dpi = 150)
-
-# INSTALA E ABRE OS PACOTES UTILIZADOS
-# most packages work fine if installed from CRAN
-packs.cran <-
-  c(
-    "emmeans",
-    "flextable",
-    "foreign",
-    "lme4",
-    "MASS",
-    "Matrix",
-    "mice",
-    "miceadds",
-    "mitml",
-    "multcomp",
-    "mvtnorm",
-    "misty",
-    "nlme",
-    "readxl",
-    "ridittools",
-    "Rmisc",
-    "stddiff",
-    "survival",
-    "TH.data"
-  )
-
-for (i in 1:length(packs.cran)) {
-  if (!require(packs.cran[i], character.only = TRUE, quietly = TRUE))
-    install.packages(packs.cran[i], character.only = TRUE)
-}
-
-# ANÁLISE COMPARATIVA
-source("RCT-Figure1.R") # numeric variables, plot of descriptive analysis (mean and CI)
-source("RCT-Table2a.R") # numeric variables, linear mixed model analysis, between- AND within-factor WITH baseline adjustment
-source("RCT-Table2b.R") # numeric variables, linear mixed model analysis, between- AND within-factor WITHOUT baseline adjustment
-source("RCT-Table3.R") #  ordinal variables, ridit analysis, ONLY within-factor
-source("RCT-Missingness.R") # missing data analysis
 
 # CARREGA O BANCO
 Banco_RCT_RIO_2021 <- data.frame(readxl::read_excel("Banco_RCT_RIO_2021.xlsx", sheet = 1))
@@ -53,7 +9,7 @@ FASES <- c("BL", "12w", "26w", "52w")
 FASES.N <- c(0, 12, 26, 52)
 ALPHA <- 0.05
 
-# DELINEMANENTO DO ESTUDO
+# DELINEANENTO DO ESTUDO
 DESFECHO.1 <- colnames(cbind(INTENS_DOR, INTENS_DOR_1, INTENS_DOR_2, INTENS_DOR_3))
 DESFECHO.2 <- colnames(cbind(ODI_TOTAL, ODI_1_TOTAL, ODI_2, ODI_3))
 DESFECHO.3 <- colnames(cbind(PERC_EF_1, PERC_EF_2, PERC_EF_3))
