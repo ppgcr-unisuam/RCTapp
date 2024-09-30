@@ -13,7 +13,7 @@ library(dplyr)
 library(htmltools)
 
 # source all scripts
-# source("packages.R", local = TRUE)
+# source("RCT-packages.R", local = TRUE) # to install packages
 source("RCT-Figure1.R", local = TRUE) # numeric variables, plot of descriptive analysis (mean and CI)
 source("RCT-Table1.R", local = TRUE) # numeric and ordinal variables, descriptive analysis, between-factor
 source("RCT-Table2a.R", local = TRUE) # numeric variables, linear mixed model analysis, between- AND within-factor WITH baseline adjustment
@@ -126,17 +126,15 @@ ui <- shiny::fluidPage(
             options = shinyWidgets::pickerOptions(
               actionsBox = TRUE,
               size = 10,
-              selectedTextFormat = "count > 1"
+              selectedTextFormat = "count > 0"
             ),
             multiple = FALSE,
             width = "100%"
           ),
-          # show dataframe of selected ID with renderTable
-          shiny::tableOutput(outputId = "IDtable"),
           # add checkbox for between-subject factors (BGF)
           shinyWidgets::pickerInput(
             inputId = "BGF",
-            label = "Between-subject factors",
+            label = "Treatment",
             choices = NULL,
             selected = NA,
             options = shinyWidgets::pickerOptions(
@@ -147,8 +145,27 @@ ui <- shiny::fluidPage(
             multiple = FALSE,
             width = "100%"
           ),
-          # show dataframe of selected BGF with renderTable
-          shiny::tableOutput(outputId = "BGFtable"),
+          # show text input to change treatment group names
+          shiny::textInput(
+            inputId = "treatmentNames",
+            label = "Treatment names (csv)",
+            value = "Control, Treatment",
+            width = "100%"
+          ),
+          # show options for control group
+          shinyWidgets::pickerInput(
+            inputId = "controlgroup",
+            label = "Control group",
+            choices = NULL,
+            selected = NA,
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              size = 10,
+              selectedTextFormat = "count > 0"
+            ),
+            multiple = FALSE,
+            width = "100%"
+          ),
           # add checkbox for covariates (CV)
           shinyWidgets::pickerInput(
             inputId = "CV",
@@ -163,12 +180,10 @@ ui <- shiny::fluidPage(
             multiple = TRUE,
             width = "100%"
           ),
-          # show dataframe of selected CV with renderTable
-          shiny::tableOutput(outputId = "CVtable"),
           # add checkbox for outcome variables (OV)
           shinyWidgets::pickerInput(
             inputId = "OV",
-            label = "Outcome variables",
+            label = "Outcome variable",
             choices = NULL,
             selected = NA,
             options = shinyWidgets::pickerOptions(
@@ -179,15 +194,10 @@ ui <- shiny::fluidPage(
             multiple = TRUE,
             width = "100%"
           ),
-          # show dataframe of selected OV with renderTable
-          shiny::tableOutput(outputId = "OVtable"),
-        ),
-        shiny::column(
-          3,
-          # show options for control group
+          # show options for baseline data
           shinyWidgets::pickerInput(
-            inputId = "controlgroup",
-            label = "Control group",
+            inputId = "baselineVar",
+            label = "Baseline data",
             choices = NULL,
             selected = NA,
             options = shinyWidgets::pickerOptions(
@@ -215,13 +225,39 @@ ui <- shiny::fluidPage(
           # number of resamples
           shiny::numericInput(
             inputId = "M",
-            label = "Resamples",
+            label = "Resamples for multiple imputation",
             value = 50,
             min = 1,
             max = 100,
             step = 1,
             width = "100%"
           ),
+          # alpha level for statistical significance
+          shiny::numericInput(
+            inputId = "alpha",
+            label = "Alpha level",
+            value = 0.05,
+            min = 0.001,
+            max = 0.20,
+            step = 0.01,
+            width = "100%"
+          ),
+        ),
+        shiny::column(
+          3,
+          shiny::br(),
+          # show dataframe of selected ID with renderTable
+          shiny::tableOutput(outputId = "IDtable"),
+          # show dataframe of selected BGF with renderTable
+          shiny::tableOutput(outputId = "BGFtable"),
+          # show dataframe of selected control group with renderTable
+          shiny::tableOutput(outputId = "CGtable"),
+          # show dataframe of selected CV with renderTable
+          shiny::tableOutput(outputId = "CVtable"),
+          # show dataframe of selected OV with renderTable
+          shiny::tableOutput(outputId = "OVtable"),
+          # show dartaframe of baseline data
+          shiny::tableOutput(outputId = "baselineVar"),
         ),
         shiny::column(6, # show dataframe of selected ID with renderTable
                       DT::DTOutput(outputId = "datatable"), shiny::br(), ),
@@ -404,7 +440,7 @@ server <- function(input, output, session) {
     shinyWidgets::updatePickerInput(inputId = "CV", choices = colnames(rawdata), selected = NA)
     # update list of outcome variables from rawdata header
     shinyWidgets::updatePickerInput(inputId = "OV", choices = colnames(rawdata), selected = NA)
-    
+
     DT::datatable(
       data = rawdata,
       rownames = FALSE,
@@ -422,26 +458,56 @@ server <- function(input, output, session) {
   # show selected ID in IDtable
   output[["IDtable"]] <- shiny::renderTable({
     shiny::req(input[["ID"]])
-    data.frame(input[["ID"]])
-  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = FALSE)
+    data.frame("Subject ID" = input[["ID"]], check.names = FALSE)
+  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
   
   # show selected BGF in BGFtable
   output[["BGFtable"]] <- shiny::renderTable({
     shiny::req(input[["BGF"]])
-    data.frame(input[["BGF"]])
-  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = FALSE)
+    data.frame("Treatment" = input[["BGF"]], check.names = FALSE)
+  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
+  
+  # show selected control group in CGtable
+  output[["CGtable"]] <- shiny::renderTable({
+    shiny::req(input[["controlgroup"]])
+    data.frame("Control group" = input[["controlgroup"]], check.names = FALSE)
+  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
   
   # show selected CV in CVtable
   output[["CVtable"]] <- shiny::renderTable({
     shiny::req(input[["CV"]])
-    data.frame(input[["CV"]])
-  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = FALSE)
+    data.frame("Covariates" = input[["CV"]], check.names = FALSE)
+  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
   
   # show selected OV in OVtable
   output[["OVtable"]] <- shiny::renderTable({
     shiny::req(input[["OV"]])
-    data.frame(input[["OV"]])
-  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = FALSE)
+    data.frame("Outcome variable" = input[["OV"]], check.names = FALSE)
+  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
+  
+  # show selected baseline variable
+  output[["baselineVar"]] <- shiny::renderTable({
+    shiny::req(input[["baselineVar"]])
+    data.frame("Baseline data" = input[["baselineVar"]], check.names = FALSE)
+  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
+  
+  # update list of control group after loading choices for between-groups variables
+  shiny::observeEvent(input[["BGF"]], {
+    shinyWidgets::updatePickerInput(
+      inputId = "controlgroup",
+      choices = strsplit(input[["treatmentNames"]], ", ")[[1]],
+      selected = NA
+    )
+  })
+  
+  # update list of baseline data after loading choices for OV variables
+  shiny::observeEvent(input[["OV"]], {
+    shinyWidgets::updatePickerInput(
+      inputId = "baselineVar",
+      choices = input[["OV"]],
+      selected = NA
+    )
+  })
   
   # show table with selected variables
   output[["datatable"]] <- DT::renderDT({
@@ -457,11 +523,27 @@ server <- function(input, output, session) {
     # select columns from checked variables
     rawdata <- rawdata[, unique(c(input[["ID"]], input[["BGF"]], input[["CV"]], input[["OV"]]))]
     
-    # update list of control group
-    shinyWidgets::updatePickerInput(
-      inputId = "controlgroup",
-      choices = levels(factor(rawdata[[input[["BGF"]]]]))
-    )
+    # add column based on treatment group names per use input
+    if(!is.null(input[["BGF"]])) {
+      rawdata <- rawdata %>%
+        dplyr::mutate(
+          TREATMENT = factor(
+            x = rawdata[[input[["BGF"]]]],
+            levels = unique(rawdata[[input[["BGF"]]]]),
+            labels = strsplit(input[["treatmentNames"]], ", ")[[1]]
+          )
+        )
+    }
+    
+    # reorder columns to show ID, GBF, TREATMENT and all other columns
+    rawdata <- rawdata %>%
+      dplyr::select(
+        input[["ID"]],
+        input[["BGF"]],
+        TREATMENT,
+        input[["CV"]],
+        input[["OV"]]
+      )
 
     # show datatable
     DT::datatable(
@@ -477,8 +559,6 @@ server <- function(input, output, session) {
       )
     )
   })
-  
-  
   
   # # plot single frame of video imgEdit ---------------------------------------------------------
   # output[["plotMeasure"]] <- shiny::renderPlot({
