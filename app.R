@@ -113,118 +113,126 @@ ui <- shiny::fluidPage(
     shiny::tabPanel(
       title = list(fontawesome::fa("list-check"), "Plan"),
       shiny::br(),
-      # split panel into 4 columns
+      # split panel into 3 columns
       shiny::fluidRow(
         shiny::column(
-          3,
+          4,
           # add checkbox for subject variables (ID)
-          shinyWidgets::pickerInput(
+          shinyWidgets::virtualSelectInput(
             inputId = "ID",
             label = "Subject ID",
             choices = NULL,
             selected = NA,
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              size = 10,
-              selectedTextFormat = "count > 0"
-            ),
+            showValueAsTags = TRUE,
+            search = TRUE,
             multiple = FALSE,
             width = "100%"
           ),
           # add checkbox for between-subject factors (BGF)
-          shinyWidgets::pickerInput(
+          shinyWidgets::virtualSelectInput(
             inputId = "BGF",
             label = "Treatment",
             choices = NULL,
             selected = NA,
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              size = 10,
-              selectedTextFormat = "count > 0"
-            ),
+            showValueAsTags = TRUE,
+            search = TRUE,
             multiple = FALSE,
+            width = "100%"
+          ),
+          # show options for control group
+          shinyWidgets::virtualSelectInput(
+            inputId = "controlgroup",
+            label = "Control group",
+            choices = NULL,
+            selected = NA,
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = FALSE,
+            width = "100%"
+          ),
+          # add checkbox for covariates (CV)
+          shinyWidgets::virtualSelectInput(
+            inputId = "CV",
+            label = "Covariates",
+            choices = NULL,
+            selected = NA,
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = TRUE,
+            width = "100%"
+          ),
+          # add checkbox for outcome variables (OV)
+          shinyWidgets::virtualSelectInput(
+            inputId = "OV",
+            label = "Outcome data",
+            choices = NULL,
+            selected = NA,
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = TRUE,
+            width = "100%"
+          ),
+          # show options for baseline data
+          shinyWidgets::virtualSelectInput(
+            inputId = "baselineVar",
+            label = "Baseline data",
+            choices = NULL,
+            selected = NA,
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = FALSE,
+            width = "100%"
+          ),
+          # show options for missing data
+          shinyWidgets::virtualSelectInput(
+            inputId = "missing",
+            label = "Missing data",
+            choices = c(
+              "None",
+              "Complete cases",
+              "Mean imputation",
+              "Multiple imputation"
+            ),
+            selected = NA,
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = FALSE,
+            width = "100%"
+          ),
+        ),
+        shiny::column(
+          4,
+          # show text input to change outcome name
+          shiny::textInput(
+            inputId = "OutcomeNames",
+            label = "Outcome",
+            value = "Outcome",
             width = "100%"
           ),
           # show text input to change treatment group names
           shiny::textInput(
             inputId = "treatmentNames",
-            label = "Treatment names (csv)",
+            label = "Treatments (csv)",
             value = "Control, Treatment",
             width = "100%"
           ),
-          # show options for control group
-          shinyWidgets::pickerInput(
-            inputId = "controlgroup",
-            label = "Control group",
-            choices = NULL,
-            selected = NA,
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              size = 10,
-              selectedTextFormat = "count > 0"
-            ),
-            multiple = FALSE,
+          # show text for endpoint names
+          shiny::textInput(
+            inputId = "endpointNames",
+            label = "Endpoints (csv)",
+            value = "Baseline, Follow-up",
             width = "100%"
           ),
-          # add checkbox for covariates (CV)
-          shinyWidgets::pickerInput(
-            inputId = "CV",
-            label = "Covariates",
-            choices = NULL,
-            selected = NA,
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              size = 10,
-              selectedTextFormat = "count > 0"
-            ),
-            multiple = TRUE,
-            width = "100%"
-          ),
-          # add checkbox for outcome variables (OV)
-          shinyWidgets::pickerInput(
-            inputId = "OV",
-            label = "Outcome variable",
-            choices = NULL,
-            selected = NA,
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              size = 10,
-              selectedTextFormat = "count > 0"
-            ),
-            multiple = TRUE,
-            width = "100%"
-          ),
-          # show options for baseline data
-          shinyWidgets::pickerInput(
-            inputId = "baselineVar",
-            label = "Baseline data",
-            choices = NULL,
-            selected = NA,
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              size = 10,
-              selectedTextFormat = "count > 0"
-            ),
-            multiple = FALSE,
-            width = "100%"
-          ),
-          # show options for missing data
-          shinyWidgets::pickerInput(
-            inputId = "missing",
-            label = "Missing data",
-            choices = c("None", "Complete cases", "Mean imputation", "Multiple imputation"),
-            selected = NA,
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              size = 10,
-              selectedTextFormat = "count > 0"
-            ),
-            multiple = FALSE,
+          # show text for endpoint
+          shiny::textInput(
+            inputId = "endpointValues",
+            label = "Endpoint times (csv)",
+            value = "0, 3",
             width = "100%"
           ),
           # number of resamples
           shiny::numericInput(
-            inputId = "M",
+            inputId = "MICEresamples",
             label = "Resamples for multiple imputation",
             value = 50,
             min = 1,
@@ -244,7 +252,7 @@ ui <- shiny::fluidPage(
           ),
         ),
         shiny::column(
-          3,
+          4,
           shiny::br(),
           # show dataframe of selected ID with renderTable
           shiny::tableOutput(outputId = "IDtable"),
@@ -258,98 +266,134 @@ ui <- shiny::fluidPage(
           shiny::tableOutput(outputId = "OVtable"),
           # show dartaframe of baseline data
           shiny::tableOutput(outputId = "baselineVar"),
+          # show dataframe of selected endpoints with renderTable
+          shiny::tableOutput(outputId = "Endtable"),
         ),
-        shiny::column(6, # show dataframe of selected ID with renderTable
-                      DT::DTOutput(outputId = "datatable"), shiny::br(), ),
+      ),
+    ),
+    # add preview table for selected data
+    shiny::tabPanel(
+      title = list(fontawesome::fa("table"), "Preview"),
+      shiny::br(),
+      # split panel into 2 columns
+      shiny::fluidRow(
+        shiny::column(9, shiny::br(), # show table of results
+                      DT::dataTableOutput("previewTable"), ),
+        # split panel into 2 columns
+        shiny::fluidRow(
+          shiny::column(
+            3, align = "center",
+            # show button Analyze
+            shiny::br(),
+            shiny::br(),
+            shiny::br(),
+            # select wide or long format table
+            shinyWidgets::switchInput(
+              inputId = "tableFormat",
+              onLabel = "Wide",
+              offLabel = "Long",
+              value = TRUE,
+              width = "100%"
+            ),
+            shiny::br(),
+            shiny::br(),
+            shiny::actionButton(
+              inputId = "buttAnalyze1",
+              label = "Run Table 1",
+              class = "btn-primary",
+              style = "width:100%; border-color:white; border-radius: 10px",
+              icon("play")
+            ),
+            shiny::br(),
+            shiny::br(),
+            shiny::br(),
+            # show button Analyze
+            shiny::actionButton(
+              inputId = "buttAnalyze2",
+              label = "Run Table 2",
+              class = "btn-primary",
+              style = "width:100%; border-color:white; border-radius: 10px",
+              icon("play")
+            ),
+            shiny::br(),
+            shiny::br(),
+            shiny::br(),
+            # show button Analyze
+            shiny::actionButton(
+              inputId = "buttAnalyze3",
+              label = "Run Table 3",
+              class = "btn-primary",
+              style = "width:100%; border-color:white; border-radius: 10px",
+              icon("play")
+            ),
+            shiny::br(),
+            shiny::br(),
+            shiny::br(),
+            # show button Analyze
+            shiny::actionButton(
+              inputId = "buttAnalyzePlot",
+              label = "Run Plot",
+              class = "btn-primary",
+              style = "width:100%; border-color:white; border-radius: 10px",
+              icon("play")
+            ),
+          ),
+        ),
       ),
     ),
     # tab for table 1 of results
     shiny::tabPanel(
       title = list(fontawesome::fa("table"), "Table 1"),
       shiny::br(),
-      # show button Analyze
-      shiny::actionButton(
-        inputId = "buttAnalyze1",
-        label = "Run Table 1",
-        class = "btn-primary",
-        style = "width:100%; border-color:white; border-radius: 10px",
-        icon("play")
-      ),
-      shiny::br(),
       # show table of results
       DT::dataTableOutput("table"),
     ),
-    # tab for table 2a of results
+    # tab for table 2 of results
     shiny::tabPanel(
-      title = list(fontawesome::fa("table"), "Table 2a"),
+      title = list(fontawesome::fa("table"), "Table 2"),
       shiny::br(),
-      # show button Analyze
-      shiny::actionButton(
-        inputId = "buttAnalyze2a",
-        label = "Run Table 2",
-        class = "btn-primary",
-        style = "width:100%; border-color:white; border-radius: 10px",
-        icon("play")
-      ),
       # show table of results
-      DT::dataTableOutput("table2a"),
-    ),
-    # tab for table 2b of results
-    shiny::tabPanel(
-      title = list(fontawesome::fa("table"), "Table 2b"),
-      shiny::br(),
-      # show button Analyze
-      shiny::actionButton(
-        inputId = "buttAnalyze2b",
-        label = "Run Table 2",
-        class = "btn-primary",
-        style = "width:100%; border-color:white; border-radius: 10px",
-        icon("play")
-      ),
-      # show table of results
-      DT::dataTableOutput("table2b"),
+      DT::dataTableOutput("table2"),
     ),
     # tab for table 3 of results
     shiny::tabPanel(
       title = list(fontawesome::fa("table"), "Table 3"),
-      shiny::br(),
-      # show button Analyze
-      shiny::actionButton(
-        inputId = "buttAnalyze3",
-        label = "Run Table 3",
-        class = "btn-primary",
-        style = "width:100%; border-color:white; border-radius: 10px",
-        icon("play")
-      ),
       # show table of results
       DT::dataTableOutput("table3"),
     ),
     # tab for plot of results
-    shiny::tabPanel(
-      title = list(fontawesome::fa("chart-line"), "Plot"),
-      shiny::br(),
-      # show button Analyze
-      shiny::actionButton(
-        inputId = "buttAnalyzePlot",
-        label = "Run Plot",
-        class = "btn-primary",
-        style = "width:100%; border-color:white; border-radius: 10px",
-        icon("play")
-      ),
-      # show plot of results
-      shiny::plotOutput("plot"),
-    ),
+    shiny::tabPanel(title = list(fontawesome::fa("chart-line"), "Plot"), # show plot of results
+                    shiny::plotOutput("plot"), ),
     shiny::tabPanel(
       title = list(fontawesome::fa("circle-info")),
       shiny::br(),
       shiny::HTML(
-        "<p>1. Upload an Excel file (.xlsx) with the <b>Upload</b> button.</p>
-            <p>2. Choose variables for analysis.</p>
-            <p>3. Click <b>Plan</b> to configure the statistial analysis.</p>
-            <p>4. Click <b>Analyze</b>. Wait until the red progress bar on the top stops blinking.</p>
-            <p>5. Check <b>Table</b> tab to visualize the results in tabular format.</p>
-            <p>6. Check <b>Plot</b> tab to visualize the results in image format</p>
-            <p>7. Click <b>restart</b> icon before running new analisys.",
+        "<p>1. Use the <b>Upload</b> button to load an Excel file (.xlsx).</p>\
+         <p>2. Click <b>Plan</b> to configure the statistial analysis.</p>\
+         <p>2.1 Select the following variables from the dataset:</p>\
+         <ul>\
+         <li><i>Subject ID</i></li>\
+         <li><i>Treatment</i></li>\
+         <li><i>Control group</i></li>\
+         <li><i>Covariates</i></li>\
+         <li><i>Outcome data</i></li>\
+         <li><i>Baseline data</i></li>\
+         <li><i>Missing data handling method</i></li>\
+         </ul>\
+         <p>2.2. Type specific labels for the analysis:</p>\
+         <ul>\
+         <li><i>Treatments</i></li>\
+         <li><i>Endpoints</i></li>\
+         <li><i>Endopont values</i></li>\
+         <li><i>Resamples</i></li>\
+         <li><i>Alpha level</i></li>\
+         </ul>\
+         <p>3. Click <b>Preview</b> to visualize the data.</p>\
+         <p>3.1. Click <b>Run Table 1</b> to visualize the results of the Table 1.</p>\
+         <p>3.2. Click <b>Run Table 2</b> to visualize the results of the Table 2.</p>\
+         <p>3.3. Click <b>Run Table 3</b> to visualize the results of the Table 3.</p>\
+         <p>3.4. Click <b>Run Plot</b> to visualize the results of the Plot.</p>\
+         <p>4. Click <b>restart</b> icon before running new analisys.",
       ),
     ),
     shiny::tabPanel(
@@ -433,14 +477,30 @@ server <- function(input, output, session) {
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
     
     # update list of subject variables from rawdata header
-    shinyWidgets::updatePickerInput(inputId = "ID", choices = colnames(rawdata), selected = NA)
+    shinyWidgets::updateVirtualSelect(
+      inputId = "ID",
+      choices = colnames(rawdata),
+      selected = NA
+    )
     # update list of between-subject variables from rawdata header
-    shinyWidgets::updatePickerInput(inputId = "BGF", choices = colnames(rawdata), selected = NA)
+    shinyWidgets::updateVirtualSelect(
+      inputId = "BGF",
+      choices = colnames(rawdata),
+      selected = NA
+    )
     # update list of covariates from rawdata header
-    shinyWidgets::updatePickerInput(inputId = "CV", choices = colnames(rawdata), selected = NA)
+    shinyWidgets::updateVirtualSelect(
+      inputId = "CV",
+      choices = colnames(rawdata),
+      selected = NA
+    )
     # update list of outcome variables from rawdata header
-    shinyWidgets::updatePickerInput(inputId = "OV", choices = colnames(rawdata), selected = NA)
-
+    shinyWidgets::updateVirtualSelect(
+      inputId = "OV",
+      choices = colnames(rawdata),
+      selected = NA
+    )
+    
     DT::datatable(
       data = rawdata,
       rownames = FALSE,
@@ -449,8 +509,7 @@ server <- function(input, output, session) {
         searching = FALSE,
         pageLength = 10,
         width = "100%",
-        scrollX = TRUE,
-        autoWidth = TRUE
+        scrollX = TRUE
       )
     )
   })
@@ -482,18 +541,24 @@ server <- function(input, output, session) {
   # show selected OV in OVtable
   output[["OVtable"]] <- shiny::renderTable({
     shiny::req(input[["OV"]])
-    data.frame("Outcome variable" = input[["OV"]], check.names = FALSE)
+    data.frame("Outcome data" = input[["OV"]], check.names = FALSE)
   }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
   
   # show selected baseline variable
   output[["baselineVar"]] <- shiny::renderTable({
     shiny::req(input[["baselineVar"]])
-    data.frame("Baseline data" = input[["baselineVar"]], check.names = FALSE)
+    data.frame("Baseline" = input[["baselineVar"]], check.names = FALSE)
+  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
+  
+  # show selected endpoints
+  output[["Endtable"]] <- shiny::renderTable({
+    shiny::req(input[["endpointNames"]])
+    data.frame("Endpoints" = strsplit(input[["endpointNames"]], ", ")[[1]], check.names = FALSE)
   }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
   
   # update list of control group after loading choices for between-groups variables
   shiny::observeEvent(input[["BGF"]], {
-    shinyWidgets::updatePickerInput(
+    shinyWidgets::updateVirtualSelect(
       inputId = "controlgroup",
       choices = strsplit(input[["treatmentNames"]], ", ")[[1]],
       selected = NA
@@ -502,15 +567,80 @@ server <- function(input, output, session) {
   
   # update list of baseline data after loading choices for OV variables
   shiny::observeEvent(input[["OV"]], {
-    shinyWidgets::updatePickerInput(
-      inputId = "baselineVar",
-      choices = input[["OV"]],
-      selected = NA
-    )
+    shinyWidgets::updateVirtualSelect(inputId = "baselineVar",
+                                    choices = input[["OV"]],
+                                    selected = NA)
   })
   
   # show table with selected variables
-  output[["datatable"]] <- DT::renderDT({
+  output[["previewTable"]] <- DT::renderDT({
+    shiny::req(rawdata())
+
+    # read file
+    rawdata <- readxl::read_xlsx(rawdata())
+    # remove empty columns
+    rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
+    # remove empty rows
+    rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
+    
+    # select columns from checked variables
+    rawdata <- rawdata[, unique(c(input[["ID"]], input[["BGF"]], input[["CV"]], input[["OV"]]))]
+    
+    # add column based on treatment group names per use input
+    if (!is.null(input[["BGF"]])) {
+      rawdata <- rawdata %>%
+        dplyr::mutate(TREATMENT = factor(
+          x = rawdata[[input[["BGF"]]]],
+          levels = unique(rawdata[[input[["BGF"]]]]),
+          labels = strsplit(input[["treatmentNames"]], ", ")[[1]]
+        ))
+    }
+    
+    # reorder columns to show ID, GBF, TREATMENT and all other columns
+    rawdata <- rawdata %>%
+      dplyr::select(input[["ID"]], input[["BGF"]], TREATMENT, input[["CV"]], input[["OV"]])
+    
+    # change to long format if switch is off
+    if (!input[["tableFormat"]]) {
+      # to long fo
+      rawdata <- rawdata %>%
+        tidyr::pivot_longer(
+          cols = input[["OV"]],
+          names_to = "Endpoints",
+          values_to = input[["OutcomeNames"]]
+        )
+      # replace Endpoint column data with endpoint names
+      if (!is.null(input[["endpointNames"]])) {
+        # use mutate
+        rawdata <- rawdata %>%
+          dplyr::mutate(Endpoints = factor(
+            x = Endpoints,
+            levels = unique(Endpoints),
+            labels = strsplit(input[["endpointNames"]], ", ")[[1]]
+          ))
+      }
+    }
+
+    # show datatable
+    DT::datatable(
+      data = rawdata,
+      rownames = FALSE,
+      extensions = 'Buttons',
+      options = list(
+        dom = 'Btipr',
+        buttons = list(list(extend = "excel", filename = "data"),
+                       list(extend = "csv", filename = "data"),
+                       list(extend = "copy", filename = "data")),
+        searching = FALSE,
+        pageLength = 10,
+        width = "100%",
+        scrollX = TRUE
+      )
+    )
+  })
+  
+  # run table 2
+  output[["table2"]] <- DT::renderDT({
     shiny::req(rawdata())
     
     # read file
@@ -524,39 +654,26 @@ server <- function(input, output, session) {
     rawdata <- rawdata[, unique(c(input[["ID"]], input[["BGF"]], input[["CV"]], input[["OV"]]))]
     
     # add column based on treatment group names per use input
-    if(!is.null(input[["BGF"]])) {
+    if (!is.null(input[["BGF"]])) {
       rawdata <- rawdata %>%
-        dplyr::mutate(
-          TREATMENT = factor(
-            x = rawdata[[input[["BGF"]]]],
-            levels = unique(rawdata[[input[["BGF"]]]]),
-            labels = strsplit(input[["treatmentNames"]], ", ")[[1]]
-          )
-        )
+        dplyr::mutate(TREATMENT = factor(
+          x = rawdata[[input[["BGF"]]]],
+          levels = unique(rawdata[[input[["BGF"]]]]),
+          labels = strsplit(input[["treatmentNames"]], ", ")[[1]]
+        ))
     }
     
-    # reorder columns to show ID, GBF, TREATMENT and all other columns
-    rawdata <- rawdata %>%
-      dplyr::select(
-        input[["ID"]],
-        input[["BGF"]],
-        TREATMENT,
-        input[["CV"]],
-        input[["OV"]]
-      )
-
-    # show datatable
-    DT::datatable(
-      data = rawdata,
-      rownames = FALSE,
-      options = list(
-        dom = 'tipr',
-        searching = FALSE,
-        pageLength = 10,
-        width = "100%",
-        scrollX = TRUE,
-        autoWidth = TRUE
-      )
+    TABLE.2a(
+      dataset = rawdata,
+      variables = input[["OV"]],
+      covariate = rawdata[, input[["CV"]]],
+      bw.factor = rawdata$TREATMENT,
+      control.g = input[["controlgroup"]],
+      wt.labels = input[["endpointNames"]],
+      missing = tolower(gsub(" ", ".", input[["missing"]])),
+      m.imputations = input[["MICEresamples"]],
+      alpha = input[["alpha"]],
+      n.digits = 2
     )
   })
   

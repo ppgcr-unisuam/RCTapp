@@ -3,11 +3,15 @@ TABLE.2a <- function(dataset, variables, covariate, bw.factor, control.g, wt.lab
     alpha, n.digits) {
     # This function outputs a comparison table for two-way mixed-models
     # dataset: a 2D dataframe (rows: participants, columns: variables)
-    # variables: a 1D variable labels (within-group) bw.factor: a 1D
-    # between-group factor wt.labels: a 1D variable labels for each level
-    # missing: method for handling missing balues (complete.cases, mean
-    # inputation, multiple imputation) alpha: the type-I error level n.digits:
-    # number of decimal places to be presented for continuous variables
+    # variables: a 1D variable labels (within-group)
+    # covariate: a 1D variable label for the covariate
+    # bw.factor: a 1D between-group factor
+    # control.g: a string label for the control group
+    # wt.labels: a 1D variable labels for each level
+    # missing: method for handling missing balues (complete.cases, mean inputation, multiple imputation
+    # m.imputations: number of imputations for multiple imputation
+    # alpha: the type-I error level
+    # n.digits: number of decimal places to be presented for continuous variables
 
     quiet <- function(x) {
         sink(tempfile())
@@ -124,27 +128,27 @@ TABLE.2a <- function(dataset, variables, covariate, bw.factor, control.g, wt.lab
     # fit linear mixed model
     if (missing != "multiple.imputation") {
         if (!is.null(covariate)) {
-            mod1 <- lme(fixed = OUTCOME_M ~ TIME_M * GROUP_M + COVARIATE_M, random = ~1 |
+            mod1 <- nlme::lme(fixed = OUTCOME_M ~ TIME_M * GROUP_M + COVARIATE_M, random = ~1 |
                 ID_M/TIME_M, data = data_M)
         } else {
-            mod1 <- lme(fixed = OUTCOME_M ~ TIME_M * GROUP_M, random = ~1 | ID_M/TIME_M,
+            mod1 <- nlme::lme(fixed = OUTCOME_M ~ TIME_M * GROUP_M, random = ~1 | ID_M/TIME_M,
                 data = data_M)
         }
         mod1.aov <- anova(mod1)
     } else {
-        ini <- mice(data = data_M, maxit = 0)
+        ini <- mice::mice(data = data_M, maxit = 0)
         pred <- ini$pred
         pred["OUTCOME_M", "ID_M"] <- -2
-        imp <- mice(data_M, pred = pred, method = "2l.pan", m = m.imputations, seed = 0,
+        imp <- mice::mice(data_M, pred = pred, method = "2l.pan", m = m.imputations, seed = 0,
             print = FALSE)
         if (!is.null(covariate)) {
-            mod1 <- with(data = imp, lme(fixed = OUTCOME_M ~ TIME_M * GROUP_M + COVARIATE_M,
+            mod1 <- with(data = imp, nlme::lme(fixed = OUTCOME_M ~ TIME_M * GROUP_M + COVARIATE_M,
                 random = ~1 | ID_M/TIME_M))
-            mod1.aov <- quiet(mi.anova(imp, formula = "OUTCOME_M ~ TIME_M * GROUP_M + COVARIATE_M"))
+            mod1.aov <- quiet(miceadds::mi.anova(imp, formula = "OUTCOME_M ~ TIME_M * GROUP_M + COVARIATE_M"))
         } else {
-            mod1 <- with(data = imp, lme(fixed = OUTCOME_M ~ TIME_M * GROUP_M, random = ~1 |
+            mod1 <- with(data = imp, nlme::lme(fixed = OUTCOME_M ~ TIME_M * GROUP_M, random = ~1 |
                 ID_M/TIME_M))
-            mod1.aov <- quiet(mi.anova(imp, formula = "OUTCOME_M ~ TIME_M * GROUP_M"))
+            mod1.aov <- quiet(miceadds::mi.anova(imp, formula = "OUTCOME_M ~ TIME_M * GROUP_M"))
         }
         mod1.aov <- mod1.aov$anova.table[1:3, 2:5]
         mod1.aov <- rbind(rep(NA, 4), mod1.aov)
@@ -212,7 +216,7 @@ TABLE.2a <- function(dataset, variables, covariate, bw.factor, control.g, wt.lab
     model.res[3, 1] <- interaction
 
     # calcula e preenche a subtabela WITHIN-GROUP (SAME LINEAR MIXED MODEL)
-    mult.within <- summary(pairs(emmeans(mod1, ~TIME_M | GROUP_M), reverse = FALSE),
+    mult.within <- summary(pairs(emmeans::emmeans(mod1, ~ TIME_M | GROUP_M), reverse = FALSE),
         infer = c(TRUE, TRUE))
     wt <- c()
     wt.pvalues <- c()
@@ -255,14 +259,14 @@ TABLE.2a <- function(dataset, variables, covariate, bw.factor, control.g, wt.lab
             if (!is.null(covariate)) {
                 df <- data.frame(ID, bw.factor, BASELINE_M, FOLLOWUP_M, CHANGE_M,
                   COVARIATE_M)
-                mod2 <- lme(CHANGE_M ~ bw.factor + BASELINE_M + COVARIATE_M, random = ~1 |
+                mod2 <- nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M + COVARIATE_M, random = ~1 |
                   ID, data = df)
             } else {
                 df <- data.frame(ID, bw.factor, BASELINE_M, FOLLOWUP_M, CHANGE_M)
-                mod2 <- lme(CHANGE_M ~ bw.factor + BASELINE_M, random = ~1 | ID,
+                mod2 <- nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M, random = ~1 | ID,
                   data = df)
             }
-            mod2.sum <- summary(glht(mod2, linfct = mcp(bw.factor = "Tukey")), test = adjusted("holm"))
+            mod2.sum <- summary(multcomp::glht(mod2, linfct = mcp(bw.factor = "Tukey")), test = adjusted("holm"))
             names <- names(coef(mod2.sum))
             estimate <- round(confint(mod2.sum, level = 1 - alpha)$confint[, "Estimate"],
                 digits = n.digits)
@@ -278,23 +282,23 @@ TABLE.2a <- function(dataset, variables, covariate, bw.factor, control.g, wt.lab
             } else {
                 df <- data.frame(ID, bw.factor, BASELINE_M, FOLLOWUP_M, CHANGE_M)
             }
-            ini <- mice(data = df, maxit = 0)
+            ini <- mice::mice(data = df, maxit = 0)
             pred <- ini$pred
             pred["FOLLOWUP_M", "ID"] <- -2
             pred["CHANGE_M", "ID"] <- -2
-            imp <- mice(data = df, pred = pred, method = "2l.pan", m = m.imputations,
+            imp <- mice::mice(data = df, pred = pred, method = "2l.pan", m = m.imputations,
                 seed = 0, print = FALSE)
             implist <- mids2mitml.list(imp)
             mod2 <- with(data = implist, lm(CHANGE_M ~ bw.factor + BASELINE_M, random = ~1 |
                 ID))
-            fit2.pairwise <- lapply(mod2, glht, linfct = mcp(bw.factor = "Tukey"))
-            fit2.pairwise <- as.mitml.result(fit2.pairwise)
-            mod2.sum <- testEstimates(fit2.pairwise)
-            names <- rownames(confint.mitml.testEstimates(mod2.sum, level = 1 - alpha))
+            fit2.pairwise <- lapply(mod2, multcomp::glht, linfct = mcp(bw.factor = "Tukey"))
+            fit2.pairwise <- mice::as.mitml.result(fit2.pairwise)
+            mod2.sum <- mitml::testEstimates(fit2.pairwise)
+            names <- rownames(mitml::confint.mitml.testEstimates(mod2.sum, level = 1 - alpha))
             estimate <- round(unlist(mod2.sum)$estimates1, digits = n.digits)
-            low.ci <- round(confint.mitml.testEstimates(mod2.sum, level = 1 - alpha)[1,
+            low.ci <- round(mitml::confint.mitml.testEstimates(mod2.sum, level = 1 - alpha)[1,
                 1], digits = n.digits)
-            upp.ci <- round(confint.mitml.testEstimates(mod2.sum, level = 1 - alpha)[1,
+            upp.ci <- round(mitml::confint.mitml.testEstimates(mod2.sum, level = 1 - alpha)[1,
                 2], digits = n.digits)
             p.value <- unlist(mod2.sum)$estimates5
         }
@@ -330,8 +334,7 @@ TABLE.2a <- function(dataset, variables, covariate, bw.factor, control.g, wt.lab
     bw.diff[6, ] <- smd.values
 
     # apresenta os resultados na tela
-    print(paste("Table 2a: Two-way linear mixed model analysis (", toString(variables),
-        ").", sep = ""), quote = FALSE)
+    print(paste("Table 2a: Two-way linear mixed model analysis (", toString(variables),").", sep = ""), quote = FALSE)
     print(cbind(mix.mod.res, model.res), quote = FALSE)
     print(cbind(wt.diff), quote = FALSE)
     print(cbind(bw.diff), quote = FALSE)
@@ -341,12 +344,6 @@ TABLE.2a <- function(dataset, variables, covariate, bw.factor, control.g, wt.lab
 
     # missingness analysis
     try(missing.data(dataset = dataset, variables = variables, covariate = covariate))
-
-    # separate outputs in multiple calls
-    pb1 = txtProgressBar(min = 0, max = 1, initial = 0)
-    for (y in 1:1) {
-        setTxtProgressBar(pb1, y)
-    }
 
     # output results
     return("mix.mod.res")
