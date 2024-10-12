@@ -360,6 +360,13 @@ ui <- shiny::fluidPage(
       shiny::br(),
       # show table of results
       DT::dataTableOutput("table2"),
+      shiny::br(),
+      # download Word format
+      shiny::downloadButton(
+        outputId = "downloadTable2",
+        label = "Download Table 2 (.DOCX)",
+        style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+      ),
     ),
     # tab for plot of results
     shiny::tabPanel(title = list(fontawesome::fa("chart-line"), "Figure 1"), # show plot of results
@@ -594,6 +601,13 @@ server <- function(input, output, session) {
                              selected = "Table 1")
   })
   
+  # change tab on runTable2 click
+  shiny::observeEvent(input[["runTable2"]], {
+    shiny::updateTabsetPanel(session = session,
+                             inputId = "tabs",
+                             selected = "Table 2")
+  })
+  
   # run table 1 on runTable1 click ------------------------------------------------
   output[["table1"]] <- DT::renderDT({
     shiny::req(rawdata())
@@ -682,106 +696,94 @@ server <- function(input, output, session) {
   )
   
   # run table 2
-  # output[["table2"]] <- DT::renderDT({
-  #   shiny::req(rawdata())
-  #
-  #   # read file
-  #   rawdata <- readxl::read_xlsx(rawdata())
-  #   # remove empty columns
-  #   rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
-  #   # remove empty rows
-  #   rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
-  #
-  #   # select columns from checked variables
-  #   rawdata <- rawdata[, unique(c(input[["ID"]], input[["BGF"]], input[["CV"]], input[["OV"]]))]
-  #
-  #   # add column based on treatment group names per use input
-  #   if (!is.null(input[["BGF"]])) {
-  #     rawdata <- rawdata %>%
-  #       dplyr::mutate(TREATMENT = factor(
-  #         x = rawdata[[input[["BGF"]]]],
-  #         levels = unique(rawdata[[input[["BGF"]]]]),
-  #         labels = strsplit(input[["treatmentNames"]], ", ")[[1]]
-  #       ))
-  #   }
-  #
-  #   TABLE.2a(
-  #     dataset = rawdata,
-  #     variables = input[["OV"]],
-  #     covariate = as.data.frame(rawdata[, input[["CV"]]], check.names = FALSE),
-  #     bw.factor = rawdata$TREATMENT,
-  #     control.g = input[["controlgroup"]],
-  #     wt.labels = input[["endpointNames"]],
-  #     missing = tolower(gsub(" ", ".", input[["missing"]])),
-  #     m.imputations = input[["MICEresamples"]],
-  #     alpha = input[["alpha"]],
-  #     n.digits = 2
-  #   )
-  # })
+  output[["table2"]] <- DT::renderDT({
+    shiny::req(rawdata())
+    shiny::req(input[["BV"]])
+    shiny::req(input[["BGF"]])
+    shiny::req(input[["CV"]])
+    shiny::req(input[["OV"]])
+    
+    # read file
+    rawdata <- readxl::read_xlsx(rawdata())
+    # remove empty columns
+    rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
+    # remove empty rows
+    rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
+    
+    # select columns from checked variables
+    rawdata <- rawdata[, unique(c(input[["BV"]], input[["BGF"]]))]
+    
+    # add column based on treatment group names per use input
+    if (!is.null(input[["BGF"]])) {
+      rawdata <- rawdata %>%
+        dplyr::mutate(TREATMENT = factor(
+          x = rawdata[[input[["BGF"]]]],
+          levels = unique(rawdata[[input[["BGF"]]]]),
+          labels = strsplit(input[["treatmentNames"]], ", ")[[1]]
+        ))
+    }
+    
+    results <- TABLE.2a(
+      dataset = rawdata$mix.mod.res,
+      variables = input[["OV"]],
+      covariate = as.data.frame(rawdata[, input[["CV"]]], check.names = FALSE),
+      bw.factor = rawdata$TREATMENT,
+      control.g = input[["controlgroup"]],
+      wt.labels = input[["endpointNames"]],
+      missing = tolower(gsub(" ", ".", input[["missing"]])),
+      m.imputations = input[["MICEresamples"]],
+      alpha = input[["alpha"]],
+      n.digits = 2
+    )
+    
+    title <- "Table 2a"
+    caption <- "Table 2a: Two-way linear mixed model analysis."
+    
+    my_summary_to_save <-
+      results$mix.mod.res %>%
+      as.data.frame(check.names = FALSE) %>%
+      dplyr::mutate(Variables = rownames(results)) %>%
+      dplyr::select(Variables, dplyr::everything()) %>%
+      flextable::regulartable()   %>%
+      flextable::autofit()
+    
+    # create Word doc from results dataframe
+    table_2 <-
+      officer::read_docx() %>%
+      officer::body_add_par(caption, style = "Normal") %>%
+      flextable::body_add_flextable(my_summary_to_save) %>%
+      print(target = file.path(dir.name, "Table 2.docx"))
+    
+    # output results
+    DT::datatable(
+      data = results$mix.mod.res,
+      caption = caption,
+      extensions = c('ColReorder'),
+      options = list(
+        searching = FALSE,
+        colReorder = TRUE,
+        pageLength = nrow(results),
+        width = "100%",
+        scrollX = TRUE,
+        columnDefs = list(list(
+          className = 'dt-center', targets = 1:ncol(results)
+        )),
+        dom = 't'
+      )
+    )
+  })
   
-  # # download MP4 file generated by 8 output files ---------------------------------------------------------
-  # output[["downloadMP4"]] <-
-  #   shiny::downloadHandler(
-  #     filename = function() {
-  #       paste0("outputvideo.mp4")
-  #     },
-  #     content = function(file) {
-  #       file.copy(from = file.path(dir.name, "outputvideo.mp4"),
-  #                 to = file)
-  #     }
-  #   )
-  #
-  # # download TRAJECTORY CSV files ---------------------------------------------------------
-  # output[["downloadPATH"]] <-
-  #   shiny::downloadHandler(
-  #     filename = function() {
-  #       paste0("trajectory_measured.csv")
-  #     },
-  #     content = function(file) {
-  #       file.copy(from = file.path(dir.name, "CSV", "trajectory_measured.csv"),
-  #                 to = file)
-  #     }
-  #   )
-  #
-  # # restart button ---------------------------------------------------------
-  # shinyjs::onclick("restart", {
-  #
-  #   # clean InputFile
-  #   shinyjs::reset("InputFile")
-  #
-  #   # delete files
-  #   unlink(
-  #     list.files(
-  #       path = dir.name,
-  #       recursive = TRUE,
-  #       include.dirs = TRUE,
-  #       full.names = TRUE,
-  #       pattern = "mp4"
-  #     )
-  #   )
-  #   unlink(
-  #     list.files(
-  #       path = dir.name,
-  #       recursive = TRUE,
-  #       include.dirs = TRUE,
-  #       full.names = TRUE,
-  #       pattern = "png"
-  #     )
-  #   )
-  #   unlink(
-  #     list.files(
-  #       path = dir.name,
-  #       recursive = TRUE,
-  #       include.dirs = TRUE,
-  #       full.names = TRUE,
-  #       pattern = "csv"
-  #     )
-  #   )
-  # })
-  # shiny::outputOptions(output, "downloadMP4", suspendWhenHidden = FALSE)
-  # shiny::outputOptions(output, "downloadPATH", suspendWhenHidden = FALSE)
-  # shiny::outputOptions(output, "downloadDISPL", suspendWhenHidden = FALSE)
-  # shiny::outputOptions(output, "downloadCC", suspendWhenHidden = FALSE)
+  # Download Handler
+  output$downloadTable2 <- shiny::downloadHandler(
+    filename = function() {
+      paste0("Table 2a.docx")
+    },
+    content = function(file) {
+      file.copy(from = file.path(dir.name, "Table 2a.docx"), to = file)
+    }
+  )
+  
+  # run table 3
 }
 
 # Run the application

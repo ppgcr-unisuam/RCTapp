@@ -498,23 +498,23 @@ TABLE.2a <-
     bw.diff[6, ] <- smd.values
     
     # apresenta os resultados na tela
-    print(
-      paste(
-        "Table 2a: Two-way linear mixed model analysis (",
-        toString(variables),
-        ").",
-        sep = ""
-      ),
-      quote = FALSE
-    )
-    print(cbind(mix.mod.res, model.res), quote = FALSE)
-    print(cbind(wt.diff), quote = FALSE)
-    print(cbind(bw.diff), quote = FALSE)
-    print(
-      "SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).",
-      quote = FALSE
-    )
-    print("", quote = FALSE)
+    # print(
+    #   paste(
+    #     "Table 2a: Two-way linear mixed model analysis (",
+    #     toString(variables),
+    #     ").",
+    #     sep = ""
+    #   ),
+    #   quote = FALSE
+    # )
+    # print(cbind(mix.mod.res, model.res), quote = FALSE)
+    # print(cbind(wt.diff), quote = FALSE)
+    # print(cbind(bw.diff), quote = FALSE)
+    # print(
+    #   "SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).",
+    #   quote = FALSE
+    # )
+    # print("", quote = FALSE)
     
     # missingness analysis
     try(missing.data(dataset = dataset, variables = variables, covariate = covariate), silent = TRUE)
