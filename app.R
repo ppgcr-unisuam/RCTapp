@@ -111,21 +111,26 @@ ui <- shiny::fluidPage(
       DT::DTOutput(outputId = "rawtable"),
     ),
     shiny::tabPanel(
-      title = list(fontawesome::fa("list-check"), "Plan"),
-      shiny::br(),
+      title = list(fontawesome::fa("list-check"), "SAP"),
+      shiny::h4("Statistical Analysis Plan", style = "text-align:center"),
+      shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
       # split panel into 3 columns
       shiny::fluidRow(
         shiny::column(
-          4,
-          # add checkbox for subject variables (ID)
+          3,
+          # add title
+          shiny::h4("Table 1", style = "text-align:center"),
+          # add horizontal line
+          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
+          # add checkbox for baseline variables (BV)
           shinyWidgets::virtualSelectInput(
-            inputId = "ID",
-            label = "Subject ID",
+            inputId = "BV",
+            label = "Baseline variables",
             choices = NULL,
             selected = NA,
             showValueAsTags = TRUE,
             search = TRUE,
-            multiple = FALSE,
+            multiple = TRUE,
             width = "100%"
           ),
           # add checkbox for between-subject factors (BGF)
@@ -150,214 +155,207 @@ ui <- shiny::fluidPage(
             multiple = FALSE,
             width = "100%"
           ),
-          # add checkbox for covariates (CV)
-          shinyWidgets::virtualSelectInput(
-            inputId = "CV",
-            label = "Covariates",
-            choices = NULL,
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = TRUE,
-            width = "100%"
-          ),
-          # add checkbox for outcome variables (OV)
-          shinyWidgets::virtualSelectInput(
-            inputId = "OV",
-            label = "Outcome data",
-            choices = NULL,
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = TRUE,
-            width = "100%"
-          ),
-          # show options for baseline data
-          shinyWidgets::virtualSelectInput(
-            inputId = "baselineVar",
-            label = "Baseline data",
-            choices = NULL,
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = FALSE,
-            width = "100%"
-          ),
-          # show options for missing data
-          shinyWidgets::virtualSelectInput(
-            inputId = "missing",
-            label = "Missing data",
-            choices = c(
-              "None",
-              "Complete cases",
-              "Mean imputation",
-              "Multiple imputation"
-            ),
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = FALSE,
-            width = "100%"
-          ),
-        ),
-        shiny::column(
-          4,
-          # show text input to change outcome name
-          shiny::textInput(
-            inputId = "OutcomeNames",
-            label = "Outcome",
-            value = "Outcome",
-            width = "100%"
-          ),
-          # show text input to change treatment group names
-          shiny::textInput(
-            inputId = "treatmentNames",
-            label = "Treatments (csv)",
-            value = "Control, Treatment",
-            width = "100%"
-          ),
-          # show text for endpoint names
-          shiny::textInput(
-            inputId = "endpointNames",
-            label = "Endpoints (csv)",
-            value = "Baseline, Follow-up",
-            width = "100%"
-          ),
-          # show text for endpoint
-          shiny::textInput(
-            inputId = "endpointValues",
-            label = "Endpoint times (csv)",
-            value = "0, 3",
-            width = "100%"
-          ),
-          # number of resamples
+          # show maxlevels for between-subject factors
           shiny::numericInput(
-            inputId = "MICEresamples",
-            label = "Resamples for multiple imputation",
-            value = 50,
+            inputId = "maxlevels",
+            label = "Max levels",
+            value = 5,
             min = 1,
-            max = 100,
+            max = 10,
             step = 1,
             width = "100%"
           ),
-          # alpha level for statistical significance
-          shiny::numericInput(
-            inputId = "alpha",
-            label = "Alpha level",
-            value = 0.05,
-            min = 0.001,
-            max = 0.20,
-            step = 0.01,
-            width = "100%"
-          ),
         ),
         shiny::column(
-          4,
-          shiny::br(),
-          # show dataframe of selected ID with renderTable
-          shiny::tableOutput(outputId = "IDtable"),
-          # show dataframe of selected BGF with renderTable
-          shiny::tableOutput(outputId = "BGFtable"),
-          # show dataframe of selected control group with renderTable
-          shiny::tableOutput(outputId = "CGtable"),
-          # show dataframe of selected CV with renderTable
-          shiny::tableOutput(outputId = "CVtable"),
-          # show dataframe of selected OV with renderTable
-          shiny::tableOutput(outputId = "OVtable"),
-          # show dartaframe of baseline data
-          shiny::tableOutput(outputId = "baselineVar"),
-          # show dataframe of selected endpoints with renderTable
-          shiny::tableOutput(outputId = "Endtable"),
+          6,
+          # add title
+          shiny::h4("Table 2", style = "text-align:center"),
+          # add horizontal line
+          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
+          # split into two columns
+          shiny::fluidRow(
+            shiny::column(
+              6,
+              # add checkbox for subject variables (ID)
+              shinyWidgets::virtualSelectInput(
+                inputId = "ID",
+                label = "Subject ID",
+                choices = NULL,
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = FALSE,
+                width = "100%"
+              ),
+              # add checkbox for covariates (CV)
+              shinyWidgets::virtualSelectInput(
+                inputId = "CV",
+                label = "Covariates",
+                choices = NULL,
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = TRUE,
+                width = "100%"
+              ),
+              # add checkbox for outcome variables (OV)
+              shinyWidgets::virtualSelectInput(
+                inputId = "OV",
+                label = "Outcome data",
+                choices = NULL,
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = TRUE,
+                width = "100%"
+              ),
+              # show options for baseline data
+              shinyWidgets::virtualSelectInput(
+                inputId = "baselineVar",
+                label = "Baseline data",
+                choices = NULL,
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = FALSE,
+                width = "100%"
+              ),
+              # show options for missing data
+              shinyWidgets::virtualSelectInput(
+                inputId = "missing",
+                label = "Missing data",
+                choices = c(
+                  "None",
+                  "Complete cases",
+                  "Mean imputation",
+                  "Multiple imputation"
+                ),
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = FALSE,
+                width = "100%"
+              ),
+            ),
+            shiny::column(
+              6,
+              # show text input to change outcome name
+              shiny::textInput(
+                inputId = "OutcomeNames",
+                label = "Outcome",
+                value = "Outcome",
+                width = "100%"
+              ),
+              # show text input to change treatment group names
+              shiny::textInput(
+                inputId = "treatmentNames",
+                label = "Treatments (csv)",
+                value = "Control, Treatment",
+                width = "100%"
+              ),
+              # show text for endpoint names
+              shiny::textInput(
+                inputId = "endpointNames",
+                label = "Endpoints (csv)",
+                value = "Baseline, Follow-up",
+                width = "100%"
+              ),
+              # show text for endpoint
+              shiny::textInput(
+                inputId = "endpointValues",
+                label = "Endpoint times (csv)",
+                value = "0, 3",
+                width = "100%"
+              ),
+              # number of resamples
+              shiny::numericInput(
+                inputId = "MICEresamples",
+                label = "Resamples for multiple imputation",
+                value = 50,
+                min = 1,
+                max = 100,
+                step = 1,
+                width = "100%"
+              ),
+              # alpha level for statistical significance
+              shiny::numericInput(
+                inputId = "alpha",
+                label = "Alpha level",
+                value = 0.05,
+                min = 0.001,
+                max = 0.20,
+                step = 0.01,
+                width = "100%"
+              ),
+            ),
+          ),
         ),
-      ),
-    ),
-    # add preview table for selected data
-    shiny::tabPanel(
-      title = list(fontawesome::fa("table"), "Preview"),
-      shiny::br(),
-      # split panel into 2 columns
-      shiny::fluidRow(
-        shiny::column(9, shiny::br(), # show table of results
-                      DT::dataTableOutput("previewTable"), ),
-        # split panel into 2 columns
-        shiny::fluidRow(
-          shiny::column(
-            3, align = "center",
-            # show button Analyze
-            shiny::br(),
-            shiny::br(),
-            shiny::br(),
-            # select wide or long format table
-            shinyWidgets::switchInput(
-              inputId = "tableFormat",
-              onLabel = "Wide",
-              offLabel = "Long",
-              value = TRUE,
-              width = "100%"
-            ),
-            shiny::br(),
-            shiny::br(),
-            shiny::actionButton(
-              inputId = "buttAnalyze1",
-              label = "Run Table 1",
-              class = "btn-primary",
-              style = "width:100%; border-color:white; border-radius: 10px",
-              icon("play")
-            ),
-            shiny::br(),
-            shiny::br(),
-            shiny::br(),
-            # show button Analyze
-            shiny::actionButton(
-              inputId = "buttAnalyze2",
-              label = "Run Table 2",
-              class = "btn-primary",
-              style = "width:100%; border-color:white; border-radius: 10px",
-              icon("play")
-            ),
-            shiny::br(),
-            shiny::br(),
-            shiny::br(),
-            # show button Analyze
-            shiny::actionButton(
-              inputId = "buttAnalyze3",
-              label = "Run Table 3",
-              class = "btn-primary",
-              style = "width:100%; border-color:white; border-radius: 10px",
-              icon("play")
-            ),
-            shiny::br(),
-            shiny::br(),
-            shiny::br(),
-            # show button Analyze
-            shiny::actionButton(
-              inputId = "buttAnalyzePlot",
-              label = "Run Plot",
-              class = "btn-primary",
-              style = "width:100%; border-color:white; border-radius: 10px",
-              icon("play")
-            ),
+        # add column for buttons
+        shiny::column(
+          3,
+          # add title
+          shiny::h4("Run", style = "text-align:center"),
+          # add horizontal line
+          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
+          # add button to run analysis
+          shiny::br(),
+          shiny::br(),
+          shiny::actionButton(
+            inputId = "runTable1",
+            icon = shiny::icon("play"),
+            label = "Table 1",
+            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          ),
+          shiny::br(),
+          shiny::br(),
+          # add button to run analysis
+          shiny::actionButton(
+            inputId = "runTable2",
+            icon = shiny::icon("play"),
+            label = "Table 2",
+            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          ),
+          shiny::br(),
+          shiny::br(),
+          # add button to run analysis
+          shiny::actionButton(
+            inputId = "runTable3",
+            icon = shiny::icon("play"),
+            label = "Table 3",
+            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          ),
+          shiny::br(),
+          shiny::br(),
+          # add button to run analysis
+          shiny::actionButton(
+            inputId = "runPlot",
+            icon = shiny::icon("play"),
+            label = "Plot",
+            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
           ),
         ),
       ),
     ),
     # tab for table 1 of results
     shiny::tabPanel(
-      title = list(fontawesome::fa("table"), "Table 1"),
+      title = "Table 1",
+      icon = fontawesome::fa("table"),
       shiny::br(),
       # show table of results
-      DT::dataTableOutput("table"),
+      DT::dataTableOutput("table1"),
     ),
     # tab for table 2 of results
     shiny::tabPanel(
-      title = list(fontawesome::fa("table"), "Table 2"),
+      title = "Table 2",
+      icon = fontawesome::fa("table"),
       shiny::br(),
       # show table of results
       DT::dataTableOutput("table2"),
     ),
     # tab for table 3 of results
     shiny::tabPanel(
-      title = list(fontawesome::fa("table"), "Table 3"),
+      title = "Table 3",
+      icon = fontawesome::fa("table"),
       # show table of results
       DT::dataTableOutput("table3"),
     ),
@@ -372,6 +370,7 @@ ui <- shiny::fluidPage(
          <p>2. Click <b>Plan</b> to configure the statistial analysis.</p>\
          <p>2.1 Select the following variables from the dataset:</p>\
          <ul>\
+         <li><i>Baseline variables</i></li>\
          <li><i>Subject ID</i></li>\
          <li><i>Treatment</i></li>\
          <li><i>Control group</i></li>\
@@ -389,10 +388,10 @@ ui <- shiny::fluidPage(
          <li><i>Alpha level</i></li>\
          </ul>\
          <p>3. Click <b>Preview</b> to visualize the data.</p>\
-         <p>3.1. Click <b>Run Table 1</b> to visualize the results of the Table 1.</p>\
-         <p>3.2. Click <b>Run Table 2</b> to visualize the results of the Table 2.</p>\
-         <p>3.3. Click <b>Run Table 3</b> to visualize the results of the Table 3.</p>\
-         <p>3.4. Click <b>Run Plot</b> to visualize the results of the Plot.</p>\
+         <p>3.1. Click <b>Table 1</b> to visualize the results of the Table 1.</p>\
+         <p>3.2. Click <b>Table 2</b> to visualize the results of the Table 2.</p>\
+         <p>3.3. Click <b>Table 3</b> to visualize the results of the Table 3.</p>\
+         <p>3.4. Click <b>Plot</b> to visualize the results of the Plot.</p>\
          <p>4. Click <b>restart</b> icon before running new analisys.",
       ),
     ),
@@ -494,6 +493,12 @@ server <- function(input, output, session) {
       choices = colnames(rawdata),
       selected = NA
     )
+    # update list of baseline variables from rawdata header
+    shinyWidgets::updateVirtualSelect(
+      inputId = "BV",
+      choices = colnames(rawdata),
+      selected = NA
+    )
     # update list of outcome variables from rawdata header
     shinyWidgets::updateVirtualSelect(
       inputId = "OV",
@@ -553,7 +558,8 @@ server <- function(input, output, session) {
   # show selected endpoints
   output[["Endtable"]] <- shiny::renderTable({
     shiny::req(input[["endpointNames"]])
-    data.frame("Endpoints" = strsplit(input[["endpointNames"]], ", ")[[1]], check.names = FALSE)
+    data.frame("Endpoints" = strsplit(input[["endpointNames"]], ", ")[[1]],
+               check.names = FALSE)
   }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
   
   # update list of control group after loading choices for between-groups variables
@@ -568,14 +574,21 @@ server <- function(input, output, session) {
   # update list of baseline data after loading choices for OV variables
   shiny::observeEvent(input[["OV"]], {
     shinyWidgets::updateVirtualSelect(inputId = "baselineVar",
-                                    choices = input[["OV"]],
-                                    selected = NA)
+                                      choices = input[["OV"]],
+                                      selected = NA)
   })
   
-  # show table with selected variables
-  output[["previewTable"]] <- DT::renderDT({
+  # change tab on runTable1 click
+  shiny::observeEvent(input[["runTable1"]], {
+    shiny::updateTabsetPanel(session = session,
+                             inputId = "tabs",
+                             selected = "Table 1")
+  })
+  
+  # run table 1 on runTable1 click ------------------------------------------------
+  output[["table1"]] <- DT::renderDT({
     shiny::req(rawdata())
-
+    
     # read file
     rawdata <- readxl::read_xlsx(rawdata())
     # remove empty columns
@@ -584,7 +597,7 @@ server <- function(input, output, session) {
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
     
     # select columns from checked variables
-    rawdata <- rawdata[, unique(c(input[["ID"]], input[["BGF"]], input[["CV"]], input[["OV"]]))]
+    rawdata <- rawdata[, unique(c(input[["BV"]], input[["BGF"]]))]
     
     # add column based on treatment group names per use input
     if (!is.null(input[["BGF"]])) {
@@ -596,569 +609,92 @@ server <- function(input, output, session) {
         ))
     }
     
-    # reorder columns to show ID, GBF, TREATMENT and all other columns
-    rawdata <- rawdata %>%
-      dplyr::select(input[["ID"]], input[["BGF"]], TREATMENT, input[["CV"]], input[["OV"]])
+    results <- TABLE.1(
+      dataset = rawdata,
+      variables = input[["BV"]],
+      bw.factor = rawdata$TREATMENT,
+      max.levels = as.numeric(input[["maxlevels"]]),
+      alpha = input[["alpha"]],
+      n.digits = 2
+    )
     
-    # change to long format if switch is off
-    if (!input[["tableFormat"]]) {
-      # to long fo
-      rawdata <- rawdata %>%
-        tidyr::pivot_longer(
-          cols = input[["OV"]],
-          names_to = "Endpoints",
-          values_to = input[["OutcomeNames"]]
-        )
-      # replace Endpoint column data with endpoint names
-      if (!is.null(input[["endpointNames"]])) {
-        # use mutate
-        rawdata <- rawdata %>%
-          dplyr::mutate(Endpoints = factor(
-            x = Endpoints,
-            levels = unique(Endpoints),
-            labels = strsplit(input[["endpointNames"]], ", ")[[1]]
-          ))
-      }
-    }
-
-    # show datatable
+    title <- "Table 1"
+    
+    # output results
     DT::datatable(
-      data = rawdata,
-      rownames = FALSE,
-      extensions = 'Buttons',
+      data = results,
+      caption = "Table 1: Between-group descriptive analysis [mean (SD) or count (%)].",
+      extensions = c('Buttons', 'ColReorder', 'FixedHeader'),
       options = list(
-        dom = 'Btipr',
-        buttons = list(list(extend = "excel", filename = "data"),
-                       list(extend = "csv", filename = "data"),
-                       list(extend = "copy", filename = "data")),
         searching = FALSE,
-        pageLength = 10,
+        colReorder = TRUE,
+        fixedHeader = TRUE,
+        pageLength = nrow(results),
         width = "100%",
-        scrollX = TRUE
+        scrollX = TRUE,
+        dom = 'tB',
+        buttons = list(
+          list(
+            extend = "copy",
+            text = "Copiar",
+            filename = title
+          ),
+          list(
+            extend = "csv",
+            text = "CSV",
+            filename = title
+          ),
+          list(
+            extend = "pdf",
+            text = "PDF",
+            title = title,
+            filename = title
+          )
+        )
       )
     )
   })
   
-  # run table 2
-  output[["table2"]] <- DT::renderDT({
-    shiny::req(rawdata())
-    
-    # read file
-    rawdata <- readxl::read_xlsx(rawdata())
-    # remove empty columns
-    rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
-    # remove empty rows
-    rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
-    
-    # select columns from checked variables
-    rawdata <- rawdata[, unique(c(input[["ID"]], input[["BGF"]], input[["CV"]], input[["OV"]]))]
-    
-    # add column based on treatment group names per use input
-    if (!is.null(input[["BGF"]])) {
-      rawdata <- rawdata %>%
-        dplyr::mutate(TREATMENT = factor(
-          x = rawdata[[input[["BGF"]]]],
-          levels = unique(rawdata[[input[["BGF"]]]]),
-          labels = strsplit(input[["treatmentNames"]], ", ")[[1]]
-        ))
-    }
-    
-    TABLE.2a(
-      dataset = rawdata,
-      variables = input[["OV"]],
-      covariate = rawdata[, input[["CV"]]],
-      bw.factor = rawdata$TREATMENT,
-      control.g = input[["controlgroup"]],
-      wt.labels = input[["endpointNames"]],
-      missing = tolower(gsub(" ", ".", input[["missing"]])),
-      m.imputations = input[["MICEresamples"]],
-      alpha = input[["alpha"]],
-      n.digits = 2
-    )
-  })
   
-  # # plot single frame of video imgEdit ---------------------------------------------------------
-  # output[["plotMeasure"]] <- shiny::renderPlot({
-  #   shiny::req(Video())
-  #   shiny::req(input$framesEdit)
-  #   shiny::req(input$imgEdit)
-  #   # Get video info such as width, height, format, duration and framerate
-  #   info <- av::av_media_info(Video())
+  
+  # run table 2
+  # output[["table2"]] <- DT::renderDT({
+  #   shiny::req(rawdata())
   #
-  #   # show 1st frame
-  #   img <-
-  #     magick::image_read(
-  #       list.files(
-  #         path = file.path(dir.name, "1 edited"),
-  #         full.names = TRUE,
-  #         pattern = "png")[input$imgEdit]
-  #     )
+  #   # read file
+  #   rawdata <- readxl::read_xlsx(rawdata())
+  #   # remove empty columns
+  #   rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
+  #   # remove empty rows
+  #   rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
   #
-  #   # color palette (grayscale)
-  #   pal <- grDevices::gray(seq(
-  #     from = 0,
-  #     to = 1,
-  #     length.out = 256
-  #   ), alpha = NULL)
-  #   par(mar = rep(0, 4), oma = rep(0, 4), omi = rep(0, 4), mai = rep(0, 4))
-  #   plot(
-  #     img,
-  #     xlim = c(0, info$video$width),
-  #     ylim = c(0, info$video$height),
-  #     asp = 1,
-  #     col = pal
-  #   )
+  #   # select columns from checked variables
+  #   rawdata <- rawdata[, unique(c(input[["ID"]], input[["BGF"]], input[["CV"]], input[["OV"]]))]
   #
-  #   # draw free-hand object
-  #   lines(
-  #     x = vals$x,
-  #     y = vals$y,
-  #     col = "red",
-  #     lty = "solid",
-  #     lwd = 2
-  #   )
-  # }, height = function() {
-  #   (session$clientData$output_plotMeasure_width) * (0.6584)
-  # })
-  #
-  # # measurements of single frame of video imgEdit ---------------------------------------------------------
-  # output[["tableMeasure"]] <- DT::renderDataTable({
-  #   shiny::req(Video())
-  #   shiny::req(input$framesEdit)
-  #   shiny::req(input$imgEdit)
-  #   shiny::req(input$imgScale)
-  #
-  #   # Get video info such as width, height, format, duration and framerate
-  #   info <- av::av_media_info(Video())
-  #
-  #   # show 1st frame
-  #   img <-
-  #     magick::image_read(
-  #       list.files(
-  #         path = file.path(dir.name, "1 edited"),
-  #         full.names = TRUE,
-  #         pattern = "png")[input$imgEdit]
-  #     )
-  #
-  #   # get separate channels
-  #   img_object <- as.integer(img[[1]])
-  #   img_object_R <- img_object[, , 1]
-  #   img_object_G <- img_object[, , 2]
-  #   img_object_B <- img_object[, , 3]
-  #
-  #   # flip image vertically
-  #   img_object_R <- img_object_R[nrow(img_object_R):1, ]
-  #   img_object_G <- img_object_G[nrow(img_object_G):1, ]
-  #   img_object_B <- img_object_B[nrow(img_object_B):1, ]
-  #
-  #   # create closed polygon
-  #   poly <- round(concaveman::concaveman(cbind(vals$x, vals$y), concavity = 1, length_threshold = 0), 0)
-  #   poly <- poly[complete.cases(poly), ]
-  #
-  #   # subset the image using polygon coordinates
-  #   img_object_R <- img_object_R[
-  #     min(poly[, 1]):max(poly[, 1]),
-  #     min(poly[, 2]):max(poly[, 2])
-  #   ]
-  #   img_object_G <- img_object_G[
-  #     min(poly[, 1]):max(poly[, 1]),
-  #     min(poly[, 2]):max(poly[, 2])
-  #   ]
-  #   img_object_B <- img_object_B[
-  #     min(poly[, 1]):max(poly[, 1]),
-  #     min(poly[, 2]):max(poly[, 2])
-  #   ]
-  #
-  #   # custom functions
-  #   source("f_meas.R", local = TRUE)
-  #   data <- f_measurement(R = img_object_R, G = img_object_G, B = img_object_B, poly = poly)
-  #   contour <- data$contour
-  #
-  #   # draw actual ROI object
-  #   lines(
-  #     x = contour$x,
-  #     y = contour$y,
-  #     col = "red",
-  #     lty = "solid",
-  #     lwd = 2
-  #   )
-  #
-  #   # distance
-  #   distancia <- 0
-  #
-  #   # cross-sectional area
-  #   area <- distancia * distancia * pi
-  #
-  #   # show measurements
-  #   df_meas <- data.frame(
-  #     "File name" = input$InputFile[1],
-  #     "Frames (n)" = info$video$frames,
-  #     "Start - End (frames)" = paste0(input$framesEdit[1], " - ", input$framesEdit[2]),
-  #     "Video size (px)" = paste0(info$video$width, " x ", info$video$height),
-  #     "Current frame (n)" = input$imgEdit[1],
-  #     "Object size (px)" = max(poly[, 1] - min(poly[, 1])) * max(poly[, 2] - min(poly[, 2])),
-  #     "Distance (mm)" = round(distancia, digits = 2),
-  #     "Cross-sectional area (mm²)" = round(area, digits = 2),
-  #     "Threshold (Otsu)" = data$threshold,
-  #     "Echogenicity, B&W (%)" = round(data$ecogenicidade_bw, digits = 2),
-  #     "Echogenicity, gray (%)" = round(data$ecogenicidade_gray, digits = 2)
-  #   )
-  #   df_meas <- t(df_meas)
-  #
-  #   labels <-
-  #     c(
-  #       "File name",
-  #       "Frames (n)",
-  #       "Start - End (frames)",
-  #       "Video size (px)",
-  #       "Current frame (n)",
-  #       "Object size (px)",
-  #       "Distance (mm)",
-  #       "Cross-sectional area (mm²)",
-  #       "Threshold (Otsu)",
-  #       "Echogenicity, B&W (%)",
-  #       "Echogenicity, gray (%)"
-  #     )
-  #   rownames(df_meas) <-
-  #     labels
-  #
-  #   # show DT table with buttons
-  #   DT::datatable(
-  #     df_meas,
-  #     rownames = TRUE,
-  #     colnames = rep("", ncol(df_meas)),
-  #     extensions = c("Buttons", "FixedColumns"),
-  #     options = list(
-  #       dom = "B",
-  #       ordering = F,
-  #       buttons = list(
-  #         list(extend = "copy",
-  #              text = "Copy"),
-  #         list(extend = "csv",
-  #              text = "CSV"),
-  #         list(extend = "excel",
-  #              text = "Excel"),
-  #         list(extend = "pdf",
-  #              text = "PDF")
-  #       ),
-  #       fixedColumns = TRUE,
-  #       pageLength = length(labels),
-  #       autoWidth = TRUE,
-  #       columnDefs = list(list(className = 'dt-center', targets = "_all"))
-  #     )
-  #   )
-  # })
-  #
-  # # show PNG file of 1st frame ---------------------------------------------------------
-  # output[["plotROI"]] <- shiny::renderPlot({
-  #   shiny::req(Video())
-  #   shiny::req(input$framesEdit)
-  #
-  #   # Get video info such as width, height, format, duration and framerate
-  #   info <- av::av_media_info(Video())
-  #
-  #   # show 1st frame
-  #   img <-
-  #     magick::image_read(
-  #       list.files(
-  #         path = file.path(dir.name, "1 edited"),
-  #         full.names = TRUE,
-  #         pattern = "png")[1]
-  #       )
-  #
-  #   # color palette (grayscale)
-  #   pal <- grDevices::gray(seq(
-  #     from = 0,
-  #     to = 1,
-  #     length.out = 256
-  #   ), alpha = NULL)
-  #   par(mar = rep(0, 4), oma = rep(0, 4), omi = rep(0, 4), mai = rep(0, 4))
-  #   plot(
-  #     img,
-  #     xlim = c(0, info$video$width),
-  #     ylim = c(0, info$video$height),
-  #     asp = 1,
-  #     col = pal
-  #   )
-  #   # custom functions
-  #   round_2_odd <- function(x) {
-  #     2 * floor(x / 2) + 1
+  #   # add column based on treatment group names per use input
+  #   if (!is.null(input[["BGF"]])) {
+  #     rawdata <- rawdata %>%
+  #       dplyr::mutate(TREATMENT = factor(
+  #         x = rawdata[[input[["BGF"]]]],
+  #         levels = unique(rawdata[[input[["BGF"]]]]),
+  #         labels = strsplit(input[["treatmentNames"]], ", ")[[1]]
+  #       ))
   #   }
   #
-  #   # draw object rectangle
-  #   rect(
-  #     xleft = roi_coords$xy[2, 1] - floor(input$KernelSizeTrack / 2),
-  #     ybottom = roi_coords$xy[2, 2] - floor(input$KernelSizeTrack / 2),
-  #     xright = roi_coords$xy[2, 1] + floor(input$KernelSizeTrack / 2),
-  #     ytop = roi_coords$xy[2, 2] + floor(input$KernelSizeTrack / 2),
-  #     col = "transparent",
-  #     border = "red",
-  #     lty = "solid",
-  #     lwd = 2
-  #   )
-  #
-  #   roi <-
-  #     round_2_odd(input$KernelSizeTrack * (1 + as.numeric(input$Overlap) / 100)) # odd numbers only
-  #   # draw ROI rectangle
-  #   rect(
-  #     xleft = roi_coords$xy[2, 1] - floor(roi / 2),
-  #     ybottom = roi_coords$xy[2, 2] - floor(roi / 2),
-  #     xright = roi_coords$xy[2, 1] + floor(roi / 2),
-  #     ytop = roi_coords$xy[2, 2] + floor(roi / 2),
-  #     col = "transparent",
-  #     border = "yellow",
-  #     lty = "solid",
-  #     lwd = 2
-  #   )
-  #   # show coordinates of ROI
-  #   text(
-  #     x = roi_coords$xy[2, 1],
-  #     y = roi_coords$xy[2, 2],
-  #     paste0(
-  #       "x=",
-  #       round(roi_coords$xy[2, 1], 0),
-  #       "\n",
-  #       "y=",
-  #       round(roi_coords$xy[2, 2], 0)
-  #     ),
-  #     col = "red"
-  #   )
-  # }, height = function() {
-  #   (session$clientData$output_plotROI_width) * (0.6584)
-  # })
-  #
-  # # process, play and export video ---------------------------------------------------------
-  # shiny::observeEvent(input[["buttAnalyze"]], {
-  #   shiny::req(Video())
-  #   # Get video info such as width, height, format, duration and framerate
-  #   info <- av::av_media_info(Video())
-  #
-  #   # Capture the result of us_track function call
-  #   us_track(
-  #     center.ini <-
-  #       list(x = roi_coords$xy[2, 1], y = roi_coords$xy[2, 2]),
-  #     inputfile = file.path(dir.name, "editeOVideo.mp4"),
-  #     filtertype = input$FilterType,
-  #     filtersize = input$FilterSize,
-  #     overlap = input$Overlap,
-  #     jump = input$Jump,
-  #     kernel = input$KernelSizeTrack
-  #   )
-  #
-  #   # draw trajectory on images
-  #   path <-
-  #     read.csv(file.path(dir.name, "CSV", "trajectory_measured.csv"))
-  #   for (i in 1:length(list.files(file.path(dir.name, "8 output")))) {
-  #     # read image from file
-  #     img <- png::readPNG(file.path(dir.name, "8 output", paste0("image_", sprintf("%06d", i), ".png")))
-  #     img <- grDevices::as.raster(img[, , 1:3])
-  #
-  #     # create a ggplot object with the image in background and trajectory as data points
-  #     par(mar = rep(0, 4), oma = rep(0, 4), omi = rep(0, 4), mai = rep(0, 4))
-  #     ggplot2::ggplot() +
-  #       ggplot2::annotation_raster(
-  #         img,
-  #         xmin = 0,
-  #         xmax = info$video$width,
-  #         ymin = 0,
-  #         ymax = info$video$height,
-  #         interpolate = TRUE
-  #       ) +
-  #       ggplot2::geom_point(
-  #         data = path[1:i,],
-  #         ggplot2::aes(x = X, y = Y),
-  #         colour = "red",
-  #         size = 100
-  #       ) +
-  #       ggplot2::scale_x_continuous(limits = c(0, info$video$width),
-  #                                   expand = c(0, 0)) +
-  #       ggplot2::scale_y_continuous(limits = c(0, info$video$height),
-  #                                   expand = c(0, 0)) +
-  #       ggplot2::coord_fixed() +
-  #       ggplot2::theme_void()
-  #
-  #     # save ggplot as png
-  #     ggplot2::ggsave(
-  #       filename = file.path(dir.name, "8 output", paste0("image_", sprintf("%06d", i), ".png")),
-  #       width = info$video$width,
-  #       height = info$video$height,
-  #       units = "px",
-  #       dpi = 1,
-  #       type = "cairo",
-  #       limitsize = FALSE
-  #     )
-  #   }
-  #
-  #   # build mp4 video using av video package from out.dir files
-  #   av::av_encode_video(
-  #     input = list.files(
-  #       file.path(dir.name, "8 output"),
-  #       pattern = ".png",
-  #       full.names = TRUE
-  #     ),
-  #     output = file.path(dir.name, "outputvideo.mp4"),
-  #     framerate = info$video$framerate
+  #   TABLE.2a(
+  #     dataset = rawdata,
+  #     variables = input[["OV"]],
+  #     covariate = as.data.frame(rawdata[, input[["CV"]]], check.names = FALSE),
+  #     bw.factor = rawdata$TREATMENT,
+  #     control.g = input[["controlgroup"]],
+  #     wt.labels = input[["endpointNames"]],
+  #     missing = tolower(gsub(" ", ".", input[["missing"]])),
+  #     m.imputations = input[["MICEresamples"]],
+  #     alpha = input[["alpha"]],
+  #     n.digits = 2
   #   )
   # })
-  #
-  # # show MP4 video of output file
-  # output[["videooutput"]] <- shiny::renderUI({
-  #   shiny::req(Video())
-  #   # Get video info such as width, height, format, duration and framerate
-  #   info <- av::av_media_info(Video())
-  #
-  #   # show video
-  #   tags$video(
-  #     width = "90%",
-  #     height = "90%",
-  #     controls = "",
-  #     tags$source(src = "outputvideo.mp4", type = "video/mp4")
-  #   )
-  # })
-  #
-  # df <-
-  #   shiny::reactive(if (file.exists(file.path(
-  #     dir.name, "CSV", "max_cross_correlation.csv"
-  #   )) &
-  #   file.exists(file.path(dir.name, "CSV", "displacement.csv"))) {
-  #     info <- av::av_media_info(Video())
-  #     data.frame(
-  #       "File name" = input$InputFile[1],
-  #       "Frames (n)" = info$video$frames,
-  #       "Start - End (frames)" = paste0(input$framesEdit[1], " - ", input$framesEdit[2]),
-  #       "Video size (px)" = paste0(info$video$width, " x ", info$video$height),
-  #       "X0 (px)" = round(roi_coords$xy[2, 1], 0),
-  #       "Y0 (px)" = round(roi_coords$xy[2, 2], 0),
-  #       "Object size (px)" = input$KernelSizeTrack,
-  #       "Filter type" = input$FilterType,
-  #       "Filter size (px)" = input$FilterSize,
-  #       "Overlap (%)" = input$Overlap,
-  #       "Jump (frames)" = input$Jump,
-  #       "Displacement, total (px)" = round(sum(read.csv(
-  #         file.path(dir.name, "CSV", "displacement.csv")
-  #       )[[1]], na.rm = TRUE), 0),
-  #       "Displacement, mean (px)" = round(mean(read.csv(
-  #         file.path(dir.name, "CSV", "displacement.csv")
-  #       )[[1]], na.rm = TRUE), 0),
-  #       "Speed, mean (px/frame)" = round(mean(abs(
-  #         diff(read.csv(
-  #           file.path(dir.name, "CSV", "displacement.csv")
-  #         )[[1]], differences = 1)
-  #       ), na.rm = TRUE), 3),
-  #       "Speed, max (px/frame)" = round(max(abs(
-  #         diff(read.csv(
-  #           file.path(dir.name, "CSV", "displacement.csv")
-  #         )[[1]], differences = 1)
-  #       ), na.rm = TRUE), 3),
-  #       "Cross-correlation, max" = round(max(read.csv(
-  #         file.path(dir.name, "CSV", "max_cross_correlation.csv")
-  #       )[[1]], na.rm = TRUE), 3),
-  #       "Cross-correlation, mean" = round(mean(read.csv(
-  #         file.path(dir.name, "CSV", "max_cross_correlation.csv")
-  #       )[[1]], na.rm = TRUE), 3),
-  #       "Cross-correlation, min" = round(min(read.csv(
-  #         file.path(dir.name, "CSV", "max_cross_correlation.csv")
-  #       )[[1]], na.rm = TRUE), 3)
-  #     )
-  #   } else {
-  #     info <- av::av_media_info(Video())
-  #     data.frame(
-  #       "File name" = input$InputFile[1],
-  #       "Frames (n)" = info$video$frames,
-  #       "Start - End (frames)" = paste0(input$framesEdit[1], " - ", input$framesEdit[2]),
-  #       "Video size (px)" = paste0(info$video$width, " x ", info$video$height),
-  #       "X0 (px)" = round(roi_coords$xy[2, 1], 0),
-  #       "Y0 (px)" = round(roi_coords$xy[2, 2], 0),
-  #       "Object size (px)" = input$KernelSizeTrack,
-  #       "Filter type" = input$FilterType,
-  #       "Filter size (px)" = input$FilterSize,
-  #       "Overlap (%)" = input$Overlap,
-  #       "Jump (frames)" = input$Jump,
-  #       "Displacement, total (px)" = NA,
-  #       "Displacement, mean (px)" = NA,
-  #       "Speed, mean (px/frame)" = NA,
-  #       "Speed, max (px/frame)" = NA,
-  #       "Cross-correlation, max" = NA,
-  #       "Cross-correlation, mean" = NA,
-  #       "Cross-correlation, min" = NA
-  #     )
-  #   })
-  #
-  # # plot results of th CSV files ---------------------------------------------------------
-  # output[["plotTrack"]] <- shiny::renderImage({
-  #   shiny::req(Video())
-  #   # Get video info such as width, height, format, duration and framerate
-  #   info <-
-  #     av::av_media_info(file.path(dir.name, "outputvideo.mp4"))
-  #
-  #   source("f_plot.R", local = TRUE)
-  #   img <- htmltools::capturePlot({
-  #     plot.trajectory(res.dir = file.path(dir.name, "CSV"),
-  #                     info = info)
-  #   }, height = 500, width = 500)
-  #   list(
-  #     src = img,
-  #     height = "auto",
-  #     width = "auto",
-  #     contentType = "image/png"
-  #   )
-  # }, deleteFile = TRUE)
-  #
-  # # show datatable of results ---------------------------------------------------------
-  # output[["tableTrack"]] <- DT::renderDataTable({
-  #   shiny::req(Video())
-  #   shiny::req(df())
-  #   df <- t(df())
-  #   labels <-
-  #     c(
-  #       "File name",
-  #       "Frames (n)",
-  #       "Start - End (frames)",
-  #       "Video size (px)",
-  #       "X0 (px)",
-  #       "Y0 (px)",
-  #       "Object size (px)",
-  #       "Filter type",
-  #       "Filter size (px)",
-  #       "Overlap (%)",
-  #       "Jump (frames)",
-  #       "Displacement, total (px)",
-  #       "Displacement, mean (px)",
-  #       "Speed, mean (px/frame)",
-  #       "Speed, max (px/frame)",
-  #       "Cross-correlation, max",
-  #       "Cross-correlation, mean",
-  #       "Cross-correlation, min"
-  #     )
-  #   rownames(df) <-
-  #     labels
-  #   # show DT table with buttons
-  #   DT::datatable(
-  #     df,
-  #     rownames = TRUE,
-  #     colnames = rep("", ncol(df)),
-  #     extensions = c("Buttons", "FixedColumns"),
-  #     options = list(
-  #       dom = "B",
-  #       ordering = F,
-  #       buttons = list(
-  #         list(extend = "copy",
-  #              text = "Copy"),
-  #         list(extend = "csv",
-  #              text = "CSV"),
-  #         list(extend = "excel",
-  #              text = "Excel"),
-  #         list(extend = "pdf",
-  #              text = "PDF")
-  #       ),
-  #       fixedColumns = TRUE,
-  #       pageLength = length(labels),
-  #       autoWidth = TRUE,
-  #       columnDefs = list(list(className = 'dt-center', targets = "_all"))
-  #     )
-  #   )
-  # })
-  #
+  
   # # download MP4 file generated by 8 output files ---------------------------------------------------------
   # output[["downloadMP4"]] <-
   #   shiny::downloadHandler(
@@ -1179,30 +715,6 @@ server <- function(input, output, session) {
   #     },
   #     content = function(file) {
   #       file.copy(from = file.path(dir.name, "CSV", "trajectory_measured.csv"),
-  #                 to = file)
-  #     }
-  #   )
-  #
-  # # download DISPLACEMENT CSV files ---------------------------------------------------------
-  # output[["downloadDISPL"]] <-
-  #   shiny::downloadHandler(
-  #     filename = function() {
-  #       paste0("displacement.csv")
-  #     },
-  #     content = function(file) {
-  #       file.copy(from = file.path(dir.name, "CSV", "displacement.csv"),
-  #                 to = file)
-  #     }
-  #   )
-  #
-  # # download CC CSV files ---------------------------------------------------------
-  # output[["downloadCC"]] <-
-  #   shiny::downloadHandler(
-  #     filename = function() {
-  #       paste0("max_cross_correlation.csv")
-  #     },
-  #     content = function(file) {
-  #       file.copy(from = file.path(dir.name, "CSV", "max_cross_correlation.csv"),
   #                 to = file)
   #     }
   #   )

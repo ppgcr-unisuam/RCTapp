@@ -1,7 +1,7 @@
 # most packages work fine if installed from CRAN
 packs.cran <-
   c(
-    "emmeans",
+    "emmeans::emmeans",
     "flextable",
     "foreign",
     "lme4",
@@ -25,3 +25,6 @@ packs.cran <-
 for (pack in packs.cran) {
   suppressMessages(library(pack, character.only = TRUE))
 }
+
+# patch to handle rank-deficient fixed model matrix in lme
+remotes::install_github("bbolker/nlme")
