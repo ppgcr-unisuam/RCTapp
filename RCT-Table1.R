@@ -26,11 +26,9 @@ TABLE.1 <- function(dataset,
   }
   
   # confirma a estrutura dos dados
-  dataset <- data.frame(dataset)
+  dataset <- data.frame(dataset, check.names = FALSE)
   bw.factor <- factor(bw.factor, exclude = NULL)
-  
-  # remove variáveis não usadas
-  dataset <- dataset[, colnames(dataset) %in% variables]
+  max.levels <- as.numeric(max.levels)
   
   # inicializa a matriz de resultados descritivos (+1 coluna para identificar os níveis das variáveis categóricas)
   descript.res <- matrix("",
@@ -41,12 +39,9 @@ TABLE.1 <- function(dataset,
   
   # analisa as variáveis selecionadas
   for (i in 1:length(variables)) {
-    # analisa as variaveis selecionadas
-    categorical <- c()
-    if (class(dataset[, i]) == 'character') {
-      # analise de variaveis categoricas
-      # calcula os parametros descritivos
-      categorical <- c(categorical, i)
+    
+    # analisa as variaveis categoricas
+    if (nlevels(factor(dataset[, i], exclude = NULL)) <= max.levels) {
       freq.abs <- format(round(t(table(
         factor(dataset[, i], exclude = NULL), bw.factor
       )), digits = 0), nsmall = 0)
@@ -85,8 +80,10 @@ TABLE.1 <- function(dataset,
       # sinaliza os dados perdidos
       tempdata[is.na(tempdata)] <- "Missing"
       descript.res <- rbind(descript.res, tempdata)
-    } else {
-      # analise de variaveis continuas
+    }
+    
+    # analisa as variaveis continuas
+    else if (nlevels(factor(dataset[, i], exclude = NULL)) > max.levels) {
       # calcula os parametros descritivos
       descript.res[i, 2:(1 + nlevels(bw.factor))] <- paste(
         format(round(
@@ -118,10 +115,10 @@ TABLE.1 <- function(dataset,
   descript.res <- descript.res[!apply(descript.res == "", 1, all), ]
   
   # apresenta os resultados na tela
-  print("Table 1: Between-group descriptive analysis [mean (SD) or count (%)].",
-        quote = FALSE)
-  print(descript.res, quote = FALSE)
-  print("", quote = FALSE)
-  print("", quote = FALSE)
+  # print("Table 1: Between-group descriptive analysis [mean (SD) or count (%)].",
+  #       quote = FALSE)
+  # print(descript.res, quote = FALSE)
+  # print("", quote = FALSE)
+  # print("", quote = FALSE)
   return(descript.res)
 }

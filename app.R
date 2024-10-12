@@ -59,9 +59,7 @@ ui <- shiny::fluidPage(
           fontawesome::fa("users"),
           fontawesome::fa("shuffle"),
           fontawesome::fa("users"),
-          shiny::HTML("<strong>RCTapp</strong>"),
-          shiny::br(),
-          "Randomized Clinical Trial"
+          shiny::HTML("<strong>RCTapp</strong>")
         ),
         style = "text-align:left;"
       ),
@@ -80,7 +78,6 @@ ui <- shiny::fluidPage(
     ),
     windowTitle = "RCTapp | Randomized Clinical Trial"
   ),
-  
   shiny::HTML(
     "<a href=\"https://doi.org/10.5281/zenodo.13848815\" style=\"vertical-align:middle;\"><img src=\"https://zenodo.org/badge/DOI/10.5281/zenodo.10439718.svg\" alt=\"DOI\"  style=\"vertical-align:top;\"></a>"
   ),
@@ -112,8 +109,7 @@ ui <- shiny::fluidPage(
     ),
     shiny::tabPanel(
       title = list(fontawesome::fa("list-check"), "SAP"),
-      shiny::h4("Statistical Analysis Plan", style = "text-align:center"),
-      shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
+      shiny::h4("Statistical Analysis Plan", style = "text-align:center; font-weight:bold;"),
       # split panel into 3 columns
       shiny::fluidRow(
         shiny::column(
@@ -144,6 +140,13 @@ ui <- shiny::fluidPage(
             multiple = FALSE,
             width = "100%"
           ),
+          # show text input to change treatment group names
+          shiny::textInput(
+            inputId = "treatmentNames",
+            label = "Treatments (csv)",
+            value = "Control, Treatment",
+            width = "100%"
+          ),
           # show options for control group
           shinyWidgets::virtualSelectInput(
             inputId = "controlgroup",
@@ -158,11 +161,18 @@ ui <- shiny::fluidPage(
           # show maxlevels for between-subject factors
           shiny::numericInput(
             inputId = "maxlevels",
-            label = "Max levels",
+            label = "Max levels (categorical variables)",
             value = 5,
             min = 1,
             max = 10,
             step = 1,
+            width = "100%"
+          ),
+          # add checkbox for show p-value
+          shiny::checkboxInput(
+            inputId = "showPvalue",
+            label = "Show P-value",
+            value = FALSE,
             width = "100%"
           ),
         ),
@@ -246,13 +256,6 @@ ui <- shiny::fluidPage(
                 value = "Outcome",
                 width = "100%"
               ),
-              # show text input to change treatment group names
-              shiny::textInput(
-                inputId = "treatmentNames",
-                label = "Treatments (csv)",
-                value = "Control, Treatment",
-                width = "100%"
-              ),
               # show text for endpoint names
               shiny::textInput(
                 inputId = "endpointNames",
@@ -299,7 +302,6 @@ ui <- shiny::fluidPage(
           shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
           # add button to run analysis
           shiny::br(),
-          shiny::br(),
           shiny::actionButton(
             inputId = "runTable1",
             icon = shiny::icon("play"),
@@ -330,7 +332,7 @@ ui <- shiny::fluidPage(
           shiny::actionButton(
             inputId = "runPlot",
             icon = shiny::icon("play"),
-            label = "Plot",
+            label = "Figure 1",
             style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
           ),
         ),
@@ -343,6 +345,13 @@ ui <- shiny::fluidPage(
       shiny::br(),
       # show table of results
       DT::dataTableOutput("table1"),
+      shiny::br(),
+      # download Word format
+      shiny::downloadButton(
+        outputId = "downloadTable1",
+        label = "Download Table 1 (.DOCX)",
+        style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+      ),
     ),
     # tab for table 2 of results
     shiny::tabPanel(
@@ -352,6 +361,9 @@ ui <- shiny::fluidPage(
       # show table of results
       DT::dataTableOutput("table2"),
     ),
+    # tab for plot of results
+    shiny::tabPanel(title = list(fontawesome::fa("chart-line"), "Figure 1"), # show plot of results
+                    shiny::plotOutput("plot"), ),
     # tab for table 3 of results
     shiny::tabPanel(
       title = "Table 3",
@@ -359,9 +371,6 @@ ui <- shiny::fluidPage(
       # show table of results
       DT::dataTableOutput("table3"),
     ),
-    # tab for plot of results
-    shiny::tabPanel(title = list(fontawesome::fa("chart-line"), "Plot"), # show plot of results
-                    shiny::plotOutput("plot"), ),
     shiny::tabPanel(
       title = list(fontawesome::fa("circle-info")),
       shiny::br(),
@@ -388,10 +397,10 @@ ui <- shiny::fluidPage(
          <li><i>Alpha level</i></li>\
          </ul>\
          <p>3. Click <b>Preview</b> to visualize the data.</p>\
-         <p>3.1. Click <b>Table 1</b> to visualize the results of the Table 1.</p>\
-         <p>3.2. Click <b>Table 2</b> to visualize the results of the Table 2.</p>\
-         <p>3.3. Click <b>Table 3</b> to visualize the results of the Table 3.</p>\
-         <p>3.4. Click <b>Plot</b> to visualize the results of the Plot.</p>\
+         <p>3.1. Click <b>Table 1</b> to visualize the baseline between-group results.</p>\
+         <p>3.2. Click <b>Table 2</b> to visualize the results within- and between-group results.</p>\
+         <p>3.3. Click <b>Table 3</b> to visualize the results within- and between-group results without baseline.</p>\
+         <p>3.4. Click <b>Figure 1</b> to visualize the results in graphical format.</p>\
          <p>4. Click <b>restart</b> icon before running new analisys.",
       ),
     ),
@@ -512,7 +521,7 @@ server <- function(input, output, session) {
       options = list(
         dom = 'tipr',
         searching = FALSE,
-        pageLength = 10,
+        pageLength = 15,
         width = "100%",
         scrollX = TRUE
       )
@@ -563,7 +572,7 @@ server <- function(input, output, session) {
   }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
   
   # update list of control group after loading choices for between-groups variables
-  shiny::observeEvent(input[["BGF"]], {
+  shiny::observeEvent(input[["treatmentNames"]], {
     shinyWidgets::updateVirtualSelect(
       inputId = "controlgroup",
       choices = strsplit(input[["treatmentNames"]], ", ")[[1]],
@@ -588,6 +597,8 @@ server <- function(input, output, session) {
   # run table 1 on runTable1 click ------------------------------------------------
   output[["table1"]] <- DT::renderDT({
     shiny::req(rawdata())
+    shiny::req(input[["BV"]])
+    shiny::req(input[["BGF"]])
     
     # read file
     rawdata <- readxl::read_xlsx(rawdata())
@@ -618,44 +629,57 @@ server <- function(input, output, session) {
       n.digits = 2
     )
     
+    # show p-value if checkbox is true
+    if (!input[["showPvalue"]]) {
+      results <- results[, -ncol(results)]
+    }
+    
     title <- "Table 1"
+    caption <- "Table 1: Between-group descriptive analysis [mean (SD) or count (%)]."
+    
+    my_summary_to_save <-
+      results %>%
+      as.data.frame(check.names = FALSE) %>%
+      dplyr::mutate(Variables = rownames(results)) %>%
+      dplyr::select(Variables, dplyr::everything()) %>%
+      flextable::regulartable()   %>%
+      flextable::autofit()
+    
+    # create Word doc from results dataframe
+    table_1 <-
+      officer::read_docx() %>%
+      officer::body_add_par(caption, style = "Normal") %>%
+      flextable::body_add_flextable(my_summary_to_save) %>%
+      print(target = file.path(dir.name, "Table 1.docx"))
     
     # output results
     DT::datatable(
       data = results,
-      caption = "Table 1: Between-group descriptive analysis [mean (SD) or count (%)].",
-      extensions = c('Buttons', 'ColReorder', 'FixedHeader'),
+      caption = caption,
+      extensions = c('ColReorder'),
       options = list(
         searching = FALSE,
         colReorder = TRUE,
-        fixedHeader = TRUE,
         pageLength = nrow(results),
         width = "100%",
         scrollX = TRUE,
-        dom = 'tB',
-        buttons = list(
-          list(
-            extend = "copy",
-            text = "Copiar",
-            filename = title
-          ),
-          list(
-            extend = "csv",
-            text = "CSV",
-            filename = title
-          ),
-          list(
-            extend = "pdf",
-            text = "PDF",
-            title = title,
-            filename = title
-          )
-        )
+        columnDefs = list(list(
+          className = 'dt-center', targets = 1:ncol(results)
+        )),
+        dom = 't'
       )
     )
   })
   
-  
+  # Download Handler
+  output$downloadTable1 <- shiny::downloadHandler(
+    filename = function() {
+      paste0("Table 1.docx")
+    },
+    content = function(file) {
+      file.copy(from = file.path(dir.name, "Table 1.docx"), to = file)
+    }
+  )
   
   # run table 2
   # output[["table2"]] <- DT::renderDT({
