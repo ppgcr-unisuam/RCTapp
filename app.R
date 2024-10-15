@@ -716,7 +716,19 @@ server <- function(input, output, session) {
         n.digits = 2
       )
     } else {
-      # run table 2b
+      results <- TABLE.2b(
+        dataset = rawdata,
+        variables = input[["OV"]],
+        covariate = input[["CV"]],
+        bw.factor = rawdata$TREATMENT,
+        control.g = input[["controlgroup"]],
+        # drop 1 
+        wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
+        missing = tolower(gsub(" ", ".", input[["missing"]])),
+        m.imputations = as.numeric(input[["MICEresamples"]]),
+        alpha = as.numeric(input[["alpha"]]),
+        n.digits = 2
+      )
     }
     return(results)
   })
