@@ -6,7 +6,7 @@ FIGURE.1 <-
            wt.labels,
            missing = c("complete.cases", "mean.imputation", "multiple.imputation"),
            m.imputations,
-           xlab,
+           xlabs,
            ylab,
            alpha) {
     # This function outputs a plot for two-way mixed-models.
@@ -15,7 +15,7 @@ FIGURE.1 <-
     # bw.factor: a 1D between-group factor
     # wt.labels: a 1D variable labels for each
     # level missing: method for handling missing balues (mean inputation, last value carried forward)
-    # xlab: a 1D vector of labels for the X axis (within-group factor)
+    # xlabs: a 1D vector of labels for the X axis (within-group factor)
     # ylabs: a string label for the Y axis (outcome)
     
     quiet <- function(x) {
@@ -27,6 +27,7 @@ FIGURE.1 <-
     # confirma a estrutura dos dados
     dataset <- data.frame(dataset)
     bw.factor <- factor(bw.factor, exclude = NULL)
+    xlabs <- as.numeric(xlabs)
     
     # remove variaveis nao usadas
     dataset <- dataset[, colnames(dataset) %in% variables]
@@ -42,7 +43,7 @@ FIGURE.1 <-
     OUTCOME_M <- c(as.matrix(dataset))
     COVARIATE_M <- c()
     if (!is.null(covariate)) {
-      for(i in 1:length(wt.labels)){
+      for (i in 1:length(wt.labels)) {
         COVARIATE_M <- rbind(COVARIATE_M, covariate)
       }
     }
@@ -63,7 +64,7 @@ FIGURE.1 <-
       OUTCOME_M <- c(as.matrix(dataset))
       COVARIATE_M <- c()
       if (!is.null(covariate)) {
-        for(i in 1:length(wt.labels)){
+        for (i in 1:length(wt.labels)) {
           COVARIATE_M <- rbind(COVARIATE_M, covariate)
         }
       }
@@ -83,8 +84,8 @@ FIGURE.1 <-
       OUTCOME_M <- c(as.matrix(dataset))
       COVARIATE_M <- c()
       if (!is.null(covariate)) {
-        for(i in 1:length(wt.labels)){
-          for(j in 1:ncol(covariate)){
+        for (i in 1:length(wt.labels)) {
+          for (j in 1:ncol(covariate)) {
             covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
           }
           COVARIATE_M <- rbind(COVARIATE_M, covariate)
@@ -111,8 +112,8 @@ FIGURE.1 <-
       # mean imputation of covariate data if any
       COVARIATE_M <- c()
       if (!is.null(covariate)) {
-        for(i in 1:length(wt.labels)){
-          for(j in 1:ncol(covariate)){
+        for (i in 1:length(wt.labels)) {
+          for (j in 1:ncol(covariate)) {
             covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
           }
           COVARIATE_M <- rbind(COVARIATE_M, covariate)
@@ -132,7 +133,10 @@ FIGURE.1 <-
       if (!is.null(covariate)) {
         mod1 <-
           nlme::lme(
-            fixed = as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))),
+            fixed = as.formula(paste0(
+              "OUTCOME_M ~ TIME_M * GROUP_M + ",
+              paste0(colnames(COVARIATE_M), collapse = " + ")
+            )),
             random = ~ 1 | ID_M / TIME_M,
             data = data_M
           )
@@ -168,7 +172,10 @@ FIGURE.1 <-
             )
           )
         mod1.aov <-
-          quiet(miceadds::mi.anova(imp, formula = paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))))
+          quiet(miceadds::mi.anova(imp, formula = paste0(
+            "OUTCOME_M ~ TIME_M * GROUP_M + ",
+            paste0(colnames(COVARIATE_M), collapse = " + ")
+          )))
       } else {
         mod1 <-
           with(data = imp,
@@ -215,7 +222,7 @@ FIGURE.1 <-
     
     # calculate CI
     myCI <-
-      group.CI(
+      Rmisc::group.CI(
         OUTCOME_M ~ GROUP_M * as.factor(TIME_M),
         data = cbind(GROUP_M, as.factor(TIME_M), OUTCOME_M),
         ci = 1 - alpha
@@ -240,57 +247,71 @@ FIGURE.1 <-
     symbols <- c(15, 16, 17, 18)
     
     # interaction plot with %CI
+    
+    # set narrow margins
+    par(mar = c(5, 5, 1, 1))
+    
     # start empty area plot with main setup
     plot(
       NA,
       xaxt = "n",
-      xlab = xlab,
+      xlab = "Endpoint",
       ylab = ylab,
-      xlim = c(min(wt.labels) - 1.5, max(wt.labels) + 1.5),
+      xlim = c(min(xlabs) - 1.5, max(xlabs) + 1.5),
       ylim = c(min(myCI[, 5]) - min(myCI[, 5]) *
                  0.2, max(myCI[, 3]) + max(myCI[, 3]) * 0.2)
     )
+    
     # plot CI intervals (vertical lines)
     for (i in 1:dim(myCI)[1]) {
       lines(
-        x = rep(myCI[i, 2], 2) + jitter[i],
+        x = rep(xlabs[which(myCI[i, 2] == wt.labels)], 2) + jitter[i],
         y = c(myCI[i, 5], myCI[i, 3]),
         lty = "solid",
         lwd = 1.5,
         col = "darkgrey"
       )
       axis(side = 1,
-           at = wt.labels,
+           at = xlabs,
            labels = wt.labels)
     }
     # plot CI intervals (symbols at end lines)
     for (i in 1:dim(myCI)[1]) {
       points(
-        x = rep(myCI[i, 2], 2) + jitter[i],
+        x = rep(xlabs[which(myCI[i, 2] == wt.labels)], 2) + jitter[i],
         y = c(myCI[i, 5], myCI[i, 3]),
         pch = "−",
         cex = 1.5,
         lwd = 1.5,
         col = "darkgrey"
       )
+      axis(side = 1,
+           at = xlabs,
+           labels = wt.labels)
     }
     # plot point estimates
     for (i in 1:nlevels(bw.factor)) {
       lines(
-        x = myCI[myCI[, 1] == i, 2] + jitter[i],
+        x = xlabs + jitter[i],
         y = myCI[myCI[, 1] == i, 4],
         type = "b",
         pch = symbols[i],
         lwd = 1,
         cex = 1
       )
+      axis(side = 1,
+           at = xlabs,
+           labels = wt.labels)
     }
     # add interaction label
     if (mod1.aov[4, 4] < alpha) {
-      mtext(interaction,
-            line = -21,
-            outer = FALSE,
-            cex = 0.50)
+      text(
+        x = min(xlabs) - 1.5,
+        y = min(myCI[, 5]) - min(myCI[, 5]) * 0.2,
+        labels = interaction,
+        adj = c(0, 0),
+        cex = 0.75
+      )
     }
     # plot legend
     legend(
@@ -299,8 +320,7 @@ FIGURE.1 <-
       pch = symbols,
       cex = 1.25,
       bty = "n",
-      horiz = TRUE,
+      horiz = FALSE,
       x.intersp = 1
     )
   }
-

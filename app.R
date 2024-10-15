@@ -94,14 +94,14 @@ ui <- shiny::fluidPage(
     id = "tabs",
     type = "tabs",
     shiny::tabPanel(
-      title = list(fontawesome::fa("right-to-bracket"), "Input"),
+      title = list(fontawesome::fa("database"), "Data"),
       shiny::br(),
       # input Excel file data
       shiny::fileInput(
         inputId = "InputFile",
         label = NULL,
         multiple = FALSE,
-        buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
+        buttonLabel = list(fontawesome::fa("file-excel"), "Upload data"),
         accept = c(".xlsx"),
         width = "100%",
       ),
@@ -110,8 +110,70 @@ ui <- shiny::fluidPage(
     shiny::tabPanel(
       title = list(fontawesome::fa("list-check"), "SAP"),
       shiny::h4("Statistical Analysis Plan", style = "text-align:center; font-weight:bold;"),
-      # split panel into 3 columns
+      # split panel into 4 columns
       shiny::fluidRow(
+        shiny::column(
+          3,
+          # add title
+          shiny::h4("Study design", style = "text-align:center"),
+          # add horizontal line
+          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
+          # add checkbox for between-subject factors (BGF)
+          shinyWidgets::virtualSelectInput(
+            inputId = "BGF",
+            label = "Treatment",
+            choices = NULL,
+            selected = NA,
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = FALSE,
+            width = "100%"
+          ),
+          # show text input to change treatment group names
+          shiny::textInput(
+            inputId = "treatmentNames",
+            label = "Treatment labels (csv)",
+            value = "Control,Treatment",
+            width = "100%"
+          ),
+          # show options for control group
+          shinyWidgets::virtualSelectInput(
+            inputId = "controlgroup",
+            label = "Control group",
+            choices = NULL,
+            selected = NA,
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = FALSE,
+            width = "100%"
+          ),
+          shiny::br(),
+          # show text for endpoint names
+          shiny::textInput(
+            inputId = "endpointNames",
+            label = "Endpoints (csv)",
+            value = "Baseline,Follow-up",
+            width = "100%"
+          ),
+          # show text for endpoint
+          shiny::textInput(
+            inputId = "endpointValues",
+            label = "Endpoint times (csv)",
+            value = "0,3",
+            width = "100%"
+          ),
+          shiny::br(),
+          # alpha level for statistical significance
+          shiny::numericInput(
+            inputId = "alpha",
+            label = "Alpha level",
+            value = 0.05,
+            min = 0.001,
+            max = 0.20,
+            step = 0.01,
+            width = "100%"
+          ),
+        ),
         shiny::column(
           3,
           # add title
@@ -127,35 +189,6 @@ ui <- shiny::fluidPage(
             showValueAsTags = TRUE,
             search = TRUE,
             multiple = TRUE,
-            width = "100%"
-          ),
-          # add checkbox for between-subject factors (BGF)
-          shinyWidgets::virtualSelectInput(
-            inputId = "BGF",
-            label = "Treatment",
-            choices = NULL,
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = FALSE,
-            width = "100%"
-          ),
-          # show text input to change treatment group names
-          shiny::textInput(
-            inputId = "treatmentNames",
-            label = "Treatments (csv)",
-            value = "Control, Treatment",
-            width = "100%"
-          ),
-          # show options for control group
-          shinyWidgets::virtualSelectInput(
-            inputId = "controlgroup",
-            label = "Control group",
-            choices = NULL,
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = FALSE,
             width = "100%"
           ),
           # show maxlevels for between-subject factors
@@ -177,120 +210,67 @@ ui <- shiny::fluidPage(
           ),
         ),
         shiny::column(
-          6,
+          3,
           # add title
           shiny::h4("Table 2", style = "text-align:center"),
           # add horizontal line
           shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
-          # split into two columns
-          shiny::fluidRow(
-            shiny::column(
-              6,
-              # add checkbox for subject variables (ID)
-              shinyWidgets::virtualSelectInput(
-                inputId = "ID",
-                label = "Subject ID",
-                choices = NULL,
-                selected = NA,
-                showValueAsTags = TRUE,
-                search = TRUE,
-                multiple = FALSE,
-                width = "100%"
-              ),
-              # add checkbox for covariates (CV)
-              shinyWidgets::virtualSelectInput(
-                inputId = "CV",
-                label = "Covariates",
-                choices = NULL,
-                selected = NA,
-                showValueAsTags = TRUE,
-                search = TRUE,
-                multiple = TRUE,
-                width = "100%"
-              ),
-              # add checkbox for outcome variables (OV)
-              shinyWidgets::virtualSelectInput(
-                inputId = "OV",
-                label = "Outcome data",
-                choices = NULL,
-                selected = NA,
-                showValueAsTags = TRUE,
-                search = TRUE,
-                multiple = TRUE,
-                width = "100%"
-              ),
-              # show options for baseline data
-              shinyWidgets::virtualSelectInput(
-                inputId = "baselineVar",
-                label = "Baseline data",
-                choices = NULL,
-                selected = NA,
-                showValueAsTags = TRUE,
-                search = TRUE,
-                multiple = FALSE,
-                width = "100%"
-              ),
-              # show options for missing data
-              shinyWidgets::virtualSelectInput(
-                inputId = "missing",
-                label = "Missing data",
-                choices = c(
-                  "None",
-                  "Complete cases",
-                  "Mean imputation",
-                  "Multiple imputation"
-                ),
-                selected = NA,
-                showValueAsTags = TRUE,
-                search = TRUE,
-                multiple = FALSE,
-                width = "100%"
-              ),
-            ),
-            shiny::column(
-              6,
-              # show text input to change outcome name
-              shiny::textInput(
-                inputId = "OutcomeNames",
-                label = "Outcome",
-                value = "Outcome",
-                width = "100%"
-              ),
-              # show text for endpoint names
-              shiny::textInput(
-                inputId = "endpointNames",
-                label = "Endpoints (csv)",
-                value = "Baseline, Follow-up",
-                width = "100%"
-              ),
-              # show text for endpoint
-              shiny::textInput(
-                inputId = "endpointValues",
-                label = "Endpoint times (csv)",
-                value = "0, 3",
-                width = "100%"
-              ),
-              # number of resamples
-              shiny::numericInput(
-                inputId = "MICEresamples",
-                label = "Resamples for multiple imputation",
-                value = 50,
-                min = 1,
-                max = 100,
-                step = 1,
-                width = "100%"
-              ),
-              # alpha level for statistical significance
-              shiny::numericInput(
-                inputId = "alpha",
-                label = "Alpha level",
-                value = 0.05,
-                min = 0.001,
-                max = 0.20,
-                step = 0.01,
-                width = "100%"
-              ),
-            ),
+          # add checkbox for outcome variables (OV)
+          shinyWidgets::virtualSelectInput(
+            inputId = "OV",
+            label = "Outcome variables",
+            choices = NULL,
+            selected = NA,
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = TRUE,
+            width = "100%"
+          ),
+          # show checkbox for indicating outcomes has baseline data
+          shiny::checkboxInput(
+            inputId = "hasBaseline",
+            label = "Baseline data is available",
+            value = TRUE,
+            width = "100%"
+          ),
+          # show text input to change outcome name
+          shiny::textInput(
+            inputId = "OutcomeName",
+            label = "Outcome label",
+            value = "Outcome",
+            width = "100%"
+          ),
+          # add checkbox for covariates (CV)
+          shinyWidgets::virtualSelectInput(
+            inputId = "CV",
+            label = "Covariates",
+            choices = NULL,
+            selected = NA,
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = TRUE,
+            width = "100%"
+          ),
+          # show options for missing data
+          shinyWidgets::virtualSelectInput(
+            inputId = "missing",
+            label = "Missing data",
+            choices = c("Complete cases", "Mean imputation", "Multiple imputation"),
+            selected = "Complete cases",
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = FALSE,
+            width = "100%"
+          ),
+          # number of resamples
+          shiny::numericInput(
+            inputId = "MICEresamples",
+            label = "Resamples for multiple imputation",
+            value = 50,
+            min = 1,
+            max = 100,
+            step = 1,
+            width = "100%"
           ),
         ),
         # add column for buttons
@@ -321,18 +301,18 @@ ui <- shiny::fluidPage(
           shiny::br(),
           # add button to run analysis
           shiny::actionButton(
-            inputId = "runTable3",
+            inputId = "runFigure1",
             icon = shiny::icon("play"),
-            label = "Table 3",
+            label = "Figure 1",
             style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
           ),
           shiny::br(),
           shiny::br(),
           # add button to run analysis
           shiny::actionButton(
-            inputId = "runPlot",
+            inputId = "runTable3",
             icon = shiny::icon("play"),
-            label = "Figure 1",
+            label = "Table 3",
             style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
           ),
         ),
@@ -359,7 +339,7 @@ ui <- shiny::fluidPage(
       icon = fontawesome::fa("table"),
       shiny::br(),
       # show table of results
-      DT::dataTableOutput("table2"),
+      DT::dataTableOutput("datatable2"),
       shiny::br(),
       # download Word format
       shiny::downloadButton(
@@ -369,8 +349,19 @@ ui <- shiny::fluidPage(
       ),
     ),
     # tab for plot of results
-    shiny::tabPanel(title = list(fontawesome::fa("chart-line"), "Figure 1"), # show plot of results
-                    shiny::plotOutput("plot"), ),
+    shiny::tabPanel(
+      title = "Figure 1",
+      icon = fontawesome::fa("chart-line"),
+      # show plot of results
+      shiny::plotOutput("plot"),
+      shiny::br(),
+      # download TIFF format
+      shiny::downloadButton(
+        outputId = "downloadFigure1",
+        label = "Download Figure 1 (.TIFF)",
+        style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+      ),
+    ),
     # tab for table 3 of results
     shiny::tabPanel(
       title = "Table 3",
@@ -384,21 +375,18 @@ ui <- shiny::fluidPage(
       shiny::HTML(
         "<p>1. Use the <b>Upload</b> button to load an Excel file (.xlsx).</p>\
          <p>2. Click <b>Plan</b> to configure the statistial analysis.</p>\
-         <p>2.1 Select the following variables from the dataset:</p>\
+         <p>2.1 Set the study design:</p>\
          <ul>\
-         <li><i>Baseline variables</i></li>\
-         <li><i>Subject ID</i></li>\
          <li><i>Treatment</i></li>\
          <li><i>Control group</i></li>\
-         <li><i>Covariates</i></li>\
-         <li><i>Outcome data</i></li>\
-         <li><i>Baseline data</i></li>\
-         <li><i>Missing data handling method</i></li>\
+         <li><i>Endpoints</i></li>\
          </ul>\
          <p>2.2. Type specific labels for the analysis:</p>\
          <ul>\
+         <li><i>Covariates</i></li>\
+         <li><i>Outcome</i></li>\
+         <li><i>Missing data handling method</i></li>\
          <li><i>Treatments</i></li>\
-         <li><i>Endpoints</i></li>\
          <li><i>Endopont values</i></li>\
          <li><i>Resamples</i></li>\
          <li><i>Alpha level</i></li>\
@@ -470,6 +458,15 @@ server <- function(input, output, session) {
     values$upload_state <- 'restart'
   })
   
+  # enable resamples if multiple imputation is differente from complete cases
+  shiny::observeEvent(input$missing, {
+    if (input$missing == "Multiple imputation") {
+      shinyjs::enable("MICEresamples")
+    } else {
+      shinyjs::disable("MICEresamples")
+    }
+  })
+  
   rawdata <- shiny::reactive({
     if (is.null(values$upload_state)) {
       return(NULL)
@@ -491,12 +488,6 @@ server <- function(input, output, session) {
     # remove empty rows
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
     
-    # update list of subject variables from rawdata header
-    shinyWidgets::updateVirtualSelect(
-      inputId = "ID",
-      choices = colnames(rawdata),
-      selected = NA
-    )
     # update list of between-subject variables from rawdata header
     shinyWidgets::updateVirtualSelect(
       inputId = "BGF",
@@ -535,12 +526,6 @@ server <- function(input, output, session) {
     )
   })
   
-  # show selected ID in IDtable
-  output[["IDtable"]] <- shiny::renderTable({
-    shiny::req(input[["ID"]])
-    data.frame("Subject ID" = input[["ID"]], check.names = FALSE)
-  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
-  
   # show selected BGF in BGFtable
   output[["BGFtable"]] <- shiny::renderTable({
     shiny::req(input[["BGF"]])
@@ -565,16 +550,10 @@ server <- function(input, output, session) {
     data.frame("Outcome data" = input[["OV"]], check.names = FALSE)
   }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
   
-  # show selected baseline variable
-  output[["baselineVar"]] <- shiny::renderTable({
-    shiny::req(input[["baselineVar"]])
-    data.frame("Baseline" = input[["baselineVar"]], check.names = FALSE)
-  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
-  
   # show selected endpoints
   output[["Endtable"]] <- shiny::renderTable({
     shiny::req(input[["endpointNames"]])
-    data.frame("Endpoints" = strsplit(input[["endpointNames"]], ", ")[[1]],
+    data.frame("Endpoints" = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
                check.names = FALSE)
   }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
   
@@ -582,16 +561,9 @@ server <- function(input, output, session) {
   shiny::observeEvent(input[["treatmentNames"]], {
     shinyWidgets::updateVirtualSelect(
       inputId = "controlgroup",
-      choices = strsplit(input[["treatmentNames"]], ", ")[[1]],
+      choices = strsplit(trimws(input[["treatmentNames"]], which = "both"), ",")[[1]],
       selected = NA
     )
-  })
-  
-  # update list of baseline data after loading choices for OV variables
-  shiny::observeEvent(input[["OV"]], {
-    shinyWidgets::updateVirtualSelect(inputId = "baselineVar",
-                                      choices = input[["OV"]],
-                                      selected = NA)
   })
   
   # change tab on runTable1 click
@@ -606,6 +578,13 @@ server <- function(input, output, session) {
     shiny::updateTabsetPanel(session = session,
                              inputId = "tabs",
                              selected = "Table 2")
+  })
+  
+  # change tab on runFigure 1 click
+  shiny::observeEvent(input[["runFigure1"]], {
+    shiny::updateTabsetPanel(session = session,
+                             inputId = "tabs",
+                             selected = "Figure 1")
   })
   
   # run table 1 on runTable1 click ------------------------------------------------
@@ -630,7 +609,7 @@ server <- function(input, output, session) {
         dplyr::mutate(TREATMENT = factor(
           x = rawdata[[input[["BGF"]]]],
           levels = unique(rawdata[[input[["BGF"]]]]),
-          labels = strsplit(input[["treatmentNames"]], ", ")[[1]]
+          labels = strsplit(trimws(input[["treatmentNames"]], which = "both"), ",")[[1]]
         ))
     }
     
@@ -639,7 +618,7 @@ server <- function(input, output, session) {
       variables = input[["BV"]],
       bw.factor = rawdata$TREATMENT,
       max.levels = as.numeric(input[["maxlevels"]]),
-      alpha = input[["alpha"]],
+      alpha = as.numeric(input[["alpha"]]),
       n.digits = 2
     )
     
@@ -649,7 +628,7 @@ server <- function(input, output, session) {
     }
     
     title <- "Table 1"
-    caption <- "Table 1: Between-group descriptive analysis [mean (SD) or count (%)]."
+    caption <- "Table 1: Between-group descriptive analysis."
     
     my_summary_to_save <-
       results %>%
@@ -664,6 +643,7 @@ server <- function(input, output, session) {
       officer::read_docx() %>%
       officer::body_add_par(caption, style = "Normal") %>%
       flextable::body_add_flextable(my_summary_to_save) %>%
+      officer::body_add_par("Mean (SD) or count (%)", style = "Normal") %>%
       print(target = file.path(dir.name, "Table 1.docx"))
     
     # output results
@@ -695,13 +675,135 @@ server <- function(input, output, session) {
     }
   )
   
-  # run table 2
-  output[["table2"]] <- DT::renderDT({
+  # run table 2 on runTable2 click ------------------------------------------------
+  table2 <- shiny::reactive({
     shiny::req(rawdata())
-    shiny::req(input[["BV"]])
     shiny::req(input[["BGF"]])
-    shiny::req(input[["CV"]])
     shiny::req(input[["OV"]])
+
+    # read file
+    rawdata <- readxl::read_xlsx(rawdata())
+    # remove empty columns
+    rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
+    # remove empty rows
+    rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
+    
+    # select columns from checked variables
+    rawdata <- rawdata[, unique(c(input[["BGF"]], input[["CV"]], input[["OV"]]))]
+    
+    # add column based on treatment group names per user input
+    if (!is.null(input[["BGF"]])) {
+      rawdata <- rawdata %>%
+        dplyr::mutate(TREATMENT = factor(
+          x = rawdata[[input[["BGF"]]]],
+          levels = unique(rawdata[[input[["BGF"]]]]),
+          labels = strsplit(trimws(input[["treatmentNames"]], which = "both"), ",")[[1]]
+        ))
+    }
+    
+    # check if data has baseline from checkbox
+    if(input[["hasBaseline"]]){
+      results <- TABLE.2a(
+        dataset = rawdata,
+        variables = input[["OV"]],
+        covariate = input[["CV"]],
+        bw.factor = rawdata$TREATMENT,
+        control.g = input[["controlgroup"]],
+        wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
+        missing = tolower(gsub(" ", ".", input[["missing"]])),
+        m.imputations = as.numeric(input[["MICEresamples"]]),
+        alpha = as.numeric(input[["alpha"]]),
+        n.digits = 2
+      )
+    } else {
+      # run table 2b
+    }
+    return(results)
+  })
+  
+  # show table 2
+  output[["datatable2"]] <- DT::renderDT({
+    shiny::req(table2())
+    results.mix <- table2()$mix.mod.res %>%
+      as.data.frame(check.names = FALSE) %>%
+      dplyr::mutate(Variables = rownames(table2()$mix.mod.res))
+
+    results.wt <- table2()$wt.diff %>%
+      as.data.frame(check.names = FALSE) %>%
+      dplyr::mutate(Variables = rownames(table2()$wt.diff))
+
+    results.bw <- table2()$bw.diff %>%
+      as.data.frame(check.names = FALSE) %>%
+      dplyr::mutate(Variables = rownames(table2()$bw.diff))
+
+    results <- dplyr::bind_rows(results.mix, results.wt, results.bw) %>% as.data.frame(check.names = FALSE)
+    
+    # last column first, then the others
+    results <- results[, c(ncol(results), 1:(ncol(results) - 1))]
+    
+    # remove names
+    rownames(results) <- rep(NULL, nrow(results))
+    
+    # use outcome names
+    results[, 1] <- gsub("Outcome", input[["OutcomeName"]], results[, 1])
+    
+    title <- "Table 2"
+    caption <- "Table 2: Two-way linear mixed model analysis."
+    
+    my_summary_to_save <-
+      results %>%
+      as.data.frame(check.names = FALSE) %>%
+      flextable::regulartable() %>%
+      flextable::autofit()
+    
+    # create Word doc from results dataframe
+    section_properties <- officer::prop_section(
+      page_size = officer::page_size(orient = "landscape"),
+      type = "continuous"
+    )
+    
+    table_2 <-
+      officer::read_docx() %>%
+      officer::body_add_par(caption, style = "Normal") %>%
+      flextable::body_add_flextable(my_summary_to_save) %>%
+      officer::body_add_par("SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).", style = "Normal") %>%
+      officer::body_end_block_section(officer::block_section(section_properties)) %>%
+      print(target = file.path(dir.name, "Table 2.docx"))
+    
+    # output results
+    DT::datatable(
+      data = results,
+      caption = caption,
+      options = list(
+        pageLength = nrow(results),
+        width = "100%",
+        columnDefs = list(list(
+          className = 'dt-center', targets = 1:ncol(results),
+          defaultContent = "-",
+          targets = "_all"
+        )),
+        dom = 't'
+      ),
+      colnames = NULL,
+      rownames = FALSE
+    )
+  }, server = FALSE)
+  
+  # Download Handler
+  output$downloadTable2 <- shiny::downloadHandler(
+    filename = function() {
+      paste0("Table 2.docx")
+    },
+    content = function(file) {
+      file.copy(from = file.path(dir.name, "Table 2.docx"), to = file)
+    }
+  )
+  
+  # run Figure 1
+  output[["plot"]] <- shiny::renderPlot({
+    shiny::req(rawdata())
+    shiny::req(input[["OV"]])
+    shiny::req(input[["BGF"]])
     
     # read file
     rawdata <- readxl::read_xlsx(rawdata())
@@ -711,79 +813,48 @@ server <- function(input, output, session) {
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
     
     # select columns from checked variables
-    rawdata <- rawdata[, unique(c(input[["BV"]], input[["BGF"]]))]
+    rawdata <- rawdata[, unique(c(input[["BGF"]], input[["OV"]]))]
     
-    # add column based on treatment group names per use input
+    # add column based on treatment group names per user input
     if (!is.null(input[["BGF"]])) {
       rawdata <- rawdata %>%
         dplyr::mutate(TREATMENT = factor(
           x = rawdata[[input[["BGF"]]]],
           levels = unique(rawdata[[input[["BGF"]]]]),
-          labels = strsplit(input[["treatmentNames"]], ", ")[[1]]
+          labels = strsplit(trimws(input[["treatmentNames"]], which = "both"), ",")[[1]]
         ))
     }
     
-    results <- TABLE.2a(
-      dataset = rawdata$mix.mod.res,
+    FIGURE.1(
+      dataset = rawdata,
       variables = input[["OV"]],
-      covariate = as.data.frame(rawdata[, input[["CV"]]], check.names = FALSE),
+      covariate = input[["CV"]],
       bw.factor = rawdata$TREATMENT,
-      control.g = input[["controlgroup"]],
-      wt.labels = input[["endpointNames"]],
+      wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
       missing = tolower(gsub(" ", ".", input[["missing"]])),
-      m.imputations = input[["MICEresamples"]],
-      alpha = input[["alpha"]],
-      n.digits = 2
+      m.imputations = as.numeric(input[["MICEresamples"]]),
+      xlabs = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
+      ylab = input[["OutcomeName"]],
+      alpha = as.numeric(input[["alpha"]])
     )
     
-    title <- "Table 2a"
-    caption <- "Table 2a: Two-way linear mixed model analysis."
-    
-    my_summary_to_save <-
-      results$mix.mod.res %>%
-      as.data.frame(check.names = FALSE) %>%
-      dplyr::mutate(Variables = rownames(results)) %>%
-      dplyr::select(Variables, dplyr::everything()) %>%
-      flextable::regulartable()   %>%
-      flextable::autofit()
-    
-    # create Word doc from results dataframe
-    table_2 <-
-      officer::read_docx() %>%
-      officer::body_add_par(caption, style = "Normal") %>%
-      flextable::body_add_flextable(my_summary_to_save) %>%
-      print(target = file.path(dir.name, "Table 2.docx"))
-    
-    # output results
-    DT::datatable(
-      data = results$mix.mod.res,
-      caption = caption,
-      extensions = c('ColReorder'),
-      options = list(
-        searching = FALSE,
-        colReorder = TRUE,
-        pageLength = nrow(results),
-        width = "100%",
-        scrollX = TRUE,
-        columnDefs = list(list(
-          className = 'dt-center', targets = 1:ncol(results)
-        )),
-        dom = 't'
-      )
-    )
+    # save plot
+    dev.copy(tiff, file = file.path(dir.name, "Figure 1.tiff"), width = 7, height = 5, units = "in", res = 300)
+    dev.off()
   })
   
-  # Download Handler
-  output$downloadTable2 <- shiny::downloadHandler(
+  # download Figure 1
+  output$downloadFigure1 <- shiny::downloadHandler(
     filename = function() {
-      paste0("Table 2a.docx")
+      paste0("Figure 1.tiff")
     },
     content = function(file) {
-      file.copy(from = file.path(dir.name, "Table 2a.docx"), to = file)
+      file.copy(from = file.path(dir.name, "Figure 1.tiff"), to = file)
     }
   )
   
   # run table 3
+  
 }
 
 # Run the application

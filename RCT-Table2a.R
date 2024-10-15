@@ -33,7 +33,7 @@ TABLE.2a <-
     }
     
     # confirma a estrutura dos dados
-    dataset <- data.frame(dataset)
+    dataset <- data.frame(dataset, check.names = FALSE)
     bw.factor <- factor(bw.factor, exclude = NULL)
     
     # remove variáveis não usadas
@@ -91,10 +91,11 @@ TABLE.2a <-
     OUTCOME_ORIG <- c(as.matrix(dataset))
     OUTCOME_M <- c(as.matrix(dataset))
     COVARIATE_M <- c()
-    if (!is.null(covariate)) {
+    if (!sjmisc::is_empty(covariate)) {
       for (i in 1:length(wt.labels)) {
         COVARIATE_M <- rbind(COVARIATE_M, covariate)
       }
+      names(COVARIATE_M) <- names(covariate)
     }
     
     # decide como lidar com os dados perdidos
@@ -112,11 +113,12 @@ TABLE.2a <-
       OUTCOME_ORIG <- c(as.matrix(dataset))
       OUTCOME_M <- c(as.matrix(dataset))
       COVARIATE_M <- c()
-      if (!is.null(covariate)) {
+      if (!sjmisc::is_empty(covariate)) {
         for(i in 1:length(wt.labels)){
           COVARIATE_M <- rbind(COVARIATE_M, covariate)
         }
       }
+      names(COVARIATE_M) <- names(covariate)
     }
     
     if (missing == "mean.imputation") {
@@ -132,7 +134,7 @@ TABLE.2a <-
       }
       OUTCOME_M <- c(as.matrix(dataset))
       COVARIATE_M <- c()
-      if (!is.null(covariate)) {
+      if (!sjmisc::is_empty(covariate)) {
         for(i in 1:length(wt.labels)){
           for(j in 1:ncol(covariate)){
             covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
@@ -140,6 +142,7 @@ TABLE.2a <-
           COVARIATE_M <- rbind(COVARIATE_M, covariate)
         }
       }
+      names(COVARIATE_M) <- names(covariate)
     }
     
     if (missing == "multiple.imputation") {
@@ -160,7 +163,7 @@ TABLE.2a <-
                                TIME_M == levels(TIME_M)[1])])
       # mean imputation of covariate data if any
       COVARIATE_M <- c()
-      if (!is.null(covariate)) {
+      if (!sjmisc::is_empty(covariate)) {
         for(i in 1:length(wt.labels)){
           for(j in 1:ncol(covariate)){
             covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
@@ -171,18 +174,18 @@ TABLE.2a <-
     }
     
     # cria o dataset com os valores após imputação ou não de dados
-    if (!is.null(covariate)) {
-      data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, COVARIATE_M)
+    if (!sjmisc::is_empty(covariate)) {
+      data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, COVARIATE_M, check.names = FALSE)
     } else {
-      data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M)
+      data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, check.names = FALSE)
     }
     
     # fit linear mixed model
     if (missing != "multiple.imputation") {
-      if (!is.null(covariate)) {
+      if (!sjmisc::is_empty(covariate)) {
         mod1 <-
           nlme::lme(
-            fixed = as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))),
+            fixed = as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(names(COVARIATE_M), collapse = " + "))),
             random = ~ 1 | ID_M / TIME_M,
             data = data_M
           )
@@ -208,17 +211,17 @@ TABLE.2a <-
           seed = 0,
           print = FALSE
         )
-      if (!is.null(covariate)) {
+      if (!sjmisc::is_empty(covariate)) {
         mod1 <-
           with(
             data = imp,
             nlme::lme(
-              fixed = as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))),
+              fixed = as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(names(COVARIATE_M), collapse = " + "))),
               random = ~ 1 | ID_M / TIME_M
             )
           )
         mod1.aov <-
-          quiet(miceadds::mi.anova(imp, formula = paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))))
+          quiet(miceadds::mi.anova(imp, formula = paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(names(COVARIATE_M), collapse = " + "))))
       } else {
         mod1 <-
           with(data = imp,
@@ -265,6 +268,7 @@ TABLE.2a <-
           ))
       }
     }
+    
     mix.mod.res[1, ] <- rep(wt.labels, each = nlevels(bw.factor))
     mix.mod.res[2, ] <- rep(levels(bw.factor), length(wt.labels))
     mix.mod.res[3, ] <- N
@@ -388,14 +392,14 @@ TABLE.2a <-
         matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, i]
       CHANGE_M <- FOLLOWUP_M - BASELINE_M
       if (missing != "multiple.imputation") {
-        if (!is.null(covariate)) {
+        if (!sjmisc::is_empty(covariate)) {
           df <-
             data.frame(ID,
                        bw.factor,
                        BASELINE_M,
-                       FOLLOWUP_M,
                        CHANGE_M,
-                       COVARIATE_M)
+                       COVARIATE_M,
+                       check.names = FALSE)
           mod2 <-
             nlme::lme(
               as.formula(paste0("CHANGE_M ~ bw.factor * BASELINE_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))),
@@ -403,7 +407,11 @@ TABLE.2a <-
               data = df
             )
         } else {
-          df <- data.frame(ID, bw.factor, BASELINE_M, FOLLOWUP_M, CHANGE_M)
+          df <- data.frame(ID,
+                           bw.factor,
+                           BASELINE_M,
+                           CHANGE_M,
+                           check.names = FALSE)
           mod2 <-
             nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M,
                 random = ~ 1 | ID,
@@ -420,20 +428,24 @@ TABLE.2a <-
           round(confint(mod2.sum, level = 1 - alpha)$confint[, "upr"], digits = n.digits)
         p.value <- summary(mod2)$tTable[, "p-value"][2]
       } else {
-        if (!is.null(covariate)) {
+        if (!sjmisc::is_empty(covariate)) {
           df <-
             data.frame(ID,
                        bw.factor,
                        BASELINE_M,
-                       FOLLOWUP_M,
                        CHANGE_M,
-                       COVARIATE_M)
+                       COVARIATE_M,
+                       check.names = FALSE)
         } else {
-          df <- data.frame(ID, bw.factor, BASELINE_M, FOLLOWUP_M, CHANGE_M)
+          df <- data.frame(ID,
+                           bw.factor,
+                           BASELINE_M,
+                           CHANGE_M,
+                           check.names = FALSE)
         }
+        # https://simongrund1.github.io/posts/anova-with-multiply-imputed-data-sets/
         ini <- mice::mice(data = df, maxit = 0)
         pred <- ini$pred
-        pred["FOLLOWUP_M", "ID"] <- -2
         pred["CHANGE_M", "ID"] <- -2
         imp <-
           mice::mice(
@@ -444,10 +456,20 @@ TABLE.2a <-
             seed = 0,
             print = FALSE
           )
+        # create a list of completed data sets
         implist <- mitml::mids2mitml.list(imp)
-        mod2 <- with(data = implist, lme(CHANGE_M ~ bw.factor + BASELINE_M, random = ~ 1 | ID))
+        mod2 <- with(data = implist, nlme::lme(
+          CHANGE_M ~ bw.factor + BASELINE_M, random = ~ 1 | ID, data = implist)
+          )
+        
+        print("OK 1")
+        
+        # NOT WORKING
         fit2.pairwise <-
           lapply(mod2, multcomp::glht, linfct = multcomp::mcp(bw.factor = "Tukey"))
+        
+        print("OK 2")
+        
         fit2.pairwise <- mice::as.mitml.result(fit2.pairwise)
         mod2.sum <- mitml::testEstimates(fit2.pairwise)
         names <- rownames(mitml::confint.mitml.testEstimates(mod2.sum, level = 1 - alpha))
@@ -478,7 +500,7 @@ TABLE.2a <-
       group_data <- as.character(bw.factor)
       group_data[bw.factor == bw.factor] <- 0
       group_data[bw.factor != control.g] <- 1
-      data <- data.frame(group_data, CHANGE_M)
+      data <- data.frame(group_data, CHANGE_M, check.names = FALSE)
       smd <- stddiff::stddiff.numeric(data = data,
                              gcol = 1,
                              vcol = 2)
