@@ -1,124 +1,80 @@
-TABLE.1 <- function(dataset,
-                    variables,
-                    bw.factor,
-                    max.levels,
-                    alpha,
-                    n.digits) {
-  # LAST MODIFIED: AUG 24, 2022
+TABLE.1 <- function(dataset, variables, bw.factor, max.levels = 2, alpha = 0.05, n.digits = 3) {
+  # Validate inputs
+  if (is.null(dataset) || ncol(dataset) == 0) stop("Dataset is empty or invalid.")
+  if (!all(variables %in% colnames(dataset))) stop("Some variables are not in the dataset.")
+  if (length(unique(bw.factor)) < 2) stop("Between-group factor must have at least two levels.")
   
-  # This function outputs a descriptive table, by groups [continuous: mean (SD); categorical: n (%)].
-  # dataset: a 2D dataframe (rows: participants, columns: variables)
-  # variables: a 1D variable labels
-  # bw.factor: a 1D between-group factor
-  # max.levels: the maximum number of levels in a categorical variable
-  # alpha: the type-I error level
-  # n.digits: number of decimal places to be presented for continuous variables
-  
-  # default values
-  if (max.levels == "") {
-    max.levels = 2
-  }
-  if (alpha == "") {
-    alpha = 0.05
-  }
-  if (n.digits == "") {
-    n.digits = 3
-  }
-  
-  # confirma a estrutura dos dados
   dataset <- data.frame(dataset, check.names = FALSE)
   bw.factor <- factor(bw.factor, exclude = NULL)
-  max.levels <- as.numeric(max.levels)
   
-  # inicializa a matriz de resultados descritivos (+1 coluna para identificar os níveis das variáveis categóricas)
-  descript.res <- matrix("",
-                         nrow = length(variables),
-                         ncol = 1 + nlevels(bw.factor) + 1)
-  colnames(descript.res) <- c("Levels", levels(bw.factor), "P-value")
-  rownames(descript.res) <- variables
-  
-  # analisa as variáveis selecionadas
-  for (i in 1:length(variables)) {
-    
-    # analisa as variaveis categoricas
-    if (nlevels(factor(dataset[, i], exclude = NULL)) <= max.levels) {
-      freq.abs <- format(round(t(table(
-        factor(dataset[, i], exclude = NULL), bw.factor
-      )), digits = 0), nsmall = 0)
-      freq.rel <- format(round(t(table(
-        factor(dataset[, i], exclude = NULL), bw.factor
-      )) / colSums(table(
-        factor(dataset[, i], exclude = NULL), bw.factor
-      )) * 100, digits = n.digits), nsmall = n.digits)
-      freq <- paste(freq.abs,
-                    rep(" (", length(freq.abs)),
-                    freq.rel,
-                    rep("%)", length(freq.abs)),
-                    sep = "")
-      # compara os grupos
-      p.value <- chisq.test(factor(dataset[, i], exclude = NULL), bw.factor, correct = TRUE)$p.value
-      flag <- ""
-      if (p.value < alpha) {
-        flag <- "*"
-      }
-      if (p.value < 0.001) {
-        p.value <- "<0.001*"
-      }
-      # preenche a tabela de resultados
-      tempdata <- cbind(levels(factor(dataset[, i], exclude = NULL)),
-                        matrix(freq, nrow = nlevels(factor(
-                          dataset[, i], exclude = NULL
-                        )), byrow = TRUE),
-                        c(paste(
-                          format(round(p.value, digits = n.digits), nsmall = n.digits), flag, sep = ""
-                        ), rep("", nlevels(
-                          factor(dataset[, i], exclude = NULL)
-                        ))))
-      rownames(tempdata) <- c(colnames(dataset)[i], rep("", nlevels(factor(
-        dataset[, i], exclude = NULL
-      )) - 1))
-      # sinaliza os dados perdidos
-      tempdata[is.na(tempdata)] <- "Missing"
-      descript.res <- rbind(descript.res, tempdata)
+  # Calculate total rows for descript.res
+  total_rows <- sum(sapply(variables, function(var) {
+    if (is.factor(dataset[[var]]) || (is.numeric(dataset[[var]]) && length(unique(dataset[[var]])) <= max.levels)) {
+      length(unique(dataset[[var]], na.rm = TRUE))  # Add rows for each level of a categorical variable
+    } else {
+      1  # Add one row for a continuous variable
     }
+  }))
+  
+  # Initialize the result matrix
+  descript.res <- matrix("", nrow = total_rows, ncol = nlevels(bw.factor) + 4)  # +1 for Missing column
+  colnames(descript.res) <- c("Variable", "Levels", levels(bw.factor), "Missing", "P-value")
+  
+  row_idx <- 1  # Row index for populating the matrix
+  
+  for (var in variables) {
+    data_col <- dataset[[var]]
     
-    # analisa as variaveis continuas
-    else if (nlevels(factor(dataset[, i], exclude = NULL)) > max.levels) {
-      # calcula os parametros descritivos
-      descript.res[i, 2:(1 + nlevels(bw.factor))] <- paste(
-        format(round(
-          tapply(as.numeric(dataset[, i]), bw.factor, mean, na.rm = TRUE),
-          digits = n.digits
-        ), nsmall = n.digits),
-        " (",
-        format(round(
-          tapply(as.numeric(dataset[, i]), bw.factor, sd, na.rm = TRUE), digits = n.digits
-        ), nsmall = n.digits),
-        ")",
-        sep = ""
-      )
-      # compara os grupos
-      p.value <- anova(lm(as.numeric(dataset[, i]) ~ bw.factor))[[5]][1]
-      flag <- ""
-      if (p.value < alpha) {
-        flag <- "*"
+    # Calculate missing values
+    missing_counts <- tapply(is.na(data_col), bw.factor, sum)
+    total_missing <- paste(sum(is.na(data_col)), " (", round(sum(is.na(data_col)) / length(data_col) * 100, 1), "%)", sep = "")
+    
+    # Check for categorical variables (including numeric with few unique values)
+    if (is.factor(data_col) || (is.numeric(data_col) && length(unique(data_col, na.rm = TRUE)) <= max.levels)) {
+      # recode NA to Missing
+      data_col[is.na(data_col)] <- "Missing"
+      data_col <- factor(data_col, exclude = NULL)  # Convert numeric variable to factor
+      levels_data <- levels(data_col)
+      freq_table <- table(factor(data_col, levels = levels_data, exclude = NULL), bw.factor)
+      p.value <- suppressWarnings(chisq.test(freq_table, simulate.p.value = TRUE)$p.value)
+      
+      for (lvl in levels_data) {
+        # Handle missing levels
+        if (lvl %in% rownames(freq_table)) {
+          freq_row <- sapply(seq_len(nlevels(bw.factor)), function(idx) {
+            paste0(freq_table[lvl, idx], " (", round((freq_table[lvl, idx] / sum(freq_table[, idx])) * 100, n.digits), "%)")
+          })
+        } else {
+          freq_row <- rep("0 (0.00%)", nlevels(bw.factor))
+        }
+        
+        # Populate rows
+        if (lvl == head(levels_data, 1)) {
+          descript.res[row_idx, ] <- c(var, lvl, freq_row, total_missing, formatC(p.value, format = "f", digits = n.digits))
+        } else {
+          descript.res[row_idx, ] <- c("", lvl, freq_row, "", "")
+        }
+        row_idx <- row_idx + 1
       }
-      if (p.value < 0.001) {
-        p.value <- "<0.001*"
-      }
-      # preenche a tabela de resultados
-      descript.res[i, dim(descript.res)[2]] <- paste(format(round(p.value, digits = n.digits), nsmall = n.digits), flag, sep = "")
+    }
+    # Check for numerical variables
+    else if (is.numeric(data_col)) {
+      # Handle descriptive statistics
+      mean_sd <- tapply(data_col, bw.factor, function(x) {
+        paste(round(mean(x, na.rm = TRUE), n.digits), " (", round(sd(x, na.rm = TRUE), n.digits), ")", sep = "")
+      })
+      p.value <- anova(lm(data_col ~ bw.factor))$`Pr(>F)`[1]
+      descript.res[row_idx, ] <- c(var, "", mean_sd, total_missing, formatC(p.value, format = "f", digits = n.digits))
+      row_idx <- row_idx + 1
+    }
+    # Handle unsupported data types
+    else {
+      stop(paste("Unsupported variable type for:", var))
     }
   }
   
-  # remove as variaveis nao analisadas
-  descript.res <- descript.res[!apply(descript.res == "", 1, all), ]
+  # Convert to data frame for output
+  descript.res <- as.data.frame(descript.res, check.names = FALSE, row.names = NULL)
   
-  # apresenta os resultados na tela
-  # print("Table 1: Between-group descriptive analysis [mean (SD) or count (%)].",
-  #       quote = FALSE)
-  # print(descript.res, quote = FALSE)
-  # print("", quote = FALSE)
-  # print("", quote = FALSE)
   return(descript.res)
 }

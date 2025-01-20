@@ -13,11 +13,11 @@ library(dplyr)
 library(htmltools)
 
 # source all scripts
-# source("RCT-packages.R", local = TRUE) # to install packages
-source("RCT-Figure1.R", local = TRUE) # numeric variables, plot of descriptive analysis (mean and CI)
-source("RCT-Table1.R", local = TRUE) # numeric and ordinal variables, descriptive analysis, between-factor
+# source("RCT-packages.R", local = TRUE) # to install packages (not required for Shiny app)
+source("RCT-Table1.R", local = TRUE) # numeric and categorical variables, descriptive analysis, between-factor
 source("RCT-Table2a.R", local = TRUE) # numeric variables, linear mixed model analysis, between- AND within-factor WITH baseline adjustment
 source("RCT-Table2b.R", local = TRUE) # numeric variables, linear mixed model analysis, between- AND within-factor WITHOUT baseline adjustment
+source("RCT-Figure2.R", local = TRUE) # numeric variables, plot of descriptive analysis (mean and CI)
 source("RCT-Table3.R", local = TRUE) #  ordinal variables, ridit analysis, ONLY within-factor
 source("RCT-Missingness.R", local = TRUE) # missing data analysis
 
@@ -301,9 +301,9 @@ ui <- shiny::fluidPage(
           shiny::br(),
           # add button to run analysis
           shiny::actionButton(
-            inputId = "runFigure1",
+            inputId = "runFigure2",
             icon = shiny::icon("play"),
-            label = "Figure 1",
+            label = "Figure 2",
             style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
           ),
           shiny::br(),
@@ -350,15 +350,15 @@ ui <- shiny::fluidPage(
     ),
     # tab for plot of results
     shiny::tabPanel(
-      title = "Figure 1",
+      title = "Figure 2",
       icon = fontawesome::fa("chart-line"),
       # show plot of results
       shiny::plotOutput("plot"),
       shiny::br(),
       # download TIFF format
       shiny::downloadButton(
-        outputId = "downloadFigure1",
-        label = "Download Figure 1 (.TIFF)",
+        outputId = "downloadFigure2",
+        label = "Download Figure 2 (.TIFF)",
         style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
       ),
     ),
@@ -394,8 +394,8 @@ ui <- shiny::fluidPage(
          <p>3. Click <b>Preview</b> to visualize the data.</p>\
          <p>3.1. Click <b>Table 1</b> to visualize the baseline between-group results.</p>\
          <p>3.2. Click <b>Table 2</b> to visualize the results within- and between-group results.</p>\
-         <p>3.3. Click <b>Table 3</b> to visualize the results within- and between-group results without baseline.</p>\
-         <p>3.4. Click <b>Figure 1</b> to visualize the results in graphical format.</p>\
+         <p>3.3. Click <b>Figure 2</b> to visualize the results in graphical format.</p>\
+         <p>3.4. Click <b>Table 3</b> to visualize the results within- and between-group results without baseline.</p>\
          <p>4. Click <b>restart</b> icon before running new analisys.",
       ),
     ),
@@ -487,7 +487,9 @@ server <- function(input, output, session) {
     rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
     # remove empty rows
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
-    
+    # clean variable names
+    colnames(rawdata) <- janitor::make_clean_names(colnames(rawdata))
+
     # update list of between-subject variables from rawdata header
     shinyWidgets::updateVirtualSelect(
       inputId = "BGF",
@@ -519,7 +521,8 @@ server <- function(input, output, session) {
       options = list(
         dom = 'tipr',
         searching = FALSE,
-        pageLength = 15,
+        pageLength = 10,
+        autoWidth = TRUE,
         width = "100%",
         scrollX = TRUE
       )
@@ -580,11 +583,11 @@ server <- function(input, output, session) {
                              selected = "Table 2")
   })
   
-  # change tab on runFigure 1 click
-  shiny::observeEvent(input[["runFigure1"]], {
+  # change tab on runFigure 2 click
+  shiny::observeEvent(input[["runFigure2"]], {
     shiny::updateTabsetPanel(session = session,
                              inputId = "tabs",
-                             selected = "Figure 1")
+                             selected = "Figure 2")
   })
   
   # run table 1 on runTable1 click ------------------------------------------------
@@ -599,6 +602,8 @@ server <- function(input, output, session) {
     rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
     # remove empty rows
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
+    # clean variable names
+    colnames(rawdata) <- janitor::make_clean_names(colnames(rawdata))
     
     # select columns from checked variables
     rawdata <- rawdata[, unique(c(input[["BV"]], input[["BGF"]]))]
@@ -630,20 +635,33 @@ server <- function(input, output, session) {
     title <- "Table 1"
     caption <- "Table 1: Between-group descriptive analysis."
     
+    # Define text styles for caption and footnotes
+    caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
+    footnote_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
+    
+    # Generate and format the flextable
     my_summary_to_save <-
       results %>%
-      as.data.frame(check.names = FALSE) %>%
-      dplyr::mutate(Variables = rownames(results)) %>%
-      dplyr::select(Variables, dplyr::everything()) %>%
-      flextable::regulartable()   %>%
-      flextable::autofit()
+      as.data.frame(check.names = FALSE, row.names = NULL) %>%
+      flextable::regulartable() %>%
+      flextable::autofit() %>%
+      flextable::font(fontname = "Times New Roman", part = "all") %>%
+      flextable::fontsize(size = 12, part = "all")
     
-    # create Word doc from results dataframe
+    # Create Word document with formatted caption, table, and footnote
     table_1 <-
       officer::read_docx() %>%
-      officer::body_add_par(caption, style = "Normal") %>%
+      officer::body_add_fpar(
+        officer::fpar(
+          officer::ftext(caption, prop = caption_style)
+        )
+      ) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
-      officer::body_add_par("Mean (SD) or count (%)", style = "Normal") %>%
+      officer::body_add_fpar(
+        officer::fpar(
+          officer::ftext("Mean (SD) or count (%)", prop = footnote_style)
+        )
+      ) %>%  # Add footnote
       print(target = file.path(dir.name, "Table 1.docx"))
     
     # output results
@@ -657,12 +675,16 @@ server <- function(input, output, session) {
         pageLength = nrow(results),
         width = "100%",
         scrollX = TRUE,
-        columnDefs = list(list(
-          className = 'dt-center', targets = 1:ncol(results)
-        )),
+        columnDefs = list(
+          list(className = 'dt-center', targets = 1:ncol(results)),
+          list(visible = FALSE, targets = 0)
+          ),
         dom = 't'
       )
-    )
+    ) %>%
+      DT::formatStyle(columns = 1, fontWeight = "bold") %>%
+      DT::formatStyle(columns = 2, fontStyle = "italic") %>%
+      DT::formatStyle(columns = 3:ncol(results), textAlign = "right")
   })
   
   # Download Handler
@@ -687,6 +709,8 @@ server <- function(input, output, session) {
     rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
     # remove empty rows
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
+    # clean variable names
+    colnames(rawdata) <- janitor::make_clean_names(colnames(rawdata))
     
     # select columns from checked variables
     rawdata <- rawdata[, unique(c(input[["BGF"]], input[["CV"]], input[["OV"]]))]
@@ -811,7 +835,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # run Figure 1
+  # run Figure 2
   output[["plot"]] <- shiny::renderPlot({
     shiny::req(rawdata())
     shiny::req(input[["OV"]])
@@ -823,6 +847,8 @@ server <- function(input, output, session) {
     rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
     # remove empty rows
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
+    # clean variable names
+    colnames(rawdata) <- janitor::make_clean_names(colnames(rawdata))
     
     # select columns from checked variables
     rawdata <- rawdata[, unique(c(input[["BGF"]], input[["OV"]]))]
@@ -837,7 +863,7 @@ server <- function(input, output, session) {
         ))
     }
     
-    FIGURE.1(
+    FIGURE.2(
       dataset = rawdata,
       variables = input[["OV"]],
       covariate = input[["CV"]],
@@ -851,17 +877,17 @@ server <- function(input, output, session) {
     )
     
     # save plot
-    dev.copy(tiff, file = file.path(dir.name, "Figure 1.tiff"), width = 7, height = 5, units = "in", res = 300)
+    dev.copy(tiff, file = file.path(dir.name, "Figure 2.tiff"), width = 7, height = 5, units = "in", res = 300)
     dev.off()
   })
   
-  # download Figure 1
-  output$downloadFigure1 <- shiny::downloadHandler(
+  # download Figure 2
+  output$downloadFigure2 <- shiny::downloadHandler(
     filename = function() {
-      paste0("Figure 1.tiff")
+      paste0("Figure 2.tiff")
     },
     content = function(file) {
-      file.copy(from = file.path(dir.name, "Figure 1.tiff"), to = file)
+      file.copy(from = file.path(dir.name, "Figure 2.tiff"), to = file)
     }
   )
   
