@@ -685,7 +685,7 @@ server <- function(input, output, session) {
       DT::formatStyle(columns = 1, fontWeight = "bold") %>%
       DT::formatStyle(columns = 2, fontStyle = "italic") %>%
       DT::formatStyle(columns = 3:ncol(results), textAlign = "right")
-  })
+  }, server = FALSE)
   
   # Download Handler
   output$downloadTable1 <- shiny::downloadHandler(
@@ -786,11 +786,18 @@ server <- function(input, output, session) {
     title <- "Table 2"
     caption <- "Table 2: Two-way linear mixed model analysis."
     
+    # Define text styles for caption and footnotes
+    caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
+    footnote_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
+    
+    # Generate and format the flextable
     my_summary_to_save <-
       results %>%
-      as.data.frame(check.names = FALSE) %>%
+      as.data.frame(check.names = FALSE, row.names = NULL) %>%
       flextable::regulartable() %>%
-      flextable::autofit()
+      flextable::autofit() %>%
+      flextable::font(fontname = "Times New Roman", part = "all") %>%
+      flextable::fontsize(size = 12, part = "all")
     
     # create Word doc from results dataframe
     section_properties <- officer::prop_section(
@@ -798,12 +805,20 @@ server <- function(input, output, session) {
       type = "continuous"
     )
     
+    # Create Word document with formatted caption, table, and footnote
     table_2 <-
       officer::read_docx() %>%
-      officer::body_add_par(caption, style = "Normal") %>%
+      officer::body_add_fpar(
+        officer::fpar(
+          officer::ftext(caption, prop = caption_style)
+        )
+      ) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
-      officer::body_add_par("SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).", style = "Normal") %>%
-      officer::body_end_block_section(officer::block_section(section_properties)) %>%
+      officer::body_add_fpar(
+        officer::fpar(
+          officer::ftext("SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).", prop = footnote_style)
+        )
+      ) %>%  # Add footnote
       print(target = file.path(dir.name, "Table 2.docx"))
     
     # output results
