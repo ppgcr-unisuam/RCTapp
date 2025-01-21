@@ -336,7 +336,7 @@ TABLE.2a <-
     # calcula e preenche a subtabela WITHIN-GROUP (SAME LINEAR MIXED MODEL)
     mult.within <-
       summary(pairs(emmeans::emmeans(mod1, ~ TIME_M |
-                              GROUP_M), reverse = FALSE), infer = c(TRUE, TRUE))
+                                       GROUP_M), reverse = FALSE), infer = c(TRUE, TRUE))
     wt <- c()
     wt.pvalues <- c()
     for (i in 1:nlevels(bw.factor)) {
@@ -414,8 +414,8 @@ TABLE.2a <-
                            check.names = FALSE)
           mod2 <-
             nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M,
-                random = ~ 1 | ID,
-                data = df)
+                      random = ~ 1 | ID,
+                      data = df)
         }
         mod2.sum <-
           summary(multcomp::glht(mod2, linfct = multcomp::mcp(bw.factor = "Tukey")), test = multcomp::adjusted("holm"))
@@ -460,7 +460,7 @@ TABLE.2a <-
         implist <- mitml::mids2mitml.list(imp)
         mod2 <- with(data = implist, nlme::lme(
           CHANGE_M ~ bw.factor + BASELINE_M, random = ~ 1 | ID, data = implist)
-          )
+        )
         
         print("OK 1")
         
@@ -475,9 +475,9 @@ TABLE.2a <-
         names <- rownames(mitml::confint.mitml.testEstimates(mod2.sum, level = 1 - alpha))
         estimate <- round(unlist(mod2.sum)$estimates1, digits = n.digits)
         low.ci <- round(mitml::confint.mitml.testEstimates(mod2.sum, level = 1 - alpha)[1, 1],
-                digits = n.digits)
+                        digits = n.digits)
         upp.ci <- round(mitml::confint.mitml.testEstimates(mod2.sum, level = 1 - alpha)[1, 2],
-                digits = n.digits)
+                        digits = n.digits)
         p.value <- unlist(mod2.sum)$estimates5
       }
       bw <-
@@ -502,8 +502,8 @@ TABLE.2a <-
       group_data[bw.factor != control.g] <- 1
       data <- data.frame(group_data, CHANGE_M, check.names = FALSE)
       smd <- stddiff::stddiff.numeric(data = data,
-                             gcol = 1,
-                             vcol = 2)
+                                      gcol = 1,
+                                      vcol = 2)
       estimate <- round(smd[7], digits = n.digits)
       lower <- round(smd[8], digits = n.digits)
       upper <- round(smd[9], digits = n.digits)
@@ -520,28 +520,27 @@ TABLE.2a <-
     bw.diff[6, ] <- smd.values
     
     # apresenta os resultados na tela
-    # print(
-    #   paste(
-    #     "Table 2a: Two-way linear mixed model analysis (",
-    #     toString(variables),
-    #     ").",
-    #     sep = ""
-    #   ),
-    #   quote = FALSE
-    # )
-    # print(cbind(mix.mod.res, model.res), quote = FALSE)
-    # print(cbind(wt.diff), quote = FALSE)
-    # print(cbind(bw.diff), quote = FALSE)
-    # print(
-    #   "SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).",
-    #   quote = FALSE
-    # )
-    # print("", quote = FALSE)
-    
+    print(
+      paste(
+        "Table 2a: Two-way linear mixed model analysis (",
+        toString(variables),
+        ").",
+        sep = ""
+      ),
+      quote = FALSE
+    )
+    print(cbind(mix.mod.res, model.res), quote = FALSE)
+    print(cbind(wt.diff), quote = FALSE)
+    print(cbind(bw.diff), quote = FALSE)
+    print(
+      "SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).",
+      quote = FALSE
+    )
+    print("", quote = FALSE)
+
     # missingness analysis
     try(missing.data(dataset = dataset, variables = variables, covariate = covariate), silent = TRUE)
     
     # output results
     return(list('mix.mod.res' = mix.mod.res, 'wt.diff' = wt.diff, 'bw.diff' = bw.diff))
   }
-

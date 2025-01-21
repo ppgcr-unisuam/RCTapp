@@ -301,6 +301,24 @@ ui <- shiny::fluidPage(
             step = 1,
             width = "100%"
           ),
+          # show checkbox for show/hid legend
+          shiny::checkboxInput(
+            inputId = "hasLegend",
+            label = "Show legend",
+            value = TRUE,
+            width = "100%"
+          ),
+          # options for legend
+          shinyWidgets::virtualSelectInput(
+            inputId = "legendOptions",
+            label = "Legend position",
+            choices = c("top", "topleft", "topright", "bottom", "bottomleft", "bottomright", "left", "right", "center"),
+            selected = "top",
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = FALSE,
+            width = "100%"
+          ),
         ),
         # add column for buttons
         shiny::column(
@@ -331,6 +349,7 @@ ui <- shiny::fluidPage(
         label = "Download Table 1 (.DOCX)",
         style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
       ),
+      shiny::br(),
     ),
     # tab for table 2 of results
     shiny::tabPanel(
@@ -346,6 +365,7 @@ ui <- shiny::fluidPage(
         label = "Download Table 2 (.DOCX)",
         style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
       ),
+      shiny::br(),
     ),
     # tab for plot of results
     shiny::tabPanel(
@@ -360,6 +380,7 @@ ui <- shiny::fluidPage(
         label = "Download Figure 2 (.TIFF)",
         style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
       ),
+      shiny::br(),
     ),
     # tab for table 3 of results
     shiny::tabPanel(
@@ -466,6 +487,15 @@ server <- function(input, output, session) {
     }
   })
   
+  # enable legend options if hasLegeng is checked
+  shiny::observeEvent(input$hasLegend, {
+    if (input$hasLegend == TRUE) {
+      shinyjs::enable("legendOptions")
+    } else {
+      shinyjs::disable("legendOptions")
+    }
+  })
+
   rawdata <- shiny::reactive({
     if (is.null(values$upload_state)) {
       return(NULL)
@@ -474,6 +504,14 @@ server <- function(input, output, session) {
     } else if (values$upload_state == 'restart') {
       return(NULL)
     }
+  })
+  
+  # delete all files if restart in WWW is pushed
+  shiny::observeEvent(input$restart, {
+    files <- list.files("www", pattern = ".docx", full.names = TRUE)
+    unlink(files)
+    files <- list.files("www", pattern = ".tiff", full.names = TRUE)
+    unlink(files)
   })
   
   # show uploaded table ---------------------------------------------------------
@@ -518,17 +556,19 @@ server <- function(input, output, session) {
     
     DT::datatable(
       data = rawdata,
+      extensions = c('ColReorder'),
       rownames = FALSE,
       options = list(
-        dom = 'tipr',
         searching = FALSE,
+        colReorder = TRUE,
         pageLength = 10,
-        autoWidth = TRUE,
         width = "100%",
-        scrollX = TRUE
+        fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender();}'),
+        scrollX = TRUE,
+        dom = 'tipr'
       )
     )
-  })
+  }, server = FALSE)
   
   # show selected BGF in BGFtable
   output[["BGFtable"]] <- shiny::renderTable({
@@ -591,6 +631,8 @@ server <- function(input, output, session) {
                              selected = "Figure 2")
   })
   
+  # enable plot legend when checked
+
   # run table 1 on runTable1 click ------------------------------------------------
   output[["table1"]] <- DT::renderDT({
     shiny::req(rawdata())
@@ -635,31 +677,51 @@ server <- function(input, output, session) {
       results <- results[, -ncol(results)]
     }
     
-    title <- "Table 1"
     caption <- "Table 1: Between-group descriptive analysis."
     
     # Define text styles for caption and footnotes
     caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
     footnote_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
     
+    # create Word doc from results dataframe
+    sect_properties <- officer::prop_section(
+      page_size = officer::page_size(
+        orient = "portrait",
+        width = 8.3,
+        height = 11.7
+      ),
+      type = "continuous",
+      page_margins = officer::page_mar()
+    )
+    
+    FitFlextableToPage <- function(ft, pgwidth = 8.3 - 1) {
+      ft_out <- ft %>% flextable::autofit()
+      ft_out <-
+        flextable::width(ft_out, width = dim(ft_out)$widths * pgwidth / (flextable::flextable_dim(ft_out)$widths))
+      return(ft_out)
+    }  
+    
     # Generate and format the flextable
     my_summary_to_save <-
       results %>%
       as.data.frame(check.names = FALSE, row.names = NULL) %>%
       flextable::regulartable() %>%
-      flextable::autofit() %>%
+      FitFlextableToPage() %>%
       flextable::font(fontname = "Times New Roman", part = "all") %>%
       flextable::fontsize(size = 12, part = "all")
     
     # Create Word document with formatted caption, table, and footnote
-    table_1 <-
+    table_2 <-
       officer::read_docx() %>%
+      officer::body_set_default_section(sect_properties) %>%
       officer::body_add_fpar(
         officer::fpar(
           officer::ftext(caption, prop = caption_style)
         )
       ) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
+      # define sec properties
+      
       officer::body_add_fpar(
         officer::fpar(
           officer::ftext("Mean (SD) or count (%)", prop = footnote_style)
@@ -672,17 +734,19 @@ server <- function(input, output, session) {
       data = results,
       caption = caption,
       extensions = c('ColReorder'),
+      rownames = TRUE,
       options = list(
         searching = FALSE,
         colReorder = TRUE,
         pageLength = nrow(results),
         width = "100%",
+        fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender();}'),
         scrollX = TRUE,
+        dom = 't',
         columnDefs = list(
           list(className = 'dt-center', targets = 1:ncol(results)),
           list(visible = FALSE, targets = 0)
-        ),
-        dom = 't'
+        )
       )
     ) %>%
       DT::formatStyle(columns = 1, fontWeight = "bold") %>%
@@ -765,6 +829,7 @@ server <- function(input, output, session) {
   # show table 2
   output[["datatable2"]] <- DT::renderDT({
     shiny::req(table2())
+    
     results.mix <- table2()$mix.mod.res %>%
       as.data.frame(check.names = FALSE) %>%
       dplyr::mutate(Variables = rownames(table2()$mix.mod.res))
@@ -788,37 +853,51 @@ server <- function(input, output, session) {
     # use outcome names
     results[, 1] <- gsub("Outcome", input[["OutcomeName"]], results[, 1])
     
-    title <- "Table 2"
     caption <- "Table 2: Two-way linear mixed model analysis."
     
     # Define text styles for caption and footnotes
     caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
     footnote_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
     
+    # create Word doc from results dataframe
+    sect_properties <- officer::prop_section(
+      page_size = officer::page_size(
+        orient = "landscape",
+        width = 8.3,
+        height = 11.7
+      ),
+      type = "continuous",
+      page_margins = officer::page_mar()
+    )
+    
+    FitFlextableToPage <- function(ft, pgwidth = 11.7 - 1) {
+      ft_out <- ft %>% flextable::autofit()
+      ft_out <-
+        flextable::width(ft_out, width = dim(ft_out)$widths * pgwidth / (flextable::flextable_dim(ft_out)$widths))
+      return(ft_out)
+    }  
+    
     # Generate and format the flextable
     my_summary_to_save <-
       results %>%
       as.data.frame(check.names = FALSE, row.names = NULL) %>%
       flextable::regulartable() %>%
-      flextable::autofit() %>%
+      FitFlextableToPage() %>%
       flextable::font(fontname = "Times New Roman", part = "all") %>%
       flextable::fontsize(size = 12, part = "all")
-    
-    # create Word doc from results dataframe
-    section_properties <- officer::prop_section(
-      page_size = officer::page_size(orient = "landscape"),
-      type = "continuous"
-    )
     
     # Create Word document with formatted caption, table, and footnote
     table_2 <-
       officer::read_docx() %>%
+      officer::body_set_default_section(sect_properties) %>%
       officer::body_add_fpar(
         officer::fpar(
           officer::ftext(caption, prop = caption_style)
         )
       ) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
+      # define sec properties
+
       officer::body_add_fpar(
         officer::fpar(
           officer::ftext("SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).", prop = footnote_style)
@@ -830,21 +909,28 @@ server <- function(input, output, session) {
     DT::datatable(
       data = results,
       caption = caption,
+      extensions = c('ColReorder'),
+      rownames = FALSE,
+      colnames = NULL,
       options = list(
+        searching = FALSE,
+        colReorder = TRUE,
         pageLength = nrow(results),
         width = "100%",
+        fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender();}'),
+        scrollX = TRUE,
+        dom = 't',
         columnDefs = list(list(
           className = 'dt-center', targets = 1:ncol(results),
           defaultContent = "-",
           targets = "_all"
-        )),
-        dom = 't'
-      ),
-      colnames = NULL,
-      rownames = FALSE
-    )
+        ))
+      )
+    ) %>%
+      DT::formatStyle(columns = 1, fontWeight = "bold") %>%
+      DT::formatStyle(columns = 3:ncol(results), textAlign = "right")
   }, server = FALSE)
-  
+
   # Download Handler
   output$downloadTable2 <- shiny::downloadHandler(
     filename = function() {
@@ -895,6 +981,7 @@ server <- function(input, output, session) {
       m.imputations = as.numeric(input[["MICEresamples"]]),
       xlabs = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
       ylab = input[["OutcomeName"]],
+      legend.opt = input[["legendOptions"]],
       alpha = as.numeric(input[["alpha"]])
     )
     

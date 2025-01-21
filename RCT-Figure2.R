@@ -1,4 +1,4 @@
-FIGURE.1 <-
+FIGURE.2 <-
   function(dataset,
            variables,
            covariate,
@@ -8,6 +8,7 @@ FIGURE.1 <-
            m.imputations,
            xlabs,
            ylab,
+           legend.opt,
            alpha) {
     # This function outputs a plot for two-way mixed-models.
     # dataset: a 2D dataframe (rows: participants, columns: variables)
@@ -42,10 +43,11 @@ FIGURE.1 <-
     OUTCOME_ORIG <- c(as.matrix(dataset))
     OUTCOME_M <- c(as.matrix(dataset))
     COVARIATE_M <- c()
-    if (!is.null(covariate)) {
+    if (!sjmisc::is_empty(covariate)) {
       for (i in 1:length(wt.labels)) {
         COVARIATE_M <- rbind(COVARIATE_M, covariate)
       }
+      names(COVARIATE_M) <- names(covariate)
     }
     
     # decide como lidar com os dados perdidos
@@ -63,11 +65,12 @@ FIGURE.1 <-
       OUTCOME_ORIG <- c(as.matrix(dataset))
       OUTCOME_M <- c(as.matrix(dataset))
       COVARIATE_M <- c()
-      if (!is.null(covariate)) {
-        for (i in 1:length(wt.labels)) {
+      if (!sjmisc::is_empty(covariate)) {
+        for(i in 1:length(wt.labels)){
           COVARIATE_M <- rbind(COVARIATE_M, covariate)
         }
       }
+      names(COVARIATE_M) <- names(covariate)
     }
     
     if (missing == "mean.imputation") {
@@ -83,14 +86,15 @@ FIGURE.1 <-
       }
       OUTCOME_M <- c(as.matrix(dataset))
       COVARIATE_M <- c()
-      if (!is.null(covariate)) {
-        for (i in 1:length(wt.labels)) {
-          for (j in 1:ncol(covariate)) {
+      if (!sjmisc::is_empty(covariate)) {
+        for(i in 1:length(wt.labels)){
+          for(j in 1:ncol(covariate)){
             covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
           }
           COVARIATE_M <- rbind(COVARIATE_M, covariate)
         }
       }
+      names(COVARIATE_M) <- names(covariate)
     }
     
     if (missing == "multiple.imputation") {
@@ -111,9 +115,9 @@ FIGURE.1 <-
                                TIME_M == levels(TIME_M)[1])])
       # mean imputation of covariate data if any
       COVARIATE_M <- c()
-      if (!is.null(covariate)) {
-        for (i in 1:length(wt.labels)) {
-          for (j in 1:ncol(covariate)) {
+      if (!sjmisc::is_empty(covariate)) {
+        for(i in 1:length(wt.labels)){
+          for(j in 1:ncol(covariate)){
             covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
           }
           COVARIATE_M <- rbind(COVARIATE_M, covariate)
@@ -122,21 +126,18 @@ FIGURE.1 <-
     }
     
     # cria o dataset com os valores após imputação ou não de dados
-    if (!is.null(covariate)) {
-      data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, COVARIATE_M)
+    if (!sjmisc::is_empty(covariate)) {
+      data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, COVARIATE_M, check.names = FALSE)
     } else {
-      data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M)
+      data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, check.names = FALSE)
     }
     
     # fit linear mixed model
     if (missing != "multiple.imputation") {
-      if (!is.null(covariate)) {
+      if (!sjmisc::is_empty(covariate)) {
         mod1 <-
           nlme::lme(
-            fixed = as.formula(paste0(
-              "OUTCOME_M ~ TIME_M * GROUP_M + ",
-              paste0(colnames(COVARIATE_M), collapse = " + ")
-            )),
+            fixed = as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(names(COVARIATE_M), collapse = " + "))),
             random = ~ 1 | ID_M / TIME_M,
             data = data_M
           )
@@ -162,20 +163,17 @@ FIGURE.1 <-
           seed = 0,
           print = FALSE
         )
-      if (!is.null(covariate)) {
+      if (!sjmisc::is_empty(covariate)) {
         mod1 <-
           with(
             data = imp,
             nlme::lme(
-              fixed = OUTCOME_M ~ TIME_M * GROUP_M + COVARIATE_M,
+              fixed = as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(names(COVARIATE_M), collapse = " + "))),
               random = ~ 1 | ID_M / TIME_M
             )
           )
         mod1.aov <-
-          quiet(miceadds::mi.anova(imp, formula = paste0(
-            "OUTCOME_M ~ TIME_M * GROUP_M + ",
-            paste0(colnames(COVARIATE_M), collapse = " + ")
-          )))
+          quiet(miceadds::mi.anova(imp, formula = paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(names(COVARIATE_M), collapse = " + "))))
       } else {
         mod1 <-
           with(data = imp,
@@ -201,23 +199,21 @@ FIGURE.1 <-
       p.value <- "<0.001"
     } else {
       p.value <-
-        paste("==", format(round(p.value, digits = 3), nsmall = 3), sep = "")
+        paste("=", format(round(p.value, digits = 3), nsmall = 3), sep = "")
     }
-    
-    # interaction in equation format
     interaction <-
-      parse(
-        text = paste0(
-          'Interaction: ~ F[',
-          format(round(mod1.aov[4, 1], digits = 0), nsmall = 0),
-          '*","*',
-          format(round(mod1.aov[4, 2], digits = 0), nsmall = 0),
-          '] == ',
-          format(round(mod1.aov[4, 3], digits = 3), nsmall = 3),
-          '*","*',
-          ' ~ p',
-          p.value
-        )
+      paste(
+        "Interaction: F(",
+        format(round(mod1.aov[4, 1], digits = 0), nsmall = 0),
+        ",",
+        format(round(mod1.aov[4, 2], digits = 0),
+               nsmall = 0),
+        ") = ",
+        format(round(mod1.aov[4, 3], digits = 3), nsmall = 3),
+        ", p",
+        p.value,
+        flag,
+        sep = ""
       )
     
     # calculate CI
@@ -315,7 +311,7 @@ FIGURE.1 <-
     }
     # plot legend
     legend(
-      x = "topleft",
+      x = legend.opt,
       legend = levels(GROUP_M),
       pch = symbols,
       cex = 1.25,

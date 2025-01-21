@@ -40,6 +40,8 @@ TABLE.1 <- function(dataset, variables, bw.factor, max.levels = 2, alpha = 0.05,
       levels_data <- levels(data_col)
       freq_table <- table(factor(data_col, levels = levels_data, exclude = NULL), bw.factor)
       p.value <- suppressWarnings(chisq.test(freq_table, simulate.p.value = TRUE)$p.value)
+      # format p values < 0.001 as "<0.001"
+      if (p.value < 0.001) {p.value <- "<0.001"}
 
       for (lvl in levels_data) {
         if (lvl %in% rownames(freq_table)) {
@@ -66,6 +68,8 @@ TABLE.1 <- function(dataset, variables, bw.factor, max.levels = 2, alpha = 0.05,
         paste(round(mean(x, na.rm = TRUE), n.digits), " (", round(sd(x, na.rm = TRUE), n.digits), ")", sep = "")
       })
       p.value <- anova(lm(data_col ~ bw.factor))$`Pr(>F)`[1]
+      # format p values < 0.001 as "<0.001"
+      if (p.value < 0.001) {p.value <- "<0.001"}
       descript.res[row_idx, ] <- c(var, "", mean_sd, total_missing, formatC(p.value, format = "f", digits = 3))
       row_idx <- row_idx + 1
     }
