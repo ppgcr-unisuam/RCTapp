@@ -312,8 +312,8 @@ ui <- shiny::fluidPage(
           shinyWidgets::virtualSelectInput(
             inputId = "legendOptions",
             label = "Legend position",
-            choices = c("top", "topleft", "topright", "bottom", "bottomleft", "bottomright", "left", "right", "center"),
-            selected = "top",
+            choices = c("none", "top", "topleft", "topright", "bottom", "bottomleft", "bottomright", "left", "right", "center"),
+            selected = "none",
             showValueAsTags = TRUE,
             search = TRUE,
             multiple = FALSE,
@@ -417,6 +417,21 @@ ui <- shiny::fluidPage(
          <p>3.3. Click <b>Figure 2</b> to visualize the results in graphical format.</p>\
          <p>3.4. Click <b>Table 3</b> to visualize the results within- and between-group results without baseline.</p>\
          <p>4. Click <b>restart</b> icon before running new analisys.",
+      ),
+    ),
+    shiny::tabPanel(
+      title = list(fontawesome::fa("file-lines")),
+      shiny::br(),
+      shiny::HTML("<b> Publications</b>"),
+      shiny::br(),
+      shiny::br(),
+      shiny::HTML(
+        "Castro, J., Correia, L., Donato, B. de S., Arruda, B., Agulhari, F., Pellegrini, M. J., Belache, F. T. C., de Souza, C. P., Fernandez, J., Nogueira, L. A. C., Reis, F. J. J., Ferreira, A. de S., & Meziat-Filho, N. (2022). Cognitive functional therapy compared with core exercise and manual therapy in patients with chronic low back pain: randomised controlled trial. In Pain (Vol. 163, Issue 12, pp. 2430–2437). Ovid Technologies (Wolters Kluwer Health). <a href=\"https://doi.org/10.1097/j.pain.0000000000002644 \">https://doi.org/10.1097/j.pain.0000000000002644</a>"
+      ),
+      shiny::br(),
+      shiny::br(),
+      shiny::HTML(
+        "Avila, L., da Silva, M. D., Neves, M. L., Abreu, A. R., Fiuza, C. R., Fukusawa, L., de Sá Ferreira, A., & Meziat-Filho, N. (2023). Effectiveness of Cognitive Functional Therapy Versus Core Exercises and Manual Therapy in Patients With Chronic Low Back Pain After Spinal Surgery: Randomized Controlled Trial. In Physical Therapy (Vol. 104, Issue 1). Oxford University Press (OUP). <a https://doi.org/10.1093/ptj/pzad105 \">https://doi.org/10.1093/ptj/pzad105</a>"
       ),
     ),
     shiny::tabPanel(

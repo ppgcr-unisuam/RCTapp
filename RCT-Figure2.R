@@ -309,14 +309,16 @@ FIGURE.2 <-
         cex = 0.75
       )
     }
-    # plot legend
-    legend(
-      x = legend.opt,
-      legend = levels(GROUP_M),
-      pch = symbols,
-      cex = 1.25,
-      bty = "n",
-      horiz = FALSE,
-      x.intersp = 1
-    )
+    if(legend.opt != "none"){
+      # plot legend
+      legend(
+        x = legend.opt,
+        legend = levels(GROUP_M),
+        pch = symbols,
+        cex = 1.25,
+        bty = "n",
+        horiz = FALSE,
+        x.intersp = 1
+      )
+    }
   }
