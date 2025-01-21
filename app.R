@@ -102,7 +102,7 @@ ui <- shiny::fluidPage(
         inputId = "InputFile",
         label = NULL,
         multiple = FALSE,
-        buttonLabel = list(fontawesome::fa("file-excel"), "Upload data"),
+        buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
         accept = c(".xlsx"),
         width = "100%",
       ),
@@ -393,30 +393,33 @@ ui <- shiny::fluidPage(
       title = list(fontawesome::fa("circle-info")),
       shiny::br(),
       shiny::HTML(
-        "<p>1. Use the <b>Upload</b> button to load an Excel file (.xlsx).</p>\
-         <p>2. Click <b>Plan</b> to configure the statistial analysis.</p>\
-         <p>2.1 Set the study design:</p>\
+        "<p>1. In <b>Data</b>, Use the <b>Upload</b> button to load data in .XLSX format.</p>\
+         <p>2. Click <b>SAP</b> to configure the <b>statistial analysis plan</b>:</p>\
+         <p>2.1 <b>Study design</b></p>\
          <ul>\
          <li><i>Treatment</i></li>\
          <li><i>Control group</i></li>\
          <li><i>Endpoints</i></li>\
+         <li><i>Type-I error (alpha value)</i></li>\
          </ul>\
-         <p>2.2. Type specific labels for the analysis:</p>\
+         <p>2.2. <b>Table 1</b></p>\
          <ul>\
-         <li><i>Covariates</i></li>\
-         <li><i>Outcome</i></li>\
-         <li><i>Missing data handling method</i></li>\
-         <li><i>Treatments</i></li>\
-         <li><i>Endopont values</i></li>\
-         <li><i>Resamples</i></li>\
-         <li><i>Alpha level</i></li>\
+         <li><i>Baseline</i></li>\
+         <li><i>Max levels for categorical variables</i></li>\
+         <li><i>Show/Hide p-values</i></li>\
          </ul>\
-         <p>3. Click <b>Preview</b> to visualize the data.</p>\
-         <p>3.1. Click <b>Table 1</b> to visualize the baseline between-group results.</p>\
-         <p>3.2. Click <b>Table 2</b> to visualize the results within- and between-group results.</p>\
-         <p>3.3. Click <b>Figure 2</b> to visualize the results in graphical format.</p>\
-         <p>3.4. Click <b>Table 3</b> to visualize the results within- and between-group results without baseline.</p>\
-         <p>4. Click <b>restart</b> icon before running new analisys.",
+         <p>2.3. <b>Table 2 & Figure 2</b></p>\
+         <ul>\
+         <li><i>Outcomes</i></li>\
+         <li><i>Covariates</i></li>\
+         <li><i>Missing data handling method</i></li>\
+         <li><i>Resamples for multiple imputation, if any</i></li>\
+         <li><i>Position of plot legend, if any</i></li>\
+         </ul>\
+         <p>2.4. <b>Table 3:</b></p>\
+         <ul>\
+         </ul>\
+         <p>3. Click <i class='fa fa-refresh fa-1x'></i> <b>Restart</b> before running new analisys."
       ),
     ),
     shiny::tabPanel(
@@ -472,9 +475,10 @@ ui <- shiny::fluidPage(
         "This work is licensed under an <a rel=\"license\" data-spdx=\"Apache-2.0\" href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>."
       ),
       shiny::br(),
+      shiny::br(),
       shiny::HTML("<b>Cite as</b>"),
       shiny::HTML(
-        "Ferreira, A. de S., & Meziat Filho, N. (2024). RCTapp Randomized Clinical Trial (1.0.0). Zenodo. https://doi.org/10.5281/zenodo.13848816"
+        "Ferreira, A. de S., & Meziat Filho, N. (2024). RCTapp Randomized Clinical Trial (1.0.0). Zenodo. <a href=\"https://doi.org/10.5281/zenodo.13848816\" target=\"_blank\">https://doi.org/10.5281/zenodo.13848816</a>"
       ),
     ),
   ),
