@@ -14,6 +14,7 @@ library(htmltools)
 
 # source all scripts
 # source("RCT-packages.R", local = TRUE) # to install packages (not required for Shiny app)
+source("RCT-NA.R", local = TRUE) # to convert specific values to NA
 source("RCT-Table1.R", local = TRUE) # numeric and categorical variables, descriptive analysis, between-factor
 source("RCT-Table2a.R", local = TRUE) # numeric variables, linear mixed model analysis, between- AND within-factor WITH baseline adjustment
 source("RCT-Table2b.R", local = TRUE) # numeric variables, linear mixed model analysis, between- AND within-factor WITHOUT baseline adjustment
@@ -177,7 +178,13 @@ ui <- shiny::fluidPage(
         shiny::column(
           3,
           # add title
-          shiny::h4("Table 1", style = "text-align:center"),
+          #          shiny::h4("Table 1", style = "text-align:center"),
+          shiny::actionButton(
+            inputId = "runTable1",
+            icon = shiny::icon("play"),
+            label = "Table 1",
+            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          ),
           # add horizontal line
           shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
           # add checkbox for baseline variables (BV)
@@ -212,7 +219,29 @@ ui <- shiny::fluidPage(
         shiny::column(
           3,
           # add title
-          shiny::h4("Table 2", style = "text-align:center"),
+          #          shiny::h4("Table 2", style = "text-align:center"),
+          shiny::fluidRow(
+            shiny::column(
+              6,
+              # add button to run analysis
+              shiny::actionButton(
+                inputId = "runTable2",
+                icon = shiny::icon("play"),
+                label = "Table 2",
+                style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+              ),
+            ),
+            shiny::column(
+              6,
+              # add button to run analysis
+              shiny::actionButton(
+                inputId = "runFigure2",
+                icon = shiny::icon("play"),
+                label = "Figure 2",
+                style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+              ),
+            ),
+          ),
           # add horizontal line
           shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
           # add checkbox for outcome variables (OV)
@@ -277,37 +306,7 @@ ui <- shiny::fluidPage(
         shiny::column(
           3,
           # add title
-          shiny::h4("Run", style = "text-align:center"),
-          # add horizontal line
-          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
-          # add button to run analysis
-          shiny::br(),
-          shiny::actionButton(
-            inputId = "runTable1",
-            icon = shiny::icon("play"),
-            label = "Table 1",
-            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-          ),
-          shiny::br(),
-          shiny::br(),
-          # add button to run analysis
-          shiny::actionButton(
-            inputId = "runTable2",
-            icon = shiny::icon("play"),
-            label = "Table 2",
-            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-          ),
-          shiny::br(),
-          shiny::br(),
-          # add button to run analysis
-          shiny::actionButton(
-            inputId = "runFigure2",
-            icon = shiny::icon("play"),
-            label = "Figure 2",
-            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-          ),
-          shiny::br(),
-          shiny::br(),
+          #          shiny::h4("Table 3", style = "text-align:center"),
           # add button to run analysis
           shiny::actionButton(
             inputId = "runTable3",
@@ -489,7 +488,9 @@ server <- function(input, output, session) {
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
     # clean variable names
     colnames(rawdata) <- janitor::make_clean_names(colnames(rawdata))
-
+    # clean NA values
+    rawdata <- as.NA(rawdata)
+    
     # update list of between-subject variables from rawdata header
     shinyWidgets::updateVirtualSelect(
       inputId = "BGF",
@@ -604,6 +605,8 @@ server <- function(input, output, session) {
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
     # clean variable names
     colnames(rawdata) <- janitor::make_clean_names(colnames(rawdata))
+    # clean NA values
+    rawdata <- as.NA(rawdata)
     
     # select columns from checked variables
     rawdata <- rawdata[, unique(c(input[["BV"]], input[["BGF"]]))]
@@ -678,7 +681,7 @@ server <- function(input, output, session) {
         columnDefs = list(
           list(className = 'dt-center', targets = 1:ncol(results)),
           list(visible = FALSE, targets = 0)
-          ),
+        ),
         dom = 't'
       )
     ) %>%
@@ -702,7 +705,7 @@ server <- function(input, output, session) {
     shiny::req(rawdata())
     shiny::req(input[["BGF"]])
     shiny::req(input[["OV"]])
-
+    
     # read file
     rawdata <- readxl::read_xlsx(rawdata())
     # remove empty columns
@@ -711,6 +714,8 @@ server <- function(input, output, session) {
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
     # clean variable names
     colnames(rawdata) <- janitor::make_clean_names(colnames(rawdata))
+    # clean NA values
+    rawdata <- as.NA(rawdata)
     
     # select columns from checked variables
     rawdata <- rawdata[, unique(c(input[["BGF"]], input[["CV"]], input[["OV"]]))]
@@ -763,15 +768,15 @@ server <- function(input, output, session) {
     results.mix <- table2()$mix.mod.res %>%
       as.data.frame(check.names = FALSE) %>%
       dplyr::mutate(Variables = rownames(table2()$mix.mod.res))
-
+    
     results.wt <- table2()$wt.diff %>%
       as.data.frame(check.names = FALSE) %>%
       dplyr::mutate(Variables = rownames(table2()$wt.diff))
-
+    
     results.bw <- table2()$bw.diff %>%
       as.data.frame(check.names = FALSE) %>%
       dplyr::mutate(Variables = rownames(table2()$bw.diff))
-
+    
     results <- dplyr::bind_rows(results.mix, results.wt, results.bw) %>% as.data.frame(check.names = FALSE)
     
     # last column first, then the others
@@ -864,6 +869,8 @@ server <- function(input, output, session) {
     rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
     # clean variable names
     colnames(rawdata) <- janitor::make_clean_names(colnames(rawdata))
+    # clean NA values
+    rawdata <- as.NA(rawdata)
     
     # select columns from checked variables
     rawdata <- rawdata[, unique(c(input[["BGF"]], input[["OV"]]))]
