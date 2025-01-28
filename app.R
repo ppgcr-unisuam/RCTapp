@@ -5,6 +5,9 @@ if (!dir.exists(dir.name)) {
 }
 shiny::addResourcePath(prefix = "www", directoryPath = "www")
 
+# create file with citations
+grateful::cite_packages(output = "file", out.dir = file.path(getwd(), "www"), out.format = "html", pkgs = "All")
+
 # copy favicon folder to the www dir
 R.utils::copyDirectory(from = "favicon_io", to = file.path(dir.name, "favicon_io"))
 
@@ -392,6 +395,9 @@ ui <- shiny::fluidPage(
     shiny::tabPanel(
       title = list(fontawesome::fa("circle-info")),
       shiny::br(),
+      shiny::HTML("<b> Tutorial</b>"),
+      shiny::br(),
+      shiny::br(),
       shiny::HTML(
         "<p>1. In <b>Data</b>, Use the <b>Upload</b> button to load data in .XLSX format.</p>\
          <p>2. Click <b>SAP</b> to configure the <b>statistial analysis plan</b>:</p>\
@@ -423,6 +429,15 @@ ui <- shiny::fluidPage(
       ),
     ),
     shiny::tabPanel(
+      title = list(fontawesome::fa("book-open")),
+      shiny::br(),
+      shiny::HTML("<b> Session info</b>"),
+      shiny::br(),
+      shiny::br(),
+      # session info text output
+      shiny::htmlOutput("gratrep")
+    ),
+    shiny::tabPanel(
       title = list(fontawesome::fa("file-lines")),
       shiny::br(),
       shiny::HTML("<b> Publications</b>"),
@@ -439,6 +454,9 @@ ui <- shiny::fluidPage(
     ),
     shiny::tabPanel(
       title = list(fontawesome::fa("people-group")),
+      shiny::br(),
+      shiny::HTML("<b> Authors</b>"),
+      shiny::br(),
       shiny::br(),
       shiny::HTML(
         "<a href=\"mailto:arthurde@souunisuam.com.br\">Arthur de Sá Ferreira, DSc</a>"
@@ -1021,6 +1039,13 @@ server <- function(input, output, session) {
   
   # run table 3
   
+  # output references
+  output$gratrep <- shiny::renderUI({
+    tags$iframe(seamless="seamless", 
+                src = "www/grateful-report.html",
+                width = "100%",
+                height = 500)
+  })
 }
 
 # Run the application
