@@ -392,6 +392,11 @@ ui <- shiny::fluidPage(
       # show table of results
       DT::dataTableOutput("table3"),
     ),
+    # tab for regression diagnosis
+    shiny::tabPanel(
+      title = "Assumptions",
+      icon = fontawesome::fa("stethoscope"),
+    ),
     shiny::tabPanel(
       title = list(fontawesome::fa("circle-info")),
       shiny::br(),
