@@ -181,7 +181,6 @@ ui <- shiny::fluidPage(
         shiny::column(
           3,
           # add title
-          #          shiny::h4("Table 1", style = "text-align:center"),
           shiny::actionButton(
             inputId = "runTable1",
             icon = shiny::icon("play"),
@@ -222,7 +221,6 @@ ui <- shiny::fluidPage(
         shiny::column(
           3,
           # add title
-          #          shiny::h4("Table 2", style = "text-align:center"),
           shiny::fluidRow(
             shiny::column(
               6,
@@ -326,8 +324,6 @@ ui <- shiny::fluidPage(
         # add column for buttons
         shiny::column(
           3,
-          # add title
-          #          shiny::h4("Table 3", style = "text-align:center"),
           # add button to run analysis
           shiny::actionButton(
             inputId = "runTable3",
@@ -361,6 +357,8 @@ ui <- shiny::fluidPage(
       shiny::br(),
       # show table of results
       DT::dataTableOutput("datatable2"),
+      # print text:"SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d)."
+      shiny::tags$p("SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d)."),
       shiny::br(),
       # download Word format
       shiny::downloadButton(
@@ -537,7 +535,7 @@ server <- function(input, output, session) {
       shinyjs::disable("legendOptions")
     }
   })
-
+  
   rawdata <- shiny::reactive({
     if (is.null(values$upload_state)) {
       return(NULL)
@@ -674,7 +672,7 @@ server <- function(input, output, session) {
   })
   
   # enable plot legend when checked
-
+  
   # run table 1 on runTable1 click ------------------------------------------------
   output[["table1"]] <- DT::renderDT({
     shiny::req(rawdata())
@@ -939,7 +937,7 @@ server <- function(input, output, session) {
       ) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
       # define sec properties
-
+      
       officer::body_add_fpar(
         officer::fpar(
           officer::ftext("SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).", prop = footnote_style)
@@ -972,7 +970,7 @@ server <- function(input, output, session) {
       DT::formatStyle(columns = 1, fontWeight = "bold") %>%
       DT::formatStyle(columns = 3:ncol(results), textAlign = "right")
   }, server = FALSE)
-
+  
   # Download Handler
   output$downloadTable2 <- shiny::downloadHandler(
     filename = function() {

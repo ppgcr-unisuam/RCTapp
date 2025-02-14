@@ -81,10 +81,11 @@ TABLE.2b <- function(dataset,
   OUTCOME_ORIG <- c(as.matrix(dataset))
   OUTCOME_M <- c(as.matrix(dataset))
   COVARIATE_M <- c()
-  if (!is.null(covariate)) {
+  if (!sjmisc::is_empty(covariate)) {
     for (i in 1:length(wt.labels)) {
       COVARIATE_M <- rbind(COVARIATE_M, covariate)
     }
+    names(COVARIATE_M) <- names(covariate)
   }
   
   # decide como lidar com os dados perdidos
@@ -102,11 +103,12 @@ TABLE.2b <- function(dataset,
     OUTCOME_ORIG <- c(as.matrix(dataset))
     OUTCOME_M <- c(as.matrix(dataset))
     COVARIATE_M <- c()
-    if (!is.null(covariate)) {
+    if (!sjmisc::is_empty(covariate)) {
       for (i in 1:length(wt.labels)) {
         COVARIATE_M <- rbind(COVARIATE_M, covariate)
       }
     }
+    names(COVARIATE_M) <- names(covariate)
   }
   
   if (missing == "mean.imputation") {
@@ -122,7 +124,7 @@ TABLE.2b <- function(dataset,
     }
     OUTCOME_M <- c(as.matrix(dataset))
     COVARIATE_M <- c()
-    if (!is.null(covariate)) {
+    if (!sjmisc::is_empty(covariate)) {
       for (i in 1:length(wt.labels)) {
         for (j in 1:ncol(covariate)) {
           covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
@@ -130,6 +132,7 @@ TABLE.2b <- function(dataset,
         COVARIATE_M <- rbind(COVARIATE_M, covariate)
       }
     }
+    names(COVARIATE_M) <- names(covariate)
   }
   
   if (missing == "multiple.imputation") {
@@ -150,7 +153,7 @@ TABLE.2b <- function(dataset,
                              TIME_M == levels(TIME_M)[1])])
     # mean imputation of covariate data if any
     COVARIATE_M <- c()
-    if (!is.null(covariate)) {
+    if (!sjmisc::is_empty(covariate)) {
       for (i in 1:length(wt.labels)) {
         for (j in 1:ncol(covariate)) {
           covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
@@ -161,56 +164,67 @@ TABLE.2b <- function(dataset,
   }
   
   # cria o dataset com os valores após imputação ou não de dados
-  if (!is.null(covariate)) {
-    data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, COVARIATE_M)
+  if (!sjmisc::is_empty(covariate)) {
+    data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, COVARIATE_M, check.names = FALSE)
   } else {
-    data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M)
+    data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, check.names = FALSE)
   }
   
   # fit linear mixed model
   if (missing != "multiple.imputation") {
-    if (!is.null(covariate)) {
-      mod1 <- nlme::lme(
-        fixed = as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))),
-        random = ~ 1 | ID_M / TIME_M,
-        data = data_M
-      )
+    if (!sjmisc::is_empty(covariate)) {
+      mod1 <-
+        nlme::lme(
+          fixed = as.formula(paste0(
+            "OUTCOME_M ~ TIME_M * GROUP_M + ",
+            paste0(names(COVARIATE_M), collapse = " + ")
+          )),
+          random = ~ 1 | ID_M / TIME_M,
+          data = data_M
+        )
     } else {
-      mod1 <- nlme::lme(
-        fixed = OUTCOME_M ~ TIME_M * GROUP_M,
-        random = ~ 1 | ID_M / TIME_M,
-        data = data_M
-      )
+      mod1 <-
+        nlme::lme(
+          fixed = OUTCOME_M ~ TIME_M * GROUP_M,
+          random = ~ 1 | ID_M / TIME_M,
+          data = data_M
+        )
     }
     mod1.aov <- anova(mod1)
   } else {
     ini <- mice::mice(data = data_M, maxit = 0)
     pred <- ini$pred
     pred["OUTCOME_M", "ID_M"] <- -2
-    imp <- mice::mice(
-      data_M,
-      pred = pred,
-      method = "2l.pan",
-      m = m.imputations,
-      seed = 0,
-      print = FALSE
-    )
-    if (!is.null(covariate)) {
-      mod1 <- with(
-        data = imp,
-        nlme::lme(
-          fixed = as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))),
-          random = ~ 1 |
-            ID_M / TIME_M
-        )
+    imp <-
+      mice::mice(
+        data_M,
+        pred = pred,
+        method = "2l.pan",
+        m = m.imputations,
+        seed = 0,
+        print = FALSE
       )
-      mod1.aov <- quiet(miceadds::mi.anova(imp, formula = paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))))
+    if (!is.null(covariate)) {
+      mod1 <-
+        with(data = imp,
+             nlme::lme(
+               fixed = as.formula(paste0(
+                 "OUTCOME_M ~ TIME_M * GROUP_M + ",
+                 paste0(colnames(COVARIATE_M), collapse = " + ")
+               )),
+               random = ~ 1 | ID_M / TIME_M
+             ))
+      mod1.aov <- quiet(miceadds::mi.anova(imp, formula = paste0(
+        "OUTCOME_M ~ TIME_M * GROUP_M + ",
+        paste0(names(COVARIATE_M), collapse = " + ")
+      )))
     } else {
-      mod1 <- with(data = imp,
-                   nlme::lme(
-                     fixed = OUTCOME_M ~ TIME_M * GROUP_M,
-                     random = ~ 1 | ID_M / TIME_M
-                   ))
+      mod1 <-
+        with(data = imp,
+             nlme::lme(
+               fixed = OUTCOME_M ~ TIME_M * GROUP_M,
+               random = ~ 1 | ID_M / TIME_M
+             ))
       mod1.aov <- quiet(miceadds::mi.anova(imp, formula = "OUTCOME_M ~ TIME_M * GROUP_M"))
     }
     mod1.aov <- mod1.aov$anova.table[1:3, 2:5]
@@ -225,27 +239,29 @@ TABLE.2b <- function(dataset,
   for (i in 1:length(wt.labels)) {
     for (j in 1:nlevels(bw.factor)) {
       # dados válidos
-      N <- rbind(N, (paste("(n = ", sum(
-        !is.na(OUTCOME_ORIG[TIME_M == i &
-                              GROUP_M == levels(bw.factor)[j]])
-      ), ")", sep = "")))
+      N <-
+        rbind(N, (paste("(n = ", sum(
+          !is.na(OUTCOME_ORIG[TIME_M == i &
+                                GROUP_M == levels(bw.factor)[j]])
+        ), ")", sep = "")))
       # média (DP)
-      desfecho <- rbind(desfecho, paste(
-        format(round(
-          mean(OUTCOME_M[TIME_M == i & GROUP_M ==
-                           levels(bw.factor)[j]], na.rm = TRUE), digits = n.digits
-        ), nsmall = n.digits),
-        " (",
-        format(round(
-          sd(OUTCOME_M[TIME_M ==
-                         i &
-                         GROUP_M == levels(bw.factor)[j]], na.rm = TRUE), digits = n.digits
-        ), nsmall = n.digits),
-        ")",
-        sep = ""
-      ))
+      desfecho <-
+        rbind(desfecho, paste(
+          format(round(
+            mean(OUTCOME_M[TIME_M == i & 
+                             GROUP_M ==levels(bw.factor)[j]], na.rm = TRUE), digits = n.digits
+          ), nsmall = n.digits),
+          " (",
+          format(round(
+            sd(OUTCOME_M[TIME_M == i &
+                           GROUP_M == levels(bw.factor)[j]], na.rm = TRUE), digits = n.digits
+          ), nsmall = n.digits),
+          ")",
+          sep = ""
+        ))
     }
   }
+  
   mix.mod.res[1, ] <- rep(wt.labels, each = nlevels(bw.factor))
   mix.mod.res[2, ] <- rep(levels(bw.factor), length(wt.labels))
   mix.mod.res[3, ] <- N
@@ -290,11 +306,11 @@ TABLE.2b <- function(dataset,
       p.value <- paste("=", format(round(p.value, digits = 3), nsmall = 3), sep = "")
     }
     model.res[i - 1, ] <- paste(
-      "F(",
+      "Main effect: F(",
       format(round(mod1.aov[i, 1], digits = 0), nsmall = 0),
       ",",
       format(round(mod1.aov[i, 2], digits = 0), nsmall = 0),
-      ")=",
+      ") = ",
       format(round(mod1.aov[i, 3], digits = 3), nsmall = 3),
       ", p",
       p.value,
@@ -305,7 +321,7 @@ TABLE.2b <- function(dataset,
   
   # calcula e preenche a subtabela WITHIN-GROUP (SAME LINEAR MIXED MODEL)
   mult.within <- summary(pairs(emmeans::emmeans(mod1, ~ TIME_M |
-                                         GROUP_M), reverse = FALSE), infer = c(TRUE, TRUE))
+                                                  GROUP_M), reverse = FALSE), infer = c(TRUE, TRUE))
   wt <- c()
   wt.pvalues <- c()
   for (i in 1:nlevels(bw.factor)) {
@@ -344,7 +360,7 @@ TABLE.2b <- function(dataset,
   bw.pvalues <- c()
   smd.values <- c()
   mult.between <- summary(pairs(emmeans::emmeans(mod1, ~ GROUP_M |
-                                          TIME_M), reverse = FALSE), infer = c(TRUE, TRUE))
+                                                   TIME_M), reverse = FALSE), infer = c(TRUE, TRUE))
   for (i in 1:(length(wt.labels))) {
     group.data <- mult.between[i, ]
     # reverse signs due to mult.within order
@@ -370,7 +386,7 @@ TABLE.2b <- function(dataset,
     group_data[bw.factor == bw.factor] <- 0
     group_data[bw.factor != control.g] <- 1
     data <- data.frame(group_data, OUTCOME_M[TIME_M == i])
-    smd <- stddiff.numeric(data = data,
+    smd <- stddiff::stddiff.numeric(data = data,
                            gcol = 1,
                            vcol = 2)
     estimate <- round(smd[7], digits = n.digits)
