@@ -25,8 +25,7 @@ TABLE.3 <- function(dataset, variables, bw.factor, control.g, wt.labels, alpha, 
     # inicializa a matriz de resultados
     t.labels <- c("Between-subjects", "Level", wt.labels)
     c.labels <- seq(min(na.omit(dataset)), max(na.omit(dataset)))
-    cross.tab.res <- matrix("", nrow = length(t.labels), ncol = nlevels(bw.factor) *
-        length(c.labels))
+    cross.tab.res <- matrix("", nrow = length(t.labels), ncol = nlevels(bw.factor) * length(c.labels))
     rownames(cross.tab.res) <- t.labels
     colnames(cross.tab.res) <- rep("", nlevels(bw.factor) * length(c.labels))
 
@@ -47,11 +46,11 @@ TABLE.3 <- function(dataset, variables, bw.factor, control.g, wt.labels, alpha, 
             desfecho <- cbind(desfecho, t(paste(N, " (", N.perc, "%)", sep = "")))
         }
         # ridit analysis
-        r1 <- meanridits(table(dataset[, i], bw.factor), margin = 2, ref = control.g)[levels(bw.factor) ==
+        r1 <- ridittools::meanridits(table(dataset[, i], bw.factor), margin = 2, ref = control.g)[levels(bw.factor) ==
             control.g]
-        r2 <- meanridits(table(dataset[, i], bw.factor), margin = 2, ref = control.g)[levels(bw.factor) !=
+        r2 <- ridittools::meanridits(table(dataset[, i], bw.factor), margin = 2, ref = control.g)[levels(bw.factor) !=
             control.g]
-        se.diff <- seriditdiff(table(dataset[, i], bw.factor)[levels(bw.factor) ==
+        se.diff <- ridittools::seriditdiff(table(dataset[, i], bw.factor)[levels(bw.factor) ==
             control.g], table(dataset[, i], bw.factor)[levels(bw.factor) != control.g])
         z.score <- abs((r2 - r1)/se.diff)
         p.value <- 2 * pnorm(abs(z.score), lower.tail = F)
@@ -71,14 +70,13 @@ TABLE.3 <- function(dataset, variables, bw.factor, control.g, wt.labels, alpha, 
         cross.tab.res[i + 2, ] <- desfecho
     }
     bw.diff[, 1] <- rbind("", "", z.p)
-
+    
+    ridit.results <- cbind(cross.tab.res, bw.diff)
+    
     # apresenta os resultados na tela
     print("Table 3: Two-way cross-table analysis.", quote = FALSE)
-    print(cbind(cross.tab.res, bw.diff), quote = FALSE)
+    print(ridit.results, quote = FALSE)
     print("", quote = FALSE)
-
-    # missingness analysis
-    missing.data(dataset = dataset, variables = variables, covariate = NULL)
-
-    return("cross.tab.res")
+    
+    return(list('ridit.results' = ridit.results))
 }

@@ -112,14 +112,13 @@ ui <- shiny::fluidPage(
       DT::DTOutput(outputId = "rawtable"),
     ),
     shiny::tabPanel(
-      title = list(fontawesome::fa("list-check"), "SAP"),
-      shiny::h4("Statistical Analysis Plan", style = "text-align:center; font-weight:bold;"),
+      title = list(fontawesome::fa("list-check"), "Plan"),
       # split panel into 4 columns
       shiny::fluidRow(
         shiny::column(
           3,
           # add title
-          shiny::h4("Study design", style = "text-align:center"),
+          shiny::h4("1. Study design", style = "text-align:center; font-weight:bold;"),
           # add horizontal line
           shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
           # add checkbox for between-subject factors (BGF)
@@ -181,14 +180,17 @@ ui <- shiny::fluidPage(
         shiny::column(
           3,
           # add title
+          shiny::h4("2. Summary analysis", style = "text-align:center; font-weight:bold;"),
+          # add horizontal line
+          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
           shiny::actionButton(
             inputId = "runTable1",
             icon = shiny::icon("play"),
             label = "Table 1",
             style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
           ),
-          # add horizontal line
-          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
+          shiny::br(),
+          shiny::br(),
           # add checkbox for baseline variables (BV)
           shinyWidgets::virtualSelectInput(
             inputId = "BV",
@@ -221,6 +223,9 @@ ui <- shiny::fluidPage(
         shiny::column(
           3,
           # add title
+          shiny::h4("3. Linear mixed model analysis", style = "text-align:center; font-weight:bold;"),
+          # add horizontal line
+          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
           shiny::fluidRow(
             shiny::column(
               6,
@@ -243,8 +248,7 @@ ui <- shiny::fluidPage(
               ),
             ),
           ),
-          # add horizontal line
-          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
+          shiny::br(),
           # add checkbox for outcome variables (OV)
           shinyWidgets::virtualSelectInput(
             inputId = "OV",
@@ -256,18 +260,18 @@ ui <- shiny::fluidPage(
             multiple = TRUE,
             width = "100%"
           ),
-          # show checkbox for indicating outcomes has baseline data
-          shiny::checkboxInput(
-            inputId = "hasBaseline",
-            label = "Baseline data is available",
-            value = TRUE,
-            width = "100%"
-          ),
           # show text input to change outcome name
           shiny::textInput(
             inputId = "OutcomeName",
             label = "Outcome label",
             value = "Outcome",
+            width = "100%"
+          ),
+          # show checkbox for indicating outcomes has baseline data
+          shiny::checkboxInput(
+            inputId = "hasBaseline",
+            label = "Baseline data is available",
+            value = TRUE,
             width = "100%"
           ),
           # add checkbox for covariates (CV)
@@ -302,17 +306,10 @@ ui <- shiny::fluidPage(
             step = 1,
             width = "100%"
           ),
-          # show checkbox for show/hid legend
-          shiny::checkboxInput(
-            inputId = "hasLegend",
-            label = "Show legend",
-            value = TRUE,
-            width = "100%"
-          ),
           # options for legend
           shinyWidgets::virtualSelectInput(
             inputId = "legendOptions",
-            label = "Legend position",
+            label = "Legend (position)",
             choices = c("none", "top", "topleft", "topright", "bottom", "bottomleft", "bottomright", "left", "right", "center"),
             selected = "none",
             showValueAsTags = TRUE,
@@ -324,12 +321,36 @@ ui <- shiny::fluidPage(
         # add column for buttons
         shiny::column(
           3,
+          # add title
+          shiny::h4("4. Ridit analysis", style = "text-align:center; font-weight:bold;"),
+          # add horizontal line
+          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
           # add button to run analysis
           shiny::actionButton(
             inputId = "runTable3",
             icon = shiny::icon("play"),
             label = "Table 3",
             style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          ),
+          shiny::br(),
+          shiny::br(),
+          # add checkbox for outcome variables (OV)
+          shinyWidgets::virtualSelectInput(
+            inputId = "OVRidit",
+            label = "Outcome variables",
+            choices = NULL,
+            selected = NA,
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = TRUE,
+            width = "100%"
+          ),
+          # show text input to change outcome name
+          shiny::textInput(
+            inputId = "OutcomeNameRidit",
+            label = "Outcome label",
+            value = "Outcome",
+            width = "100%"
           ),
         ),
       ),
@@ -356,9 +377,10 @@ ui <- shiny::fluidPage(
       icon = fontawesome::fa("table"),
       shiny::br(),
       # show table of results
-      DT::dataTableOutput("datatable2"),
-      # print text:"SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d)."
-      shiny::tags$p("SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d)."),
+      DT::dataTableOutput("table2"),
+      shiny::br(),
+      # show output text of missing data
+      shiny::textOutput("table2missingData"),
       shiny::br(),
       # download Word format
       shiny::downloadButton(
@@ -387,55 +409,53 @@ ui <- shiny::fluidPage(
     shiny::tabPanel(
       title = "Table 3",
       icon = fontawesome::fa("table"),
+      shiny::br(),
       # show table of results
       DT::dataTableOutput("table3"),
-    ),
-    # tab for regression diagnosis
-    shiny::tabPanel(
-      title = "Assumptions",
-      icon = fontawesome::fa("stethoscope"),
+      shiny::br(),
+      # download Word format
+      shiny::downloadButton(
+        outputId = "downloadTable3",
+        label = "Download Table 3 (.DOCX)",
+        style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+      ),
+      shiny::br(),
     ),
     shiny::tabPanel(
       title = list(fontawesome::fa("circle-info")),
       shiny::br(),
-      shiny::HTML("<b> Tutorial</b>"),
-      shiny::br(),
-      shiny::br(),
       shiny::HTML(
-        "<p>1. In <b>Data</b>, Use the <b>Upload</b> button to load data in .XLSX format.</p>\
-         <p>2. Click <b>SAP</b> to configure the <b>statistial analysis plan</b>:</p>\
-         <p>2.1 <b>Study design</b></p>\
+        "<p>First, acess the <b>Data</b> tab and click <b>Upload</b> to load data in .XLSX format. Then click <b>SAP</b> to configure the <b>statistial analysis plan</b>:</p>\
+         <p>1. <b>Study design</b></p>\
          <ul>\
          <li><i>Treatment</i></li>\
          <li><i>Control group</i></li>\
          <li><i>Endpoints</i></li>\
          <li><i>Type-I error (alpha value)</i></li>\
          </ul>\
-         <p>2.2. <b>Table 1</b></p>\
+         <p>2. <b>Table 1</b></p>\
          <ul>\
          <li><i>Baseline</i></li>\
          <li><i>Max levels for categorical variables</i></li>\
          <li><i>Show/Hide p-values</i></li>\
          </ul>\
-         <p>2.3. <b>Table 2 & Figure 2</b></p>\
+         <p>3. <b>Table 2 & Figure 2</b></p>\
          <ul>\
-         <li><i>Outcomes</i></li>\
+         <li><i>Outcome</i></li>\
          <li><i>Covariates</i></li>\
          <li><i>Missing data handling method</i></li>\
-         <li><i>Resamples for multiple imputation, if any</i></li>\
-         <li><i>Position of plot legend, if any</i></li>\
+         <li><i>Resamples for multiple imputation</i></li>\
+         <li><i>Plot legend</i></li>\
          </ul>\
-         <p>2.4. <b>Table 3:</b></p>\
+         <p>4. <b>Table 3:</b></p>\
          <ul>\
+         <li><i>Outcome</i></li>\
          </ul>\
-         <p>3. Click <i class='fa fa-refresh fa-1x'></i> <b>Restart</b> before running new analisys."
+         <p>Click <i class='fa fa-refresh fa-1x'></i> <b>Restart</b> before running new analisys."
       ),
     ),
     shiny::tabPanel(
       title = list(fontawesome::fa("book-open")),
-      shiny::br(),
-      shiny::HTML("<b> Session info</b>"),
-      shiny::br(),
       shiny::br(),
       # session info text output
       shiny::htmlOutput("gratrep")
@@ -527,15 +547,6 @@ server <- function(input, output, session) {
     }
   })
   
-  # enable legend options if hasLegeng is checked
-  shiny::observeEvent(input$hasLegend, {
-    if (input$hasLegend == TRUE) {
-      shinyjs::enable("legendOptions")
-    } else {
-      shinyjs::disable("legendOptions")
-    }
-  })
-  
   rawdata <- shiny::reactive({
     if (is.null(values$upload_state)) {
       return(NULL)
@@ -590,6 +601,12 @@ server <- function(input, output, session) {
     # update list of outcome variables from rawdata header
     shinyWidgets::updateVirtualSelect(
       inputId = "OV",
+      choices = colnames(rawdata),
+      selected = NA
+    )
+    # update list of outcome variables from rawdata header
+    shinyWidgets::updateVirtualSelect(
+      inputId = "OVRidit",
       choices = colnames(rawdata),
       selected = NA
     )
@@ -669,6 +686,13 @@ server <- function(input, output, session) {
     shiny::updateTabsetPanel(session = session,
                              inputId = "tabs",
                              selected = "Figure 2")
+  })
+  
+  # change tab on runTable 3 click
+  shiny::observeEvent(input[["runTable3"]], {
+    shiny::updateTabsetPanel(session = session,
+                             inputId = "tabs",
+                             selected = "Table 3")
   })
   
   # enable plot legend when checked
@@ -751,7 +775,7 @@ server <- function(input, output, session) {
       flextable::fontsize(size = 12, part = "all")
     
     # Create Word document with formatted caption, table, and footnote
-    table_2 <-
+    table_1 <-
       officer::read_docx() %>%
       officer::body_set_default_section(sect_properties) %>%
       officer::body_add_fpar(
@@ -760,8 +784,7 @@ server <- function(input, output, session) {
         )
       ) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
-      # define sec properties
-      
+
       officer::body_add_fpar(
         officer::fpar(
           officer::ftext("Mean (SD) or count (%)", prop = footnote_style)
@@ -866,8 +889,8 @@ server <- function(input, output, session) {
     return(results)
   })
   
-  # show table 2
-  output[["datatable2"]] <- DT::renderDT({
+  # show table 2 ------------------------------------------------
+  output[["table2"]] <- DT::renderDT({
     shiny::req(table2())
     
     results.mix <- table2()$mix.mod.res %>%
@@ -893,7 +916,7 @@ server <- function(input, output, session) {
     # use outcome names
     results[, 1] <- gsub("Outcome", input[["OutcomeName"]], results[, 1])
     
-    caption <- "Table 2: Two-way linear mixed model analysis."
+    caption <- paste0("Table 2: Two-way linear mixed model analysis (", input[["OutcomeName"]],").")
     
     # Define text styles for caption and footnotes
     caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
@@ -936,11 +959,15 @@ server <- function(input, output, session) {
         )
       ) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
-      # define sec properties
       
       officer::body_add_fpar(
         officer::fpar(
           officer::ftext("SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).", prop = footnote_style)
+        )
+      ) %>%
+      officer::body_add_fpar(
+        officer::fpar(
+          officer::ftext(table2()$missingtest.res, prop = footnote_style)
         )
       ) %>%  # Add footnote
       print(target = file.path(dir.name, "Table 2.docx"))
@@ -971,6 +998,12 @@ server <- function(input, output, session) {
       DT::formatStyle(columns = 3:ncol(results), textAlign = "right")
   }, server = FALSE)
   
+  # show text for table2missingData
+  output[["table2missingData"]] <- shiny::renderText({
+    shiny::req(table2())
+    table2()$missingtest.res
+  })
+  
   # Download Handler
   output$downloadTable2 <- shiny::downloadHandler(
     filename = function() {
@@ -981,7 +1014,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # run Figure 2
+  # show figure 2 ------------------------------------------------
   output[["plot"]] <- shiny::renderPlot({
     shiny::req(rawdata())
     shiny::req(input[["OV"]])
@@ -1040,7 +1073,150 @@ server <- function(input, output, session) {
     }
   )
   
-  # run table 3
+  # run table 3 on runTable3 click ------------------------------------------------
+  table3 <- shiny::reactive({
+    shiny::req(rawdata())
+    shiny::req(input[["BGF"]])
+    shiny::req(input[["OVRidit"]])
+    
+    # read file
+    rawdata <- readxl::read_xlsx(rawdata())
+    # remove empty columns
+    rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
+    # remove empty rows
+    rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
+    # clean variable names
+    colnames(rawdata) <- janitor::make_clean_names(colnames(rawdata))
+    # clean NA values
+    rawdata <- as.NA(rawdata)
+    
+    # select columns from checked variables
+    rawdata <- rawdata[, unique(c(input[["BGF"]], input[["OVRidit"]]))]
+    
+    # add column based on treatment group names per user input
+    if (!is.null(input[["BGF"]])) {
+      rawdata <- rawdata %>%
+        dplyr::mutate(TREATMENT = factor(
+          x = rawdata[[input[["BGF"]]]],
+          levels = unique(rawdata[[input[["BGF"]]]]),
+          labels = strsplit(trimws(input[["treatmentNames"]], which = "both"), ",")[[1]]
+        ))
+    }
+    
+    # data will never have baseline
+    results <- TABLE.3(
+      dataset = rawdata,
+      variables = input[["OVRidit"]],
+      bw.factor = rawdata$TREATMENT,
+      control.g = input[["controlgroup"]],
+      # drop 1 
+      wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
+      alpha = as.numeric(input[["alpha"]]),
+      n.digits = 2
+    )
+    return(results)
+  })
+  
+  # show table 3 ------------------------------------------------
+  output[["table3"]] <- DT::renderDT({
+    shiny::req(table3())
+    
+    results <- table3()$ridit.results %>%
+      as.data.frame(check.names = FALSE) %>%
+      dplyr::mutate(Variables = rownames(table3()$ridit.results))
+    
+    # last column first, then the others
+    results <- results[, c(ncol(results), 1:(ncol(results) - 1))]
+    
+    # remove names
+    rownames(results) <- rep(NULL, nrow(results))
+    
+    caption <- paste0("Table 3: Two-way cross-table analysis (", input[["OutcomeName"]],").")
+    
+    # Define text styles for caption and footnotes
+    caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
+    footnote_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
+    
+    # create Word doc from results dataframe
+    sect_properties <- officer::prop_section(
+      page_size = officer::page_size(
+        orient = "landscape",
+        width = 8.3,
+        height = 11.7
+      ),
+      type = "continuous",
+      page_margins = officer::page_mar()
+    )
+    
+    FitFlextableToPage <- function(ft, pgwidth = 11.7 - 1) {
+      ft_out <- ft %>% flextable::autofit()
+      ft_out <-
+        flextable::width(ft_out, width = dim(ft_out)$widths * pgwidth / (flextable::flextable_dim(ft_out)$widths))
+      return(ft_out)
+    }  
+    
+    # Generate and format the flextable
+    my_summary_to_save <-
+      results %>%
+      as.data.frame(check.names = FALSE, row.names = NULL) %>%
+      flextable::regulartable() %>%
+      FitFlextableToPage() %>%
+      flextable::font(fontname = "Times New Roman", part = "all") %>%
+      flextable::fontsize(size = 12, part = "all")
+    
+    # Create Word document with formatted caption, table, and footnote
+    table_3 <-
+      officer::read_docx() %>%
+      officer::body_set_default_section(sect_properties) %>%
+      officer::body_add_fpar(
+        officer::fpar(
+          officer::ftext(caption, prop = caption_style)
+        )
+      ) %>%  # Add caption
+      flextable::body_add_flextable(my_summary_to_save) %>%
+
+      officer::body_add_fpar(
+        officer::fpar(
+          officer::ftext("Count (%)", prop = footnote_style)
+        )
+      ) %>%  # Add footnote
+      print(target = file.path(dir.name, "Table 3.docx"))
+    
+    # output results
+    DT::datatable(
+      data = results,
+      caption = caption,
+      extensions = c('ColReorder'),
+      rownames = FALSE,
+      colnames = NULL,
+      options = list(
+        searching = FALSE,
+        colReorder = TRUE,
+        pageLength = nrow(results),
+        width = "100%",
+        fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender();}'),
+        scrollX = TRUE,
+        dom = 't',
+        columnDefs = list(list(
+          className = 'dt-center', targets = 1:ncol(results),
+          defaultContent = "-",
+          targets = "_all"
+        ))
+      )
+    ) %>%
+      DT::formatStyle(columns = 1, fontWeight = "bold") %>%
+      DT::formatStyle(columns = 3:ncol(results), textAlign = "right")
+  }, server = FALSE)
+  
+  # Download Handler
+  output$downloadTable3 <- shiny::downloadHandler(
+    filename = function() {
+      paste0("Table 3.docx")
+    },
+    content = function(file) {
+      file.copy(from = file.path(dir.name, "Table 3.docx"), to = file)
+    }
+  )
   
   # output references
   output$gratrep <- shiny::renderUI({

@@ -22,7 +22,7 @@ missing.data <-
       dataset <- cbind(dataset, covariate)
     }
     
-    test.res <-
+    missingtest.res <-
       misty::na.test(
         dataset,
         digits = digits,
@@ -32,10 +32,16 @@ missing.data <-
         output = output
       )
     
-    # output results
-    print("Output: Little's Missing Completely at Random (MCAR) Test",
-          quote = FALSE)
-    print(test.res, quote = FALSE)
+    missingtest.res <- paste0("Little's Missing Completely at Random (MCAR) Test: ", paste(
+      paste(
+        names(missingtest.res$result$little),
+        format(missingtest.res$result$little, digits = 3),
+        sep = " = "
+      ),
+      collapse = ", "
+    ))
+    
+    print(missingtest.res, quote = FALSE)
     print("", quote = FALSE)
-    return(test.res <- "test.res")
+    return(missingtest.res)
   }

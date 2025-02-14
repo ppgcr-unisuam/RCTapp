@@ -78,6 +78,13 @@ TABLE.2a <- function(dataset,
   # matriz de resultados de interação
   interaction <- c()
   
+  # missing data analysis BEFORE imputation, if any
+  missingtest.res <- "There are no missing values to be analyzed."
+  try(missingtest.res <- missing.data(dataset = dataset,
+                                      variables = variables,
+                                      covariate = covariate),
+      silent = TRUE)
+  
   # preparação e análise do modelo misto
   ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
   TIME_M <-
@@ -511,18 +518,18 @@ TABLE.2a <- function(dataset,
     "SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).",
     quote = FALSE
   )
-  print("", quote = FALSE)
+  print(
+    missingtest.res,
+    quote = FALSE
+  )
   
-  # missingness analysis
-  try(missing.data(dataset = dataset,
-                   variables = variables,
-                   covariate = covariate),
-      silent = TRUE)
+  print("", quote = FALSE)
   
   # output results
   return(list(
     'mix.mod.res' = mix.mod.res,
     'wt.diff' = wt.diff,
-    'bw.diff' = bw.diff
+    'bw.diff' = bw.diff,
+    'missingtest.res' = missingtest.res
   ))
 }
