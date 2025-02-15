@@ -6,7 +6,12 @@ if (!dir.exists(dir.name)) {
 shiny::addResourcePath(prefix = "www", directoryPath = "www")
 
 # create file with citations
-grateful::cite_packages(output = "file", out.dir = file.path(getwd(), "www"), out.format = "html", pkgs = "All")
+grateful::cite_packages(
+  output = "file",
+  out.dir = file.path(getwd(), "www"),
+  out.format = "html",
+  pkgs = "All"
+)
 
 # copy favicon folder to the www dir
 R.utils::copyDirectory(from = "favicon_io", to = file.path(dir.name, "favicon_io"))
@@ -108,6 +113,7 @@ ui <- shiny::fluidPage(
         buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
         accept = c(".xlsx"),
         width = "100%",
+        placeholder = "Upload XLSX data in wide format (one row per subject, multiple columns for repeated measures)."
       ),
       DT::DTOutput(outputId = "rawtable"),
     ),
@@ -117,7 +123,7 @@ ui <- shiny::fluidPage(
       shiny::fluidRow(
         shiny::column(
           3,
-          # add title
+          # add title with
           shiny::h4("1. Study design", style = "text-align:center; font-weight:bold;"),
           # add horizontal line
           shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
@@ -252,7 +258,7 @@ ui <- shiny::fluidPage(
           # add checkbox for outcome variables (OV)
           shinyWidgets::virtualSelectInput(
             inputId = "OV",
-            label = "Outcome variables",
+            label = "Outcome variable (all columns)",
             choices = NULL,
             selected = NA,
             showValueAsTags = TRUE,
@@ -285,37 +291,93 @@ ui <- shiny::fluidPage(
             multiple = TRUE,
             width = "100%"
           ),
-          # show options for missing data
-          shinyWidgets::virtualSelectInput(
-            inputId = "missing",
-            label = "Missing data",
-            choices = c("Complete cases", "Mean imputation", "Multiple imputation"),
-            selected = "Complete cases",
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = FALSE,
-            width = "100%"
-          ),
-          # number of resamples
-          shiny::numericInput(
-            inputId = "MICEresamples",
-            label = "Resamples for multiple imputation",
-            value = 50,
-            min = 1,
-            max = 100,
-            step = 1,
-            width = "100%"
+          shiny::fluidRow(
+            shiny::column(
+              8,
+              # show options for missing data
+              shinyWidgets::virtualSelectInput(
+                inputId = "missing",
+                label = "Missing data (imputation)",
+                choices = c("Complete cases", "Mean imputation", "Multiple imputation"),
+                selected = "Complete cases",
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = FALSE,
+                width = "100%"
+              ),
+            ),
+            shiny::column(
+              4,
+              # number of resamples
+              shiny::numericInput(
+                inputId = "MICEresamples",
+                label = "Resamples",
+                value = 50,
+                min = 1,
+                max = 100,
+                step = 1,
+                width = "100%"
+              ),
+            ),
           ),
           # options for legend
           shinyWidgets::virtualSelectInput(
             inputId = "legendOptions",
             label = "Legend (position)",
-            choices = c("none", "top", "topleft", "topright", "bottom", "bottomleft", "bottomright", "left", "right", "center"),
+            choices = c(
+              "none",
+              "top",
+              "topleft",
+              "topright",
+              "bottom",
+              "bottomleft",
+              "bottomright",
+              "left",
+              "right",
+              "center"
+            ),
             selected = "none",
             showValueAsTags = TRUE,
             search = TRUE,
             multiple = FALSE,
             width = "100%"
+          ),
+          shiny::fluidRow(
+            shiny::column(
+              6,
+              # show options for missing data
+              shinyWidgets::virtualSelectInput(
+                inputId = "missingTest",
+                label = "Missing data test",
+                choices = c("None", "Little"),
+                selected = "Little",
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = FALSE,
+                width = "100%"
+              ),
+            ),
+            shiny::column(
+              6,
+              # show options for regression diagnosis
+              shinyWidgets::virtualSelectInput(
+                inputId = "regressionDiag",
+                label = "Regression diagnosis",
+                choices = c(
+                  "Outlier detection",
+                  "Influencial observations",
+                  "Normality of residues",
+                  "Homocedasticity",
+                  "Multicollinearity",
+                  "Autocorrelation"
+                ),
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = TRUE,
+                width = "100%"
+              ),
+            ),
           ),
         ),
         # add column for buttons
@@ -337,7 +399,7 @@ ui <- shiny::fluidPage(
           # add checkbox for outcome variables (OV)
           shinyWidgets::virtualSelectInput(
             inputId = "OVRidit",
-            label = "Outcome variables",
+            label = "Outcome variable (all columns)",
             choices = NULL,
             selected = NA,
             showValueAsTags = TRUE,
@@ -370,6 +432,7 @@ ui <- shiny::fluidPage(
         style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
       ),
       shiny::br(),
+      shiny::br(),
     ),
     # tab for table 2 of results
     shiny::tabPanel(
@@ -389,6 +452,7 @@ ui <- shiny::fluidPage(
         style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
       ),
       shiny::br(),
+      shiny::br(),
     ),
     # tab for plot of results
     shiny::tabPanel(
@@ -403,6 +467,7 @@ ui <- shiny::fluidPage(
         label = "Download Figure 2 (.TIFF)",
         style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
       ),
+      shiny::br(),
       shiny::br(),
     ),
     # tab for table 3 of results
@@ -419,6 +484,7 @@ ui <- shiny::fluidPage(
         label = "Download Table 3 (.DOCX)",
         style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
       ),
+      shiny::br(),
       shiny::br(),
     ),
     shiny::tabPanel(
@@ -478,31 +544,69 @@ ui <- shiny::fluidPage(
     shiny::tabPanel(
       title = list(fontawesome::fa("people-group")),
       shiny::br(),
-      shiny::HTML("<b> Authors</b>"),
+      shiny::HTML(
+        "<b>Arthur de Sá Ferreira, DSc</b> (Developer)"),
+      shiny::br(),
+      shiny::HTML(
+        '<a id="cy-effective-orcid-url" class="underline" 
+         href="https://orcid.org/0000-0001-7014-2002"
+         target="orcid.widget" rel="me noopener noreferrer" style="vertical-align: top">
+         <img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" style="width: 1em; margin-inline-start: 0.5em" alt="ORCID iD icon"/>
+         https://orcid.org/0000-0001-7014-2002
+         </a>'
+      ),
       shiny::br(),
       shiny::br(),
       shiny::HTML(
-        "<a href=\"mailto:arthurde@souunisuam.com.br\">Arthur de Sá Ferreira, DSc</a>"
+        "<b>Ney Meziat Filho, DSc</b> (Contributor)"),
+      shiny::br(),
+      shiny::HTML(
+        '<a id="cy-effective-orcid-url" class="underline" 
+         href="https://orcid.org/0000-0003-2794-7299"
+         target="orcid.widget" rel="me noopener noreferrer" style="vertical-align: top">
+         <img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" style="width: 1em; margin-inline-start: 0.5em" alt="ORCID iD icon"/>
+         https://orcid.org/0000-0003-2794-7299
+         </a>'
       ),
-      shiny::HTML("<b> (Developer)</b>"),
       shiny::br(),
       shiny::br(),
       shiny::HTML(
-        "<a href=\"mailto:ney.filho@souunisuam.com.br\">Ney Meziat Filho, DSc</a>"
-      ),
-      shiny::HTML("; "),
+        "<b>Fabiana Terra Cunha, DSc</b> (Contributor)"),
+      shiny::br(),
       shiny::HTML(
-        "<a href=\"mailto:fabianaterracunha@gmail.com\">Fabiana Terra Cunha, DSc</a>"
+        '<a id="cy-effective-orcid-url" class="underline" 
+         href="https://orcid.org/0000-0002-2043-8494"
+         target="orcid.widget" rel="me noopener noreferrer" style="vertical-align: top">
+         <img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" style="width: 1em; margin-inline-start: 0.5em" alt="ORCID iD icon"/>
+         https://orcid.org/0000-0002-2043-8494
+         </a>'
       ),
-      shiny::HTML("; "),
+      shiny::br(),
+      shiny::br(),
       shiny::HTML(
-        "<a href=\"mailto:jessicafmg@gmail.com\">Jessica Fernandez, DSc</a>"
-      ),
-      shiny::HTML("; "),
+        "<b>Jessica Fernandez, DSc</b> (Contributor)"),
+      shiny::br(),
       shiny::HTML(
-        "<a href=\"mailto:julia.d.castro@hotmail.com\">Julia Castro, DSc</a>"
+        '<a id="cy-effective-orcid-url" class="underline" 
+         href="https://orcid.org/0000-0003-0047-9659"
+         target="orcid.widget" rel="me noopener noreferrer" style="vertical-align: top">
+         <img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" style="width: 1em; margin-inline-start: 0.5em" alt="ORCID iD icon"/>
+         https://orcid.org/0000-0003-0047-9659
+         </a>'
       ),
-      shiny::HTML("<b> (Contributors)</b>"),
+      shiny::br(),
+      shiny::br(),
+      shiny::HTML(
+        "<b>Julia Castro, DSc</b> (Contributor)"),
+      shiny::br(),
+      shiny::HTML(
+        '<a id="cy-effective-orcid-url" class="underline" 
+         href="https://orcid.org/0000-0003-0511-5715"
+         target="orcid.widget" rel="me noopener noreferrer" style="vertical-align: top">
+         <img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" style="width: 1em; margin-inline-start: 0.5em" alt="ORCID iD icon"/>
+         https://orcid.org/0000-0003-0511-5715
+         </a>'
+      ),
       shiny::br(),
       shiny::br(),
       shiny::HTML(
@@ -761,9 +865,10 @@ server <- function(input, output, session) {
     FitFlextableToPage <- function(ft, pgwidth = 8.3 - 1) {
       ft_out <- ft %>% flextable::autofit()
       ft_out <-
-        flextable::width(ft_out, width = dim(ft_out)$widths * pgwidth / (flextable::flextable_dim(ft_out)$widths))
+        flextable::width(ft_out,
+                         width = dim(ft_out)$widths * pgwidth / (flextable::flextable_dim(ft_out)$widths))
       return(ft_out)
-    }  
+    }
     
     # Generate and format the flextable
     my_summary_to_save <-
@@ -778,18 +883,12 @@ server <- function(input, output, session) {
     table_1 <-
       officer::read_docx() %>%
       officer::body_set_default_section(sect_properties) %>%
-      officer::body_add_fpar(
-        officer::fpar(
-          officer::ftext(caption, prop = caption_style)
-        )
-      ) %>%  # Add caption
+      officer::body_add_fpar(officer::fpar(officer::ftext(caption, prop = caption_style))) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
-
-      officer::body_add_fpar(
-        officer::fpar(
-          officer::ftext("Mean (SD) or count (%)", prop = footnote_style)
-        )
-      ) %>%  # Add footnote
+      
+      officer::body_add_fpar(officer::fpar(
+        officer::ftext("Mean (SD) or count (%)", prop = footnote_style)
+      )) %>%  # Add footnote
       print(target = file.path(dir.name, "Table 1.docx"))
     
     # output results
@@ -858,7 +957,7 @@ server <- function(input, output, session) {
     }
     
     # check if data has baseline from checkbox
-    if(input[["hasBaseline"]]){
+    if (input[["hasBaseline"]]) {
       results <- TABLE.2a(
         dataset = rawdata,
         variables = input[["OV"]],
@@ -868,6 +967,7 @@ server <- function(input, output, session) {
         wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
         missing = tolower(gsub(" ", ".", input[["missing"]])),
         m.imputations = as.numeric(input[["MICEresamples"]]),
+        test.missing = input[["missingTest"]],
         alpha = as.numeric(input[["alpha"]]),
         n.digits = 2
       )
@@ -878,10 +978,11 @@ server <- function(input, output, session) {
         covariate = input[["CV"]],
         bw.factor = rawdata$TREATMENT,
         control.g = input[["controlgroup"]],
-        # drop 1 
+        # drop 1
         wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
         missing = tolower(gsub(" ", ".", input[["missing"]])),
         m.imputations = as.numeric(input[["MICEresamples"]]),
+        test.missing = input[["missingTest"]],
         alpha = as.numeric(input[["alpha"]]),
         n.digits = 2
       )
@@ -916,7 +1017,7 @@ server <- function(input, output, session) {
     # use outcome names
     results[, 1] <- gsub("Outcome", input[["OutcomeName"]], results[, 1])
     
-    caption <- paste0("Table 2: Two-way linear mixed model analysis (", input[["OutcomeName"]],").")
+    caption <- paste0("Table 2: Two-way linear mixed model analysis (", input[["OutcomeName"]], ").")
     
     # Define text styles for caption and footnotes
     caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
@@ -936,9 +1037,10 @@ server <- function(input, output, session) {
     FitFlextableToPage <- function(ft, pgwidth = 11.7 - 1) {
       ft_out <- ft %>% flextable::autofit()
       ft_out <-
-        flextable::width(ft_out, width = dim(ft_out)$widths * pgwidth / (flextable::flextable_dim(ft_out)$widths))
+        flextable::width(ft_out,
+                         width = dim(ft_out)$widths * pgwidth / (flextable::flextable_dim(ft_out)$widths))
       return(ft_out)
-    }  
+    }
     
     # Generate and format the flextable
     my_summary_to_save <-
@@ -953,23 +1055,18 @@ server <- function(input, output, session) {
     table_2 <-
       officer::read_docx() %>%
       officer::body_set_default_section(sect_properties) %>%
-      officer::body_add_fpar(
-        officer::fpar(
-          officer::ftext(caption, prop = caption_style)
-        )
-      ) %>%  # Add caption
+      officer::body_add_fpar(officer::fpar(officer::ftext(caption, prop = caption_style))) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
       
-      officer::body_add_fpar(
-        officer::fpar(
-          officer::ftext("SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).", prop = footnote_style)
+      officer::body_add_fpar(officer::fpar(
+        officer::ftext(
+          "SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).",
+          prop = footnote_style
         )
-      ) %>%
-      officer::body_add_fpar(
-        officer::fpar(
-          officer::ftext(table2()$missingtest.res, prop = footnote_style)
-        )
-      ) %>%  # Add footnote
+      )) %>%
+      officer::body_add_fpar(officer::fpar(
+        officer::ftext(table2()$missingtest.res, prop = footnote_style)
+      )) %>%  # Add footnote
       print(target = file.path(dir.name, "Table 2.docx"))
     
     # output results
@@ -987,11 +1084,14 @@ server <- function(input, output, session) {
         fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender();}'),
         scrollX = TRUE,
         dom = 't',
-        columnDefs = list(list(
-          className = 'dt-center', targets = 1:ncol(results),
-          defaultContent = "-",
-          targets = "_all"
-        ))
+        columnDefs = list(
+          list(
+            className = 'dt-center',
+            targets = 1:ncol(results),
+            defaultContent = "-",
+            targets = "_all"
+          )
+        )
       )
     ) %>%
       DT::formatStyle(columns = 1, fontWeight = "bold") %>%
@@ -1059,7 +1159,14 @@ server <- function(input, output, session) {
     )
     
     # save plot
-    dev.copy(tiff, file = file.path(dir.name, "Figure 2.tiff"), width = 7, height = 5, units = "in", res = 300)
+    dev.copy(
+      tiff,
+      file = file.path(dir.name, "Figure 2.tiff"),
+      width = 7,
+      height = 5,
+      units = "in",
+      res = 300
+    )
     dev.off()
   })
   
@@ -1109,7 +1216,7 @@ server <- function(input, output, session) {
       variables = input[["OVRidit"]],
       bw.factor = rawdata$TREATMENT,
       control.g = input[["controlgroup"]],
-      # drop 1 
+      # drop 1
       wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
       alpha = as.numeric(input[["alpha"]]),
       n.digits = 2
@@ -1131,7 +1238,7 @@ server <- function(input, output, session) {
     # remove names
     rownames(results) <- rep(NULL, nrow(results))
     
-    caption <- paste0("Table 3: Two-way cross-table analysis (", input[["OutcomeName"]],").")
+    caption <- paste0("Table 3: Two-way cross-table analysis (", input[["OutcomeName"]], ").")
     
     # Define text styles for caption and footnotes
     caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
@@ -1151,9 +1258,10 @@ server <- function(input, output, session) {
     FitFlextableToPage <- function(ft, pgwidth = 11.7 - 1) {
       ft_out <- ft %>% flextable::autofit()
       ft_out <-
-        flextable::width(ft_out, width = dim(ft_out)$widths * pgwidth / (flextable::flextable_dim(ft_out)$widths))
+        flextable::width(ft_out,
+                         width = dim(ft_out)$widths * pgwidth / (flextable::flextable_dim(ft_out)$widths))
       return(ft_out)
-    }  
+    }
     
     # Generate and format the flextable
     my_summary_to_save <-
@@ -1168,18 +1276,10 @@ server <- function(input, output, session) {
     table_3 <-
       officer::read_docx() %>%
       officer::body_set_default_section(sect_properties) %>%
-      officer::body_add_fpar(
-        officer::fpar(
-          officer::ftext(caption, prop = caption_style)
-        )
-      ) %>%  # Add caption
+      officer::body_add_fpar(officer::fpar(officer::ftext(caption, prop = caption_style))) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
-
-      officer::body_add_fpar(
-        officer::fpar(
-          officer::ftext("Count (%)", prop = footnote_style)
-        )
-      ) %>%  # Add footnote
+      
+      officer::body_add_fpar(officer::fpar(officer::ftext("Count (%)", prop = footnote_style))) %>%  # Add footnote
       print(target = file.path(dir.name, "Table 3.docx"))
     
     # output results
@@ -1197,11 +1297,14 @@ server <- function(input, output, session) {
         fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender();}'),
         scrollX = TRUE,
         dom = 't',
-        columnDefs = list(list(
-          className = 'dt-center', targets = 1:ncol(results),
-          defaultContent = "-",
-          targets = "_all"
-        ))
+        columnDefs = list(
+          list(
+            className = 'dt-center',
+            targets = 1:ncol(results),
+            defaultContent = "-",
+            targets = "_all"
+          )
+        )
       )
     ) %>%
       DT::formatStyle(columns = 1, fontWeight = "bold") %>%
@@ -1220,10 +1323,12 @@ server <- function(input, output, session) {
   
   # output references
   output$gratrep <- shiny::renderUI({
-    tags$iframe(seamless="seamless", 
-                src = "www/grateful-report.html",
-                width = "100%",
-                height = 500)
+    tags$iframe(
+      seamless = "seamless",
+      src = "www/grateful-report.html",
+      width = "100%",
+      height = 500
+    )
   })
 }
 

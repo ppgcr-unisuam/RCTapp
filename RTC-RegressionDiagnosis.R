@@ -1,4 +1,4 @@
-test.model.fit <- function(model.fit, dataset) {
+test.model.fit <- function(model.fit, dataset, diagnostics) {
   fit <- model.fit
   
   # Outliers
@@ -7,6 +7,7 @@ test.model.fit <- function(model.fit, dataset) {
   print("")
 
   # Influential Observations
+  print("Cook's influential observations")
   print("Cook's D cutoff (4/n)")
   D <- cooks.distance(fit)
   # identify D values > 4/(n-k-1)
@@ -18,7 +19,7 @@ test.model.fit <- function(model.fit, dataset) {
   print("")
 
   # Normality of Residuals
-  print("Shapiro-Wilk test for residues")
+  print("Shapiro-Wilk test for normality of residues")
   sresid <- resid(fit) / sd(resid(fit))
   print(shapiro.test(sresid)) # p value non-sign: normal distribution of residuals
   print("")
@@ -28,7 +29,7 @@ test.model.fit <- function(model.fit, dataset) {
   lmtest::bptest(fit)
 
   # Collinearity
-  print("Variance inflation factors")
+  print("Multicollinearity")
   print(car::vif(fit)) # variance inflation factors
   print("")
   print("Variance inflation factors (sqrt(vif) > 4")

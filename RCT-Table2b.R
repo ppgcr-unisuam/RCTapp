@@ -6,6 +6,7 @@ TABLE.2b <- function(dataset,
                      wt.labels,
                      missing = c("complete.cases", "mean.imputation", "multiple.imputation"),
                      m.imputations,
+                     test.missing = c("None", "Little"),
                      alpha,
                      n.digits) {
   # This function outputs a comparison table for two-way mixed-models
@@ -72,11 +73,16 @@ TABLE.2b <- function(dataset,
   interaction <- c()
   
   # missing data analysis BEFORE imputation, if any
-  missingtest.res <- "There are no missing values to be analyzed."
-  try(missingtest.res <- missing.data(dataset = dataset,
-                                      variables = variables,
-                                      covariate = covariate),
-      silent = TRUE)
+  if(test.missing == "None"){
+    missingtest.res <- "Missing data pattern not analyzed."
+  } else {
+    missingtest.res <- "There are no missing values to be analyzed."
+    try(missingtest.res <- missing.data(test.missing = test.missing,
+                                        dataset = dataset,
+                                        variables = variables,
+                                        covariate = covariate),
+        silent = TRUE)
+  }
   
   # preparação e análise do modelo misto
   ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
