@@ -29,6 +29,7 @@ source("RCT-Table2b.R", local = TRUE) # numeric variables, linear mixed model an
 source("RCT-Figure2.R", local = TRUE) # numeric variables, plot of descriptive analysis (mean and CI)
 source("RCT-Table3.R", local = TRUE) #  ordinal variables, ridit analysis, ONLY within-factor
 source("RCT-Missingness.R", local = TRUE) # missing data analysis
+source("RCT-RegressionDiagnosis.R", local = TRUE) # regression diagnosis on original dataset
 
 # use this code to debug
 # rsconnect::showLogs()
@@ -123,14 +124,14 @@ ui <- shiny::fluidPage(
       shiny::fluidRow(
         shiny::column(
           3,
-          # add title with
+          # add title
           shiny::h4("1. Study design", style = "text-align:center; font-weight:bold;"),
           # add horizontal line
           shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
           # add checkbox for between-subject factors (BGF)
           shinyWidgets::virtualSelectInput(
             inputId = "BGF",
-            label = "Treatment",
+            label = "Treatment groups",
             choices = NULL,
             selected = NA,
             showValueAsTags = TRUE,
@@ -160,15 +161,15 @@ ui <- shiny::fluidPage(
           # show text for endpoint names
           shiny::textInput(
             inputId = "endpointNames",
-            label = "Endpoints (csv)",
+            label = "Endpoint labels (csv)",
             value = "Baseline,Follow-up",
             width = "100%"
           ),
           # show text for endpoint
           shiny::textInput(
             inputId = "endpointValues",
-            label = "Endpoint times (csv)",
-            value = "0,3",
+            label = "Endpoint value (csv)",
+            value = "0,1",
             width = "100%"
           ),
           shiny::br(),
@@ -344,7 +345,7 @@ ui <- shiny::fluidPage(
           ),
           shiny::fluidRow(
             shiny::column(
-              6,
+              5,
               # show options for missing data
               shinyWidgets::virtualSelectInput(
                 inputId = "missingTest",
@@ -358,7 +359,7 @@ ui <- shiny::fluidPage(
               ),
             ),
             shiny::column(
-              6,
+              7,
               # show options for regression diagnosis
               shinyWidgets::virtualSelectInput(
                 inputId = "regressionDiag",
@@ -443,7 +444,9 @@ ui <- shiny::fluidPage(
       DT::dataTableOutput("table2"),
       shiny::br(),
       # show output text of missing data
-      shiny::textOutput("table2missingData"),
+      shiny::htmlOutput("table2missingData"),
+      # shot output text of regression diagnosis
+      shiny::htmlOutput("table2regressionDiag"),
       shiny::br(),
       # download Word format
       shiny::downloadButton(
@@ -488,49 +491,15 @@ ui <- shiny::fluidPage(
       shiny::br(),
     ),
     shiny::tabPanel(
-      title = list(fontawesome::fa("circle-info")),
-      shiny::br(),
-      shiny::HTML(
-        "<p>First, acess the <b>Data</b> tab and click <b>Upload</b> to load data in .XLSX format. Then click <b>SAP</b> to configure the <b>statistial analysis plan</b>:</p>\
-         <p>1. <b>Study design</b></p>\
-         <ul>\
-         <li><i>Treatment</i></li>\
-         <li><i>Control group</i></li>\
-         <li><i>Endpoints</i></li>\
-         <li><i>Type-I error (alpha value)</i></li>\
-         </ul>\
-         <p>2. <b>Table 1</b></p>\
-         <ul>\
-         <li><i>Baseline</i></li>\
-         <li><i>Max levels for categorical variables</i></li>\
-         <li><i>Show/Hide p-values</i></li>\
-         </ul>\
-         <p>3. <b>Table 2 & Figure 2</b></p>\
-         <ul>\
-         <li><i>Outcome</i></li>\
-         <li><i>Covariates</i></li>\
-         <li><i>Missing data handling method</i></li>\
-         <li><i>Resamples for multiple imputation</i></li>\
-         <li><i>Plot legend</i></li>\
-         </ul>\
-         <p>4. <b>Table 3:</b></p>\
-         <ul>\
-         <li><i>Outcome</i></li>\
-         </ul>\
-         <p>Click <i class='fa fa-refresh fa-1x'></i> <b>Restart</b> before running new analisys."
-      ),
-    ),
-    shiny::tabPanel(
-      title = list(fontawesome::fa("book-open")),
+      icon = list(fontawesome::fa("book-open")),
+      title = "References",
       shiny::br(),
       # session info text output
       shiny::htmlOutput("gratrep")
     ),
     shiny::tabPanel(
-      title = list(fontawesome::fa("file-lines")),
-      shiny::br(),
-      shiny::HTML("<b> Publications</b>"),
-      shiny::br(),
+      icon = list(fontawesome::fa("file-lines")),
+      title = "Publications",
       shiny::br(),
       shiny::HTML(
         "Castro, J., Correia, L., Donato, B. de S., Arruda, B., Agulhari, F., Pellegrini, M. J., Belache, F. T. C., de Souza, C. P., Fernandez, J., Nogueira, L. A. C., Reis, F. J. J., Ferreira, A. de S., & Meziat-Filho, N. (2022). Cognitive functional therapy compared with core exercise and manual therapy in patients with chronic low back pain: randomised controlled trial. In Pain (Vol. 163, Issue 12, pp. 2430–2437). Ovid Technologies (Wolters Kluwer Health). <a href=\"https://doi.org/10.1097/j.pain.0000000000002644 \">https://doi.org/10.1097/j.pain.0000000000002644</a>"
@@ -542,7 +511,8 @@ ui <- shiny::fluidPage(
       ),
     ),
     shiny::tabPanel(
-      title = list(fontawesome::fa("people-group")),
+      icon = list(fontawesome::fa("people-group")),
+      title = "Authors",
       shiny::br(),
       shiny::HTML(
         "<b>Arthur de Sá Ferreira, DSc</b> (Developer)"),
@@ -610,20 +580,34 @@ ui <- shiny::fluidPage(
       shiny::br(),
       shiny::br(),
       shiny::HTML(
-        "<a href=\"https://www.unisuam.edu.br/programa-pos-graduacao-ciencias-da-reabilitacao\">PPGCR</a> | Programa de Pós-graduação em Ciências da Reabilitação, Centro Universitário Augusto Motta, Rio de Janeiro, RJ, Brazil"
+        "<b>Centro Universitário Augusto Motta</b> (Affiliation) <br>
+        <a href=\"https://www.unisuam.edu.br/programa-pos-graduacao-ciencias-da-reabilitacao\">PPGCR</a> | Programa de Pós-graduação em Ciências da Reabilitação <br>
+        Rio de Janeiro, RJ, Brazil"),
+      shiny::br(),
+      shiny::HTML(
+        '<a
+         href="https://ror.org/02ab1bc46"
+         style="vertical-align: top">
+         <img src="https://ror.org/assets/ror-logo-small-671ea83ad5060ad5c0c938809aab4731.png" style="width: 1em; margin-inline-start: 0.5em"/>
+         https://ror.org/02ab1bc46
+         </a>'
       ),
-      shiny::HTML("<b> (Affiliation)</b>"),
       shiny::br(),
       shiny::br(),
       shiny::HTML("<b>License</b>"),
       shiny::HTML(
         "This work is licensed under an <a rel=\"license\" data-spdx=\"Apache-2.0\" href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>."
       ),
+    ),
+    # add panel for citation
+    shiny::tabPanel(
+      icon = shiny::icon("quote-left"),
+      title = "Citation",
       shiny::br(),
-      shiny::br(),
-      shiny::HTML("<b>Cite as</b>"),
-      shiny::HTML(
-        "Ferreira, A. de S., & Meziat Filho, N. (2024). RCTapp Randomized Clinical Trial (1.0.0). Zenodo. <a href=\"https://doi.org/10.5281/zenodo.13848816\" target=\"_blank\">https://doi.org/10.5281/zenodo.13848816</a>"
+      shiny::h4(
+        shiny::HTML(
+          "Ferreira, A. de S., & Meziat Filho, N. (2024). RCTapp Randomized Clinical Trial (1.0.0). Zenodo. <a href=\"https://doi.org/10.5281/zenodo.13848816\" target=\"_blank\">https://doi.org/10.5281/zenodo.13848816</a>"
+        ),
       ),
     ),
   ),
@@ -806,6 +790,9 @@ server <- function(input, output, session) {
     shiny::req(rawdata())
     shiny::req(input[["BV"]])
     shiny::req(input[["BGF"]])
+    shiny::req(input[["treatmentNames"]])
+    shiny::req(input[["maxlevels"]])
+    shiny::req(input[["alpha"]])
     
     # read file
     rawdata <- readxl::read_xlsx(rawdata())
@@ -931,6 +918,12 @@ server <- function(input, output, session) {
     shiny::req(rawdata())
     shiny::req(input[["BGF"]])
     shiny::req(input[["OV"]])
+    shiny::req(input[["treatmentNames"]])
+    shiny::req(input[["controlgroup"]])
+    shiny::req(input[["endpointNames"]])
+    shiny::req(input[["missing"]])
+    shiny::req(input[["missingTest"]])
+    shiny::req(input[["alpha"]])
     
     # read file
     rawdata <- readxl::read_xlsx(rawdata())
@@ -990,9 +983,52 @@ server <- function(input, output, session) {
     return(results)
   })
   
+  regression <- shiny::reactive({
+    shiny::req(rawdata())
+    shiny::req(table2())
+
+    # read file
+    rawdata <- readxl::read_xlsx(rawdata())
+    # remove empty columns
+    rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
+    # remove empty rows
+    rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
+    # clean variable names
+    colnames(rawdata) <- janitor::make_clean_names(colnames(rawdata))
+    # clean NA values
+    rawdata <- as.NA(rawdata)
+    
+    # select columns from checked variables
+    rawdata <- rawdata[, unique(c(input[["BGF"]], input[["CV"]], input[["OV"]]))]
+    
+    # add column based on treatment group names per user input
+    if (!is.null(input[["BGF"]])) {
+      rawdata <- rawdata %>%
+        dplyr::mutate(TREATMENT = factor(
+          x = rawdata[[input[["BGF"]]]],
+          levels = unique(rawdata[[input[["BGF"]]]]),
+          labels = strsplit(trimws(input[["treatmentNames"]], which = "both"), ",")[[1]]
+        ))
+    }
+    
+    results <- test.model.fit(
+      dataset = rawdata,
+      variables = input[["OV"]],
+      covariate = input[["CV"]],
+      bw.factor = rawdata$TREATMENT,
+      wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
+      alpha = as.numeric(input[["alpha"]]),
+      p.digits = 3,
+      diagnostics = input[["regressionDiag"]]
+    )
+    
+    return(results)
+  })
+  
   # show table 2 ------------------------------------------------
   output[["table2"]] <- DT::renderDT({
     shiny::req(table2())
+    shiny::req(input[["OutcomeName"]])
     
     results.mix <- table2()$mix.mod.res %>%
       as.data.frame(check.names = FALSE) %>%
@@ -1099,12 +1135,18 @@ server <- function(input, output, session) {
   }, server = FALSE)
   
   # show text for table2missingData
-  output[["table2missingData"]] <- shiny::renderText({
+  output[["table2missingData"]] <- shiny::renderUI({
     shiny::req(table2())
-    table2()$missingtest.res
+    shiny::HTML(table2()$missingtest.res)
   })
   
-  # Download Handler
+  # show text for table2regressionDiag
+  output[["table2regressionDiag"]] <- shiny::renderUI({
+    shiny::req(regression())
+    shiny::HTML(regression()$diagnostics)
+  })
+  
+  # Download table 2 ------------------------------------------------
   output$downloadTable2 <- shiny::downloadHandler(
     filename = function() {
       paste0("Table 2.docx")
@@ -1117,8 +1159,15 @@ server <- function(input, output, session) {
   # show figure 2 ------------------------------------------------
   output[["plot"]] <- shiny::renderPlot({
     shiny::req(rawdata())
-    shiny::req(input[["OV"]])
     shiny::req(input[["BGF"]])
+    shiny::req(input[["OV"]])
+    shiny::req(input[["treatmentNames"]])
+    shiny::req(input[["endpointNames"]])
+    shiny::req(input[["endpointValues"]])
+    shiny::req(input[["missing"]])
+    shiny::req(input[["OutcomeName"]])
+    shiny::req(input[["legendOptions"]])
+    shiny::req(input[["alpha"]])
     
     # read file
     rawdata <- readxl::read_xlsx(rawdata())
@@ -1170,7 +1219,7 @@ server <- function(input, output, session) {
     dev.off()
   })
   
-  # download Figure 2
+  # download Figure 2 ------------------------------------------------
   output$downloadFigure2 <- shiny::downloadHandler(
     filename = function() {
       paste0("Figure 2.tiff")
@@ -1185,6 +1234,10 @@ server <- function(input, output, session) {
     shiny::req(rawdata())
     shiny::req(input[["BGF"]])
     shiny::req(input[["OVRidit"]])
+    shiny::req(input[["treatmentNames"]])
+    shiny::req(input[["controlgroup"]])
+    shiny::req(input[["endpointNames"]])
+    shiny::req(input[["alpha"]])
     
     # read file
     rawdata <- readxl::read_xlsx(rawdata())
@@ -1227,6 +1280,7 @@ server <- function(input, output, session) {
   # show table 3 ------------------------------------------------
   output[["table3"]] <- DT::renderDT({
     shiny::req(table3())
+    shiny::req(input[["OutcomeNameRidit"]])
     
     results <- table3()$ridit.results %>%
       as.data.frame(check.names = FALSE) %>%
@@ -1238,7 +1292,7 @@ server <- function(input, output, session) {
     # remove names
     rownames(results) <- rep(NULL, nrow(results))
     
-    caption <- paste0("Table 3: Two-way cross-table analysis (", input[["OutcomeName"]], ").")
+    caption <- paste0("Table 3: Two-way cross-table analysis (", input[["OutcomeNameRidit"]], ").")
     
     # Define text styles for caption and footnotes
     caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
@@ -1311,7 +1365,7 @@ server <- function(input, output, session) {
       DT::formatStyle(columns = 3:ncol(results), textAlign = "right")
   }, server = FALSE)
   
-  # Download Handler
+  # Download table 3 ------------------------------------------------
   output$downloadTable3 <- shiny::downloadHandler(
     filename = function() {
       paste0("Table 3.docx")
@@ -1321,7 +1375,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # output references
+  # output references ------------------------------------------------
   output$gratrep <- shiny::renderUI({
     tags$iframe(
       seamless = "seamless",
