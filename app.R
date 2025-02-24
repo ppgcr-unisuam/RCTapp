@@ -365,12 +365,7 @@ ui <- shiny::fluidPage(
                 inputId = "regressionDiag",
                 label = "Regression diagnosis",
                 choices = c(
-                  "Outlier detection",
-                  "Influencial observations",
-                  "Normality of residues",
-                  "Homocedasticity",
-                  "Multicollinearity",
-                  "Autocorrelation"
+                  "Component-Plus-Residual plot"
                 ),
                 selected = NA,
                 showValueAsTags = TRUE,
@@ -445,8 +440,6 @@ ui <- shiny::fluidPage(
       shiny::br(),
       # show output text of missing data
       shiny::htmlOutput("table2missingData"),
-      # shot output text of regression diagnosis
-      shiny::htmlOutput("table2regressionDiag"),
       shiny::br(),
       # download Word format
       shiny::downloadButton(
@@ -491,6 +484,18 @@ ui <- shiny::fluidPage(
       shiny::br(),
     ),
     shiny::tabPanel(
+      icon = list(fontawesome::fa("person-circle-question")),
+      title = "Missing data",
+      shiny::br(),
+    ),
+    shiny::tabPanel(
+      icon = list(fontawesome::fa("stethoscope")),
+      title = "Diagnostics",
+      shiny::br(),
+      # add plot
+      shiny::plotOutput("plotDiag1")
+    ),
+    shiny::tabPanel(
       icon = list(fontawesome::fa("book-open")),
       title = "References",
       shiny::br(),
@@ -528,7 +533,7 @@ ui <- shiny::fluidPage(
       shiny::br(),
       shiny::br(),
       shiny::HTML(
-        "<b>Ney Meziat Filho, DSc</b> (Contributor)"),
+        "<b>Ney Meziat Filho, DSc</b> (Developer)"),
       shiny::br(),
       shiny::HTML(
         '<a id="cy-effective-orcid-url" class="underline" 
@@ -958,6 +963,7 @@ server <- function(input, output, session) {
         bw.factor = rawdata$TREATMENT,
         control.g = input[["controlgroup"]],
         wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
+        wt.values = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
         missing = tolower(gsub(" ", ".", input[["missing"]])),
         m.imputations = as.numeric(input[["MICEresamples"]]),
         test.missing = input[["missingTest"]],
@@ -973,6 +979,7 @@ server <- function(input, output, session) {
         control.g = input[["controlgroup"]],
         # drop 1
         wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
+        wt.values = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]][-1],
         missing = tolower(gsub(" ", ".", input[["missing"]])),
         m.imputations = as.numeric(input[["MICEresamples"]]),
         test.missing = input[["missingTest"]],
@@ -985,7 +992,16 @@ server <- function(input, output, session) {
   
   regression <- shiny::reactive({
     shiny::req(rawdata())
-    shiny::req(table2())
+    shiny::req(input[["BGF"]])
+    shiny::req(input[["OV"]])
+    shiny::req(input[["treatmentNames"]])
+    shiny::req(input[["controlgroup"]])
+    shiny::req(input[["endpointNames"]])
+    shiny::req(input[["endpointValues"]])
+    shiny::req(input[["missing"]])
+    shiny::req(input[["missingTest"]])
+    shiny::req(input[["alpha"]])
+    shiny::req(input[["regressionDiag"]])
 
     # read file
     rawdata <- readxl::read_xlsx(rawdata())
@@ -1017,6 +1033,7 @@ server <- function(input, output, session) {
       covariate = input[["CV"]],
       bw.factor = rawdata$TREATMENT,
       wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
+      wt.values = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
       alpha = as.numeric(input[["alpha"]]),
       p.digits = 3,
       diagnostics = input[["regressionDiag"]]
@@ -1140,12 +1157,6 @@ server <- function(input, output, session) {
     shiny::HTML(table2()$missingtest.res)
   })
   
-  # show text for table2regressionDiag
-  output[["table2regressionDiag"]] <- shiny::renderUI({
-    shiny::req(regression())
-    shiny::HTML(regression()$diagnostics)
-  })
-  
   # Download table 2 ------------------------------------------------
   output$downloadTable2 <- shiny::downloadHandler(
     filename = function() {
@@ -1199,6 +1210,7 @@ server <- function(input, output, session) {
       covariate = input[["CV"]],
       bw.factor = rawdata$TREATMENT,
       wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
+      wt.values = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
       missing = tolower(gsub(" ", ".", input[["missing"]])),
       m.imputations = as.numeric(input[["MICEresamples"]]),
       xlabs = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
@@ -1374,6 +1386,20 @@ server <- function(input, output, session) {
       file.copy(from = file.path(dir.name, "Table 3.docx"), to = file)
     }
   )
+  
+  # show plot regression diagnosis
+  output[["plotDiag1"]] <- shiny::renderPlot({
+    shiny::req(regression())
+    shiny::req(input[["regressionDiag"]])
+    
+    plot(
+      regression()$Comp_Plus_Res,
+      partial.residual = list(lty = "dashed"),
+      main = "Component-plus-residual plot for the interaction effect",
+      xlab = "Time (endpoints)",
+      ylab = input[["OutcomeName"]]
+      )
+  })
   
   # output references ------------------------------------------------
   output$gratrep <- shiny::renderUI({

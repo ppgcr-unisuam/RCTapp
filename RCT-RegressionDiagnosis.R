@@ -3,6 +3,7 @@ test.model.fit <- function(dataset,
                            covariate,
                            bw.factor,
                            wt.labels,
+                           wt.values,
                            alpha,
                            p.digits = 3,
                            diagnostics) {
@@ -16,10 +17,7 @@ test.model.fit <- function(dataset,
   
   # preparação e análise do modelo misto
   ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
-  TIME_M <-
-    as.factor(c(rep(seq(
-      1, length(wt.labels)
-    ), each = length(bw.factor))))
+  TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
   GROUP_M <- rep(bw.factor, length(wt.labels))
   OUTCOME_ORIG <- c(as.matrix(dataset))
   OUTCOME_M <- c(as.matrix(dataset))
@@ -38,10 +36,7 @@ test.model.fit <- function(dataset,
   covariate <- covariate[include == TRUE, ]
   bw.factor <- bw.factor[include == TRUE]
   ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
-  TIME_M <-
-    as.factor(c(rep(seq(
-      1, length(wt.labels)
-    ), each = length(bw.factor))))
+  TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
   GROUP_M <- rep(bw.factor, length(wt.labels))
   OUTCOME_ORIG <- c(as.matrix(dataset))
   OUTCOME_M <- c(as.matrix(dataset))
@@ -62,119 +57,27 @@ test.model.fit <- function(dataset,
   
   # fit linear mixed model (same as Table 2a and Tableb 2b)
   if (!sjmisc::is_empty(covariate)) {
-    mod1 <-
-      nlme::lme(
-        fixed = as.formula(paste0(
-          "OUTCOME_M ~ TIME_M * GROUP_M + ",
-          paste0(names(COVARIATE_M), collapse = " + ")
-        )),
-        random = ~ 1 | ID_M / TIME_M,
-        data = data_M
-      )
+    my_formula <- as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ",
+                                    paste0(names(COVARIATE_M), collapse = " + ")))
+    environment(my_formula) <- parent.frame()  # or try environment()
+    mod1 <- eval(substitute(
+      nlme::lme(fixed = f, random = r, data = d),
+      list(f = my_formula, r = ~ 1 | ID_M / TIME_M, d = data_M)
+    ))
   } else {
-    mod1 <-
-      nlme::lme(
-        fixed = OUTCOME_M ~ TIME_M * GROUP_M,
-        random = ~ 1 | ID_M / TIME_M,
-        data = data_M
-      )
+    my_formula <- as.formula("OUTCOME_M ~ TIME_M * GROUP_M")
+    environment(my_formula) <- parent.frame()  # or try environment()
+    mod1 <- eval(substitute(
+      nlme::lme(fixed = f, random = r, data = d),
+      list(f = my_formula, r = ~ 1 | ID_M / TIME_M, d = data_M)
+    ))
   }
   
-  if (sjmisc::is_empty(diagnostics)) {
-    diagnostics.res <- "Regression diagnosis not analyzed."
-  } else {
-    diagnostics.res <- c()
+  if ("Component-Plus-Residual plot" %in% diagnostics) {
+    Comp_Plus_Res <- effects::Effect(c("TIME_M", "GROUP_M"), mod1, residuals = TRUE)
   }
-  
-  outliers.res <- "Bonferroni's outlier detection not analyzed."
-  if ("Outlier detection" %in% diagnostics) {
-    diagnostics.res <- paste0(
-      diagnostics.res,
-      outliers.res,
-      sep = "<br/>"
-    )
-  }
-  
-  influencial.res <- "Cook's influential observations not analyzed."  
-  if ("Influencial observations" %in% diagnostics) {
-    diagnostics.res <- paste0(
-      diagnostics.res,
-      influencial.res,
-      sep = "<br/>"
-    )
-  }
-  
-  normality.res <- "Shapiro-Wilk test for normality of residues not analyzed."
-  if ("Normality of residues" %in% diagnostics) {
-    diagnostics.res <- paste0(
-      diagnostics.res,
-      normality.res,
-      sep = "<br/>"
-    )
-  }
-  
-  homocedasticity.res <- "Breusch-Pagan test for homoscedasticity not analyzed."
-  if ("Homocedasticity" %in% diagnostics) {
-    diagnostics.res <- paste0(
-      diagnostics.res,
-      homocedasticity.res,
-      sep = "<br/>"
-    )
-  }
-  
-  multicollinearity.res <- "Multicollinearity not analyzed."
-  if ("Multicollinearity" %in% diagnostics) {
-    diagnostics.res <- paste0(
-      diagnostics.res,
-      multicollinearity.res,
-      sep = "<br/>"
-    )
-  }
-  
-  autocorrelation.res <- "Autocorrelation not analyzed."
-  if ("Autocorrelation" %in% diagnostics) {
-    diagnostics.res <- paste0(
-      diagnostics.res,
-      autocorrelation.res,
-      sep = "<br/>"
-    )
-  }
-  
-  # # Influential Observations
-  # print("Cook's influential observations")
-  # print("Cook's D cutoff (4/n)")
-  # D <- cooks.distance(fit)
-  # # identify D values > 4/(n-k-1)
-  # cutoff <- 4 / (nrow(dataset))
-  # print(cutoff)
-  # print("")
-  # print("Cook's D largest than cutoff (4/n)")
-  # print(sort(D[D > cutoff], decreasing = TRUE))
-  # print("")
-  #
-  # # Normality of Residuals
-  # print("Shapiro-Wilk test for normality of residues")
-  # sresid <- resid(fit) / sd(resid(fit))
-  # print(shapiro.test(sresid)) # p value non-sign: normal distribution of residuals
-  # print("")
-  #
-  # # Homoscedasticity
-  # print("Breusch-Pagan test for homoscedasticity")
-  # lmtest::bptest(fit)
-  #
-  # # Collinearity
-  # print("Multicollinearity")
-  # print(car::vif(fit)) # variance inflation factors
-  # print("")
-  # print("Variance inflation factors (sqrt(vif) > 4")
-  # print(car::vif(fit)[sqrt(car::vif(fit)) > 2]) # problem?
-  # print("")
-  #
-  # # Non-independence of Errors
-  # print("Durbin-Watson test for autocorrelation")
-  # car::durbinWatsonTest(fit)
-  
+
   return(list(
-    'diagnostics.res' = diagnostics.res
+    'Comp_Plus_Res' = Comp_Plus_Res
   ))
 }

@@ -4,6 +4,7 @@ FIGURE.2 <-
            covariate,
            bw.factor,
            wt.labels,
+           wt.values,
            missing = c("complete.cases", "mean.imputation", "multiple.imputation"),
            m.imputations,
            xlabs,
@@ -35,10 +36,7 @@ FIGURE.2 <-
     
     # preparação e análise do modelo misto
     ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
-    TIME_M <-
-      as.factor(c(rep(seq(
-        1, length(wt.labels)
-      ), each = length(bw.factor))))
+    TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
     GROUP_M <- rep(bw.factor, length(wt.labels))
     OUTCOME_ORIG <- c(as.matrix(dataset))
     OUTCOME_M <- c(as.matrix(dataset))
@@ -57,10 +55,7 @@ FIGURE.2 <-
       covariate <- covariate[include == TRUE, ]
       bw.factor <- bw.factor[include == TRUE]
       ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
-      TIME_M <-
-        as.factor(c(rep(seq(
-          1, length(wt.labels)
-        ), each = length(bw.factor))))
+      TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
       GROUP_M <- rep(bw.factor, length(wt.labels))
       OUTCOME_ORIG <- c(as.matrix(dataset))
       OUTCOME_M <- c(as.matrix(dataset))
@@ -101,10 +96,7 @@ FIGURE.2 <-
       dataset <- dataset
       bw.factor <- bw.factor
       ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
-      TIME_M <-
-        as.factor(c(rep(seq(
-          1, length(wt.labels)
-        ), each = length(bw.factor))))
+      TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
       GROUP_M <- rep(bw.factor, length(wt.labels))
       OUTCOME_ORIG <- c(as.matrix(dataset))
       OUTCOME_M <- c(as.matrix(dataset))

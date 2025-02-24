@@ -4,6 +4,7 @@ TABLE.2a <- function(dataset,
                      bw.factor,
                      control.g,
                      wt.labels,
+                     wt.values,
                      missing = c("complete.cases", "mean.imputation", "multiple.imputation"),
                      m.imputations,
                      test.missing = c("None", "Little"),
@@ -93,10 +94,7 @@ TABLE.2a <- function(dataset,
   
   # preparação e análise do modelo misto
   ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
-  TIME_M <-
-    as.factor(c(rep(seq(
-      1, length(wt.labels)
-    ), each = length(bw.factor))))
+  TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
   GROUP_M <- rep(bw.factor, length(wt.labels))
   OUTCOME_ORIG <- c(as.matrix(dataset))
   OUTCOME_M <- c(as.matrix(dataset))
@@ -115,10 +113,7 @@ TABLE.2a <- function(dataset,
     covariate <- covariate[include == TRUE, ]
     bw.factor <- bw.factor[include == TRUE]
     ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
-    TIME_M <-
-      as.factor(c(rep(seq(
-        1, length(wt.labels)
-      ), each = length(bw.factor))))
+    TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
     GROUP_M <- rep(bw.factor, length(wt.labels))
     OUTCOME_ORIG <- c(as.matrix(dataset))
     OUTCOME_M <- c(as.matrix(dataset))
@@ -159,10 +154,7 @@ TABLE.2a <- function(dataset,
     dataset <- dataset
     bw.factor <- bw.factor
     ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
-    TIME_M <-
-      as.factor(c(rep(seq(
-        1, length(wt.labels)
-      ), each = length(bw.factor))))
+    TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
     GROUP_M <- rep(bw.factor, length(wt.labels))
     OUTCOME_ORIG <- c(as.matrix(dataset))
     OUTCOME_M <- c(as.matrix(dataset))
