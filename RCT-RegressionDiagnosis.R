@@ -59,25 +59,41 @@ test.model.fit <- function(dataset,
   if (!sjmisc::is_empty(covariate)) {
     my_formula <- as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ",
                                     paste0(names(COVARIATE_M), collapse = " + ")))
-    environment(my_formula) <- parent.frame()  # or try environment()
+    environment(my_formula) <- parent.frame()
     mod1 <- eval(substitute(
       nlme::lme(fixed = f, random = r, data = d),
       list(f = my_formula, r = ~ 1 | ID_M / TIME_M, d = data_M)
     ))
   } else {
     my_formula <- as.formula("OUTCOME_M ~ TIME_M * GROUP_M")
-    environment(my_formula) <- parent.frame()  # or try environment()
+    environment(my_formula) <- parent.frame()
     mod1 <- eval(substitute(
       nlme::lme(fixed = f, random = r, data = d),
       list(f = my_formula, r = ~ 1 | ID_M / TIME_M, d = data_M)
     ))
   }
   
-  if ("Component-Plus-Residual plot" %in% diagnostics) {
+  Comp_Plus_Res <- NULL
+  if ("Component-Plus-Residual" %in% diagnostics) {
     Comp_Plus_Res <- effects::Effect(c("TIME_M", "GROUP_M"), mod1, residuals = TRUE)
   }
-
+  
+  Inf_Fixed <- NULL
+  Inf_Random <- NULL
+  if("Influence" %in% diagnostics){
+    Inf_Fixed <- car::infIndexPlot(influence(mod1, "ID_M"))
+    Inf_Random <- car::infIndexPlot(influence(mod1, "ID_M"), var = "var.cov.comps")
+  }
+  
+  VIF <- NULL
+  if("Variance Inflation Factor" %in% diagnostics){
+    VIF <- car::vif(mod1)
+  }
+  
   return(list(
-    'Comp_Plus_Res' = Comp_Plus_Res
+    'Comp_Plus_Res' = Comp_Plus_Res,
+    'Inf_Fixed' = Inf_Fixed,
+    'Inf_Random' = Inf_Random,
+    'VIF' = VIF
   ))
 }

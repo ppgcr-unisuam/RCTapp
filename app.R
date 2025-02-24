@@ -365,7 +365,9 @@ ui <- shiny::fluidPage(
                 inputId = "regressionDiag",
                 label = "Regression diagnosis",
                 choices = c(
-                  "Component-Plus-Residual plot"
+                  "Component-Plus-Residual",
+                  "Influence",
+                  "Variance Inflation Factor"
                 ),
                 selected = NA,
                 showValueAsTags = TRUE,
@@ -492,8 +494,32 @@ ui <- shiny::fluidPage(
       icon = list(fontawesome::fa("stethoscope")),
       title = "Diagnostics",
       shiny::br(),
-      # add plot
-      shiny::plotOutput("plotDiag1")
+      # add tab panel
+      shiny::tabsetPanel(
+        id = "diagTab",
+        type = "tabs",
+        shiny::tabPanel(
+          title = "Component-Plus-Residual",
+          icon = fontawesome::fa("chart-line"),
+          shiny::br(),
+          # add plot
+          shiny::plotOutput("plotDiag1")
+        ),
+        shiny::tabPanel(
+          title = "Influence",
+          icon = fontawesome::fa("chart-line"),
+          shiny::br(),
+          # add plot
+          shiny::plotOutput("plotDiag2")
+        ),
+        shiny::tabPanel(
+          title = "Variance Inflation Factor",
+          icon = fontawesome::fa("chart-line"),
+          shiny::br(),
+          # add table
+          shiny::tableOutput("tableDiag3")
+        ),
+      ),
     ),
     shiny::tabPanel(
       icon = list(fontawesome::fa("book-open")),
@@ -720,37 +746,6 @@ server <- function(input, output, session) {
     )
   }, server = FALSE)
   
-  # show selected BGF in BGFtable
-  output[["BGFtable"]] <- shiny::renderTable({
-    shiny::req(input[["BGF"]])
-    data.frame("Treatment" = input[["BGF"]], check.names = FALSE)
-  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
-  
-  # show selected control group in CGtable
-  output[["CGtable"]] <- shiny::renderTable({
-    shiny::req(input[["controlgroup"]])
-    data.frame("Control group" = input[["controlgroup"]], check.names = FALSE)
-  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
-  
-  # show selected CV in CVtable
-  output[["CVtable"]] <- shiny::renderTable({
-    shiny::req(input[["CV"]])
-    data.frame("Covariates" = input[["CV"]], check.names = FALSE)
-  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
-  
-  # show selected OV in OVtable
-  output[["OVtable"]] <- shiny::renderTable({
-    shiny::req(input[["OV"]])
-    data.frame("Outcome data" = input[["OV"]], check.names = FALSE)
-  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
-  
-  # show selected endpoints
-  output[["Endtable"]] <- shiny::renderTable({
-    shiny::req(input[["endpointNames"]])
-    data.frame("Endpoints" = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
-               check.names = FALSE)
-  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
-  
   # update list of control group after loading choices for between-groups variables
   shiny::observeEvent(input[["treatmentNames"]], {
     shinyWidgets::updateVirtualSelect(
@@ -787,8 +782,6 @@ server <- function(input, output, session) {
                              inputId = "tabs",
                              selected = "Table 3")
   })
-  
-  # enable plot legend when checked
   
   # run table 1 on runTable1 click ------------------------------------------------
   output[["table1"]] <- DT::renderDT({
@@ -1389,8 +1382,8 @@ server <- function(input, output, session) {
   
   # show plot regression diagnosis
   output[["plotDiag1"]] <- shiny::renderPlot({
-    shiny::req(regression())
     shiny::req(input[["regressionDiag"]])
+    shiny::req(regression())
     
     plot(
       regression()$Comp_Plus_Res,
@@ -1400,6 +1393,38 @@ server <- function(input, output, session) {
       ylab = input[["OutcomeName"]]
       )
   })
+  
+  # show plot regression diagnosis
+  output[["plotDiag2"]] <- shiny::renderPlot({
+    shiny::req(input[["regressionDiag"]])
+    shiny::req(regression())
+    
+    plot(
+      regression()$Inf_Fixed,
+      main = "Influence plot",
+      xlab = "Time (endpoints)",
+      ylab = input[["OutcomeName"]]
+    )
+  })
+  
+  # show tableDiag3 with VIF values
+  output[["tableDiag3"]] <- shiny::renderTable({
+    shiny::req(input[["regressionDiag"]])
+    shiny::req(regression())
+    
+    results <- regression()$VIF %>%
+      as.data.frame(check.names = FALSE) %>%
+      dplyr::mutate(Variables = names(regression()$VIF))
+    
+    # last column first, then the others
+    results <- results[, c(ncol(results), 1:(ncol(results) - 1))]
+    
+    # rename colums
+    colnames(results) <- c("Model effects", "VIF")
+    
+    results
+
+  }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
   
   # output references ------------------------------------------------
   output$gratrep <- shiny::renderUI({
