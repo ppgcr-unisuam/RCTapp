@@ -956,7 +956,7 @@ server <- function(input, output, session) {
         bw.factor = rawdata$TREATMENT,
         control.g = input[["controlgroup"]],
         wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
-        wt.values = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
+        wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
         missing = tolower(gsub(" ", ".", input[["missing"]])),
         m.imputations = as.numeric(input[["MICEresamples"]]),
         test.missing = input[["missingTest"]],
@@ -972,7 +972,7 @@ server <- function(input, output, session) {
         control.g = input[["controlgroup"]],
         # drop 1
         wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
-        wt.values = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]][-1],
+        wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]][-1]),
         missing = tolower(gsub(" ", ".", input[["missing"]])),
         m.imputations = as.numeric(input[["MICEresamples"]]),
         test.missing = input[["missingTest"]],
@@ -1026,7 +1026,7 @@ server <- function(input, output, session) {
       covariate = input[["CV"]],
       bw.factor = rawdata$TREATMENT,
       wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
-      wt.values = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
+      wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
       alpha = as.numeric(input[["alpha"]]),
       p.digits = 3,
       diagnostics = input[["regressionDiag"]]
@@ -1203,7 +1203,7 @@ server <- function(input, output, session) {
       covariate = input[["CV"]],
       bw.factor = rawdata$TREATMENT,
       wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
-      wt.values = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
+      wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
       missing = tolower(gsub(" ", ".", input[["missing"]])),
       m.imputations = as.numeric(input[["MICEresamples"]]),
       xlabs = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
@@ -1412,18 +1412,27 @@ server <- function(input, output, session) {
     shiny::req(input[["regressionDiag"]])
     shiny::req(regression())
     
-    results <- regression()$VIF %>%
-      as.data.frame(check.names = FALSE) %>%
-      dplyr::mutate(Variables = names(regression()$VIF))
+    results <- regression()$VIF
     
-    # last column first, then the others
-    results <- results[, c(ncol(results), 1:(ncol(results) - 1))]
-    
-    # rename colums
-    colnames(results) <- c("Model effects", "VIF")
-    
-    results
-
+    # if results is a matrix
+    if (is.matrix(results)) {
+      results <- results %>%
+        as.data.frame(check.names = FALSE) %>%
+        dplyr::mutate(Variables = names(regression()$VIF))
+      # add new column to results data.frame with rownames
+      results <- results %>%
+        dplyr::mutate('Model effects' = rownames(results)) %>%
+        dplyr::select('Model effects', everything())
+      results
+    } else {
+      results <- results %>%
+        as.data.frame(check.names = FALSE)
+      # last column first, then the others
+      results <- results[, c(ncol(results), 1:(ncol(results) - 1))]
+      # rename colums
+      colnames(results) <- c("Model effects", "VIF")
+      results
+    }
   }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)
   
   # output references ------------------------------------------------

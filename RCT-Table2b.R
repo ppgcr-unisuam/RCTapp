@@ -246,19 +246,19 @@ TABLE.2b <- function(dataset,
       # dados válidos
       N <-
         rbind(N, (paste("(n = ", sum(
-          !is.na(OUTCOME_ORIG[TIME_M == i &
+          !is.na(OUTCOME_ORIG[TIME_M == wt.values[i] &
                                 GROUP_M == levels(bw.factor)[j]])
         ), ")", sep = "")))
       # média (DP)
       desfecho <-
         rbind(desfecho, paste(
           format(round(
-            mean(OUTCOME_M[TIME_M == i & 
+            mean(OUTCOME_M[TIME_M == wt.values[i] & 
                              GROUP_M ==levels(bw.factor)[j]], na.rm = TRUE), digits = n.digits
           ), nsmall = n.digits),
           " (",
           format(round(
-            sd(OUTCOME_M[TIME_M == i &
+            sd(OUTCOME_M[TIME_M == wt.values[i] &
                            GROUP_M == levels(bw.factor)[j]], na.rm = TRUE), digits = n.digits
           ), nsmall = n.digits),
           ")",
