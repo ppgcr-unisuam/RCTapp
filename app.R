@@ -1396,8 +1396,8 @@ server <- function(input, output, session) {
         dplyr::select('Model effects', everything())
       # reorder rows
       row_1 <- which(results[,1] == "TIME_M:GROUP_M")
-      row_2 <- which(results[,1] == "TIME_M")
-      row_3 <- which(results[,1] == "GROUP_M")
+      row_2 <- which(results[,1] == "GROUP_M")
+      row_3 <- which(results[,1] == "TIME_M")
       other_rows <- setdiff(1:nrow(results), c(row_1, row_2, row_3))
       results <- results[c(row_1, row_2, row_3, other_rows),]
       results
@@ -1411,8 +1411,8 @@ server <- function(input, output, session) {
       colnames(results) <- c("Model effects", "VIF")
       # reorder rows
       row_1 <- which(results[,1] == "TIME_M:GROUP_M")
-      row_2 <- which(results[,1] == "TIME_M")
-      row_3 <- which(results[,1] == "GROUP_M")
+      row_2 <- which(results[,1] == "GROUP_M")
+      row_3 <- which(results[,1] == "TIME_M")
       other_rows <- setdiff(1:nrow(results), c(row_1, row_2, row_3))
       results <- results[c(row_1, row_2, row_3, other_rows),]
       results
