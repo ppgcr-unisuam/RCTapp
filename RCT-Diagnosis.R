@@ -4,7 +4,7 @@ test.model.fit <- function(dataset,
                            bw.factor,
                            wt.labels,
                            wt.values,
-                           missing = c("complete.cases", "mean.imputation", "multiple.imputation"),
+                           missing = c("complete.cases"),
                            alpha,
                            p.digits = 3,
                            diagnostics) {
@@ -51,17 +51,22 @@ test.model.fit <- function(dataset,
   }
   
   # decide como lidar com os dados perdidos
+  missing = "complete.cases" # run all diagnostics with complete cases
   if (missing == "complete.cases") {
-    include <- complete.cases(dataset)
-    dataset <- dataset[include == TRUE, ]
-    covariate <- covariate[include == TRUE, ]
-    bw.factor <- bw.factor[include == TRUE]
+    if (!sjmisc::is_empty(covariate)) {
+      include <- complete.cases(dataset, covariate)
+    } else {
+      include <- complete.cases(dataset)
+    }
+    dataset <- dataset[include, ]
+    covariate <- covariate[include, ]
+    bw.factor <- bw.factor[include]
     ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
     TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
     GROUP_M <- rep(bw.factor, length(wt.labels))
     OUTCOME_ORIG <- c(as.matrix(dataset))
     OUTCOME_M <- c(as.matrix(dataset))
-    COVARIATE_M <- c()
+    COVARIATE_M <- NULL
     if (!sjmisc::is_empty(covariate)) {
       for (i in 1:length(wt.labels)) {
         COVARIATE_M <- rbind(COVARIATE_M, covariate)
@@ -69,29 +74,6 @@ test.model.fit <- function(dataset,
     }
   }
   
-  if (missing == "mean.imputation") {
-    # calcula a média para imputação para cada grupo
-    for (i in 1:length(wt.labels)) {
-      temp.imp <- dataset[, i]
-      for (j in 1:nlevels(bw.factor)) {
-        temp.imp[which(is.na(temp.imp) &
-                         bw.factor == levels(bw.factor)[j])] <-
-          mean(temp.imp[which(bw.factor == levels(bw.factor)[j])], na.rm = TRUE)
-      }
-      dataset[, i] <- temp.imp
-    }
-    OUTCOME_M <- c(as.matrix(dataset))
-    COVARIATE_M <- c()
-    if (!sjmisc::is_empty(covariate)) {
-      for (i in 1:length(wt.labels)) {
-        for (j in 1:ncol(covariate)) {
-          covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
-        }
-        COVARIATE_M <- rbind(COVARIATE_M, covariate)
-      }
-    }
-  }
-
   # cria o dataset com os valores após imputação ou não de dados
   if (!sjmisc::is_empty(covariate)) {
     data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, COVARIATE_M, check.names = FALSE)

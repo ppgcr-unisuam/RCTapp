@@ -939,8 +939,9 @@ server <- function(input, output, session) {
         covariate = rawdata[input[["COV"]]],
         bw.factor = rawdata$TREATMENT,
         control.g = input[["controlgroup"]],
-        # drop 1
+        # drop 1 (no baseline)
         wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
+        # drop 1 (no baseline)
         wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]][-1]),
         missing = tolower(gsub(" ", ".", input[["missing"]])),
         m.imputations = as.numeric(input[["MICEresamples"]]),
@@ -1140,13 +1141,14 @@ server <- function(input, output, session) {
     shiny::req(input[["BGF"]])
     shiny::req(input[["OV"]])
     shiny::req(input[["treatmentNames"]])
+    shiny::req(input[["controlgroup"]])
     shiny::req(input[["endpointNames"]])
     shiny::req(input[["endpointValues"]])
     shiny::req(input[["missing"]])
+    shiny::req(input[["alpha"]])
     shiny::req(input[["OutcomeName"]])
     shiny::req(input[["legendOptions"]])
-    shiny::req(input[["alpha"]])
-    
+
     # read file
     rawdata <- readxl::read_xlsx(rawdata())
     # remove empty columns
@@ -1159,7 +1161,7 @@ server <- function(input, output, session) {
     rawdata <- as.NA(rawdata)
     
     # select columns from checked variables
-    rawdata <- rawdata[, unique(c(input[["BGF"]], input[["OV"]]))]
+    rawdata <- rawdata[, unique(c(input[["BGF"]], input[["COV"]], input[["OV"]]))]
     
     # add column based on treatment group names per user input
     if (!is.null(input[["BGF"]])) {
@@ -1392,14 +1394,27 @@ server <- function(input, output, session) {
       results <- results %>%
         dplyr::mutate('Model effects' = rownames(results)) %>%
         dplyr::select('Model effects', everything())
+      # reorder rows
+      row_1 <- which(results[,1] == "TIME_M:GROUP_M")
+      row_2 <- which(results[,1] == "TIME_M")
+      row_3 <- which(results[,1] == "GROUP_M")
+      other_rows <- setdiff(1:nrow(results), c(row_1, row_2, row_3))
+      results <- results[c(row_1, row_2, row_3, other_rows),]
       results
     } else {
       results <- results %>%
         as.data.frame(check.names = FALSE)
-      # last column first, then the others
-      results <- results[, c(ncol(results), 1:(ncol(results) - 1))]
-      # rename colums
+      # rownames to new column
+      results <- results %>%
+        dplyr::mutate('Model effects' = rownames(results)) %>%
+        dplyr::select('Model effects', everything())
       colnames(results) <- c("Model effects", "VIF")
+      # reorder rows
+      row_1 <- which(results[,1] == "TIME_M:GROUP_M")
+      row_2 <- which(results[,1] == "TIME_M")
+      row_3 <- which(results[,1] == "GROUP_M")
+      other_rows <- setdiff(1:nrow(results), c(row_1, row_2, row_3))
+      results <- results[c(row_1, row_2, row_3, other_rows),]
       results
     }
   }, striped = TRUE, bordered = TRUE, width = "100%", rownames = FALSE, colnames = TRUE)

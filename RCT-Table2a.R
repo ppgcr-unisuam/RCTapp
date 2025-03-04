@@ -16,6 +16,7 @@ TABLE.2a <- function(dataset,
   # bw.factor: a 1D between-group factor
   # wt.labels: a 1D variable labels for each level
   # wt.values: a 1D variable values for each level
+  # missing: method for handling missing balues (complete.cases, mean inputation, multiple imputation)
   # alpha: the type-I error level
   # n.digits: number of decimal places to be presented for continuous variables
   
@@ -50,24 +51,18 @@ TABLE.2a <- function(dataset,
                         nrow = length(head(t.labels, -1)),
                         ncol = nlevels(bw.factor) * length(wt.labels))
   rownames(mix.mod.res) <- head(t.labels, -1)
-  colnames(mix.mod.res) <-
-    rep("", nlevels(bw.factor) * length(wt.labels))
+  colnames(mix.mod.res) <- rep("", nlevels(bw.factor) * length(wt.labels))
   
   # matriz de resultados intra-grupo
-  wt.diff <-
-    matrix("",
-           nrow = length(t.labels),
-           ncol = nlevels(bw.factor) * (length(wt.labels) - 1))
+  wt.diff <- matrix("",
+                    nrow = length(t.labels),
+                    ncol = nlevels(bw.factor) * (length(wt.labels) - 1))
   rownames(wt.diff) <- t.labels
-  colnames(wt.diff) <-
-    rep("", nlevels(bw.factor) * (length(wt.labels) - 1))
+  colnames(wt.diff) <- rep("", nlevels(bw.factor) * (length(wt.labels) - 1))
   
   # matriz de resultados entre-grupos
   N.comb <- dim(combn(nlevels(bw.factor), 2))[2]
-  bw.diff <-
-    matrix("",
-           nrow = length(t.labels) + 1,
-           ncol = N.comb * (length(wt.labels) - 1))
+  bw.diff <- matrix("", nrow = length(t.labels) + 1, ncol = N.comb * (length(wt.labels) - 1))
   rownames(bw.diff) <- c(t.labels, "SMD¹")
   colnames(bw.diff) <- rep("", N.comb * (length(wt.labels) - 1))
   
@@ -88,50 +83,48 @@ TABLE.2a <- function(dataset,
   OUTCOME_M <- c(as.matrix(dataset))
   COVARIATE_M <- c()
   if (!sjmisc::is_empty(covariate)) {
-    for (i in 1:length(wt.labels)) {
-      COVARIATE_M <- rbind(COVARIATE_M, covariate)
-    }
+    COVARIATE_M <- do.call(rbind, replicate(length(wt.labels), covariate, simplify = FALSE))
   }
   
   # decide como lidar com os dados perdidos
   if (missing == "complete.cases") {
-    include <- complete.cases(dataset)
-    dataset <- dataset[include == TRUE, ]
-    covariate <- covariate[include == TRUE, ]
-    bw.factor <- bw.factor[include == TRUE]
+    if (!sjmisc::is_empty(covariate)) {
+      include <- complete.cases(dataset, covariate)
+    } else {
+      include <- complete.cases(dataset)
+    }
+    dataset <- dataset[include, ]
+    covariate <- covariate[include, ]
+    bw.factor <- bw.factor[include]
     ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
     TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
     GROUP_M <- rep(bw.factor, length(wt.labels))
     OUTCOME_ORIG <- c(as.matrix(dataset))
     OUTCOME_M <- c(as.matrix(dataset))
-    COVARIATE_M <- c()
+    COVARIATE_M <- NULL
     if (!sjmisc::is_empty(covariate)) {
-      for (i in 1:length(wt.labels)) {
-        COVARIATE_M <- rbind(COVARIATE_M, covariate)
+      COVARIATE_M <- do.call(rbind, replicate(length(wt.labels), covariate, simplify = FALSE))
       }
-    }
   }
   
   if (missing == "mean.imputation") {
-    # calcula a média para imputação para cada grupo
+    # Calculate the mean for imputation for each group
     for (i in 1:length(wt.labels)) {
       temp.imp <- dataset[, i]
       for (j in 1:nlevels(bw.factor)) {
-        temp.imp[which(is.na(temp.imp) &
-                         bw.factor == levels(bw.factor)[j])] <-
+        temp.imp[which(is.na(temp.imp) & bw.factor == levels(bw.factor)[j])] <-
           mean(temp.imp[which(bw.factor == levels(bw.factor)[j])], na.rm = TRUE)
       }
       dataset[, i] <- temp.imp
     }
     OUTCOME_M <- c(as.matrix(dataset))
-    COVARIATE_M <- c()
+    
+    # mean imputation of covariate data if any
+    COVARIATE_M <- NULL
     if (!sjmisc::is_empty(covariate)) {
-      for (i in 1:length(wt.labels)) {
-        for (j in 1:ncol(covariate)) {
-          covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
-        }
-        COVARIATE_M <- rbind(COVARIATE_M, covariate)
-      }
+      covariate <- covariate %>%
+        dplyr::mutate(dplyr::across(dplyr::everything(), ~ ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+      COVARIATE_M <- do.call(rbind, replicate(length(wt.labels), covariate, simplify = FALSE))
     }
   }
   
@@ -149,14 +142,11 @@ TABLE.2a <- function(dataset,
       mean(OUTCOME_M[which(!is.na(OUTCOME_M) &
                              TIME_M == levels(TIME_M)[1])])
     # mean imputation of covariate data if any
-    COVARIATE_M <- c()
+    COVARIATE_M <- NULL
     if (!sjmisc::is_empty(covariate)) {
-      for (i in 1:length(wt.labels)) {
-        for (j in 1:ncol(covariate)) {
-          covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
-        }
-        COVARIATE_M <- rbind(COVARIATE_M, covariate)
-      }
+      covariate <- covariate %>%
+        dplyr::mutate(dplyr::across(dplyr::everything(), ~ ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+      COVARIATE_M <- do.call(rbind, replicate(length(wt.labels), covariate, simplify = FALSE))
     }
   }
   
