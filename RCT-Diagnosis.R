@@ -4,6 +4,7 @@ test.model.fit <- function(dataset,
                            bw.factor,
                            wt.labels,
                            wt.values,
+                           missing = c("complete.cases", "mean.imputation", "multiple.imputation"),
                            alpha,
                            p.digits = 3,
                            diagnostics) {
@@ -14,6 +15,27 @@ test.model.fit <- function(dataset,
   
   # remove variáveis não usadas
   dataset <- dataset[, colnames(dataset) %in% variables]
+  
+  Little_Test_Res <- NULL
+  if ("Missing Data" %in% diagnostics) {
+    # Little's MCAR test
+    missingtest <- misty::na.test(
+      dataset,
+      digits = 2,
+      p.digits = p.digits
+    )
+    
+    Little_Test_Res <- paste0(
+      "Little's Missing Completely at Random (MCAR) Test: ",
+      paste(
+        paste(
+          names(missingtest$result$little),
+          format(missingtest$result$little, digits = 3),
+          sep = " = "
+        ),
+        collapse = ", "
+      ))
+  }
   
   # preparação e análise do modelo misto
   ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
@@ -26,28 +48,50 @@ test.model.fit <- function(dataset,
     for (i in 1:length(wt.labels)) {
       COVARIATE_M <- rbind(COVARIATE_M, covariate)
     }
-    names(COVARIATE_M) <- names(covariate)
   }
   
   # decide como lidar com os dados perdidos
-  # "complete.cases" only for original dataset diagnosis
-  include <- complete.cases(dataset)
-  dataset <- dataset[include == TRUE, ]
-  covariate <- covariate[include == TRUE, ]
-  bw.factor <- bw.factor[include == TRUE]
-  ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
-  TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
-  GROUP_M <- rep(bw.factor, length(wt.labels))
-  OUTCOME_ORIG <- c(as.matrix(dataset))
-  OUTCOME_M <- c(as.matrix(dataset))
-  COVARIATE_M <- c()
-  if (!sjmisc::is_empty(covariate)) {
-    for (i in 1:length(wt.labels)) {
-      COVARIATE_M <- rbind(COVARIATE_M, covariate)
+  if (missing == "complete.cases") {
+    include <- complete.cases(dataset)
+    dataset <- dataset[include == TRUE, ]
+    covariate <- covariate[include == TRUE, ]
+    bw.factor <- bw.factor[include == TRUE]
+    ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
+    TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
+    GROUP_M <- rep(bw.factor, length(wt.labels))
+    OUTCOME_ORIG <- c(as.matrix(dataset))
+    OUTCOME_M <- c(as.matrix(dataset))
+    COVARIATE_M <- c()
+    if (!sjmisc::is_empty(covariate)) {
+      for (i in 1:length(wt.labels)) {
+        COVARIATE_M <- rbind(COVARIATE_M, covariate)
+      }
     }
   }
-  names(COVARIATE_M) <- names(covariate)
   
+  if (missing == "mean.imputation") {
+    # calcula a média para imputação para cada grupo
+    for (i in 1:length(wt.labels)) {
+      temp.imp <- dataset[, i]
+      for (j in 1:nlevels(bw.factor)) {
+        temp.imp[which(is.na(temp.imp) &
+                         bw.factor == levels(bw.factor)[j])] <-
+          mean(temp.imp[which(bw.factor == levels(bw.factor)[j])], na.rm = TRUE)
+      }
+      dataset[, i] <- temp.imp
+    }
+    OUTCOME_M <- c(as.matrix(dataset))
+    COVARIATE_M <- c()
+    if (!sjmisc::is_empty(covariate)) {
+      for (i in 1:length(wt.labels)) {
+        for (j in 1:ncol(covariate)) {
+          covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
+        }
+        COVARIATE_M <- rbind(COVARIATE_M, covariate)
+      }
+    }
+  }
+
   # cria o dataset com os valores após imputação ou não de dados
   if (!sjmisc::is_empty(covariate)) {
     data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, COVARIATE_M, check.names = FALSE)
@@ -73,16 +117,10 @@ test.model.fit <- function(dataset,
     ))
   }
   
+  # epty plot
   Comp_Plus_Res <- NULL
   if ("Component-Plus-Residual" %in% diagnostics) {
     Comp_Plus_Res <- effects::Effect(c("TIME_M", "GROUP_M"), mod1, residuals = TRUE)
-  }
-  
-  Inf_Fixed <- NULL
-  Inf_Random <- NULL
-  if("Influence" %in% diagnostics){
-    Inf_Fixed <- car::infIndexPlot(influence(mod1, "ID_M"))
-    Inf_Random <- car::infIndexPlot(influence(mod1, "ID_M"), var = "var.cov.comps")
   }
   
   VIF <- NULL
@@ -91,9 +129,8 @@ test.model.fit <- function(dataset,
   }
   
   return(list(
+    'Little_Test_Res' = Little_Test_Res,
     'Comp_Plus_Res' = Comp_Plus_Res,
-    'Inf_Fixed' = Inf_Fixed,
-    'Inf_Random' = Inf_Random,
     'VIF' = VIF
   ))
 }

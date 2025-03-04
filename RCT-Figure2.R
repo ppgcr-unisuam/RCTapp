@@ -10,15 +10,19 @@ FIGURE.2 <-
            xlabs,
            ylab,
            legend.opt,
-           alpha) {
+           alpha,
+           n.digits) {
     # This function outputs a plot for two-way mixed-models.
     # dataset: a 2D dataframe (rows: participants, columns: variables)
     # variables: a 1D variable labels (within-group)
+    # covariate: a 2D dataframe (rows: participants, columns: covariates)
     # bw.factor: a 1D between-group factor
-    # wt.labels: a 1D variable labels for each
-    # level missing: method for handling missing balues (mean inputation, last value carried forward)
+    # wt.labels: a 1D variable labels for each level
+    # wt.values: a 1D vector of values for each level
+    # missing: method for handling missing balues (mean inputation, last value carried forward)
     # xlabs: a 1D vector of labels for the X axis (within-group factor)
     # ylabs: a string label for the Y axis (outcome)
+    # n.digits: number of decimal places to be presented for continuous variables
     
     quiet <- function(x) {
       sink(tempfile())
@@ -26,13 +30,60 @@ FIGURE.2 <-
       invisible(force(x))
     }
     
-    # confirma a estrutura dos dados
-    dataset <- data.frame(dataset)
-    bw.factor <- factor(bw.factor, exclude = NULL)
-    xlabs <- as.numeric(xlabs)
+    # default values
+    if (alpha == "") {
+      alpha = 0.05
+    }
+    if (n.digits == "") {
+      n.digits = 3
+    }
     
-    # remove variaveis nao usadas
+    # confirma a estrutura dos dados
+    dataset <- data.frame(dataset, check.names = FALSE)
+    bw.factor <- factor(bw.factor, exclude = NULL)
+    
+    # remove variáveis não usadas
     dataset <- dataset[, colnames(dataset) %in% variables]
+    
+    # inicializa a matriz de resultados
+    t.labels <- c("Within-subjects",
+                  "Between-subjects",
+                  "N",
+                  "Outcome",
+                  "P-value")
+    mix.mod.res <- matrix("",
+                          nrow = length(head(t.labels, -1)),
+                          ncol = nlevels(bw.factor) * length(wt.labels))
+    rownames(mix.mod.res) <- head(t.labels, -1)
+    colnames(mix.mod.res) <-
+      rep("", nlevels(bw.factor) * length(wt.labels))
+    
+    # matriz de resultados intra-grupo
+    wt.diff <-
+      matrix("",
+             nrow = length(t.labels),
+             ncol = nlevels(bw.factor) * (length(wt.labels) - 1))
+    rownames(wt.diff) <- t.labels
+    colnames(wt.diff) <-
+      rep("", nlevels(bw.factor) * (length(wt.labels) - 1))
+    
+    # matriz de resultados entre-grupos
+    N.comb <- dim(combn(nlevels(bw.factor), 2))[2]
+    bw.diff <-
+      matrix("",
+             nrow = length(t.labels) + 1,
+             ncol = N.comb * (length(wt.labels) - 1))
+    rownames(bw.diff) <- c(t.labels, "SMD¹")
+    colnames(bw.diff) <- rep("", N.comb * (length(wt.labels) - 1))
+    
+    # matriz de resultados do modelo
+    model.res <-
+      matrix("", nrow = length(head(t.labels, -1)), ncol = 1)
+    rownames(model.res) <- head(t.labels, -1)
+    colnames(model.res) <- c("Mixed-model effects")
+    
+    # matriz de resultados de interação
+    interaction <- c()
     
     # preparação e análise do modelo misto
     ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
@@ -45,7 +96,6 @@ FIGURE.2 <-
       for (i in 1:length(wt.labels)) {
         COVARIATE_M <- rbind(COVARIATE_M, covariate)
       }
-      names(COVARIATE_M) <- names(covariate)
     }
     
     # decide como lidar com os dados perdidos
@@ -61,11 +111,10 @@ FIGURE.2 <-
       OUTCOME_M <- c(as.matrix(dataset))
       COVARIATE_M <- c()
       if (!sjmisc::is_empty(covariate)) {
-        for(i in 1:length(wt.labels)){
+        for (i in 1:length(wt.labels)) {
           COVARIATE_M <- rbind(COVARIATE_M, covariate)
         }
       }
-      names(COVARIATE_M) <- names(covariate)
     }
     
     if (missing == "mean.imputation") {
@@ -82,14 +131,13 @@ FIGURE.2 <-
       OUTCOME_M <- c(as.matrix(dataset))
       COVARIATE_M <- c()
       if (!sjmisc::is_empty(covariate)) {
-        for(i in 1:length(wt.labels)){
-          for(j in 1:ncol(covariate)){
+        for (i in 1:length(wt.labels)) {
+          for (j in 1:ncol(covariate)) {
             covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
           }
           COVARIATE_M <- rbind(COVARIATE_M, covariate)
         }
       }
-      names(COVARIATE_M) <- names(covariate)
     }
     
     if (missing == "multiple.imputation") {
@@ -108,8 +156,8 @@ FIGURE.2 <-
       # mean imputation of covariate data if any
       COVARIATE_M <- c()
       if (!sjmisc::is_empty(covariate)) {
-        for(i in 1:length(wt.labels)){
-          for(j in 1:ncol(covariate)){
+        for (i in 1:length(wt.labels)) {
+          for (j in 1:ncol(covariate)) {
             covariate[is.na(covariate[, j])] <- mean(covariate[, j], na.rm = TRUE)
           }
           COVARIATE_M <- rbind(COVARIATE_M, covariate)
@@ -129,7 +177,10 @@ FIGURE.2 <-
       if (!sjmisc::is_empty(covariate)) {
         mod1 <-
           nlme::lme(
-            fixed = as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(names(COVARIATE_M), collapse = " + "))),
+            fixed = as.formula(paste0(
+              "OUTCOME_M ~ TIME_M * GROUP_M + ",
+              paste0(names(COVARIATE_M), collapse = " + ")
+            )),
             random = ~ 1 | ID_M / TIME_M,
             data = data_M
           )
@@ -157,15 +208,18 @@ FIGURE.2 <-
         )
       if (!sjmisc::is_empty(covariate)) {
         mod1 <-
-          with(
-            data = imp,
-            nlme::lme(
-              fixed = as.formula(paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(names(COVARIATE_M), collapse = " + "))),
-              random = ~ 1 | ID_M / TIME_M
-            )
-          )
-        mod1.aov <-
-          quiet(miceadds::mi.anova(imp, formula = paste0("OUTCOME_M ~ TIME_M * GROUP_M + ", paste0(names(COVARIATE_M), collapse = " + "))))
+          with(data = imp,
+               nlme::lme(
+                 fixed = as.formula(paste0(
+                   "OUTCOME_M ~ TIME_M * GROUP_M + ",
+                   paste0(names(COVARIATE_M), collapse = " + ")
+                 )),
+                 random = ~ 1 | ID_M / TIME_M
+               ))
+        mod1.aov <- quiet(miceadds::mi.anova(imp, formula = paste0(
+          "OUTCOME_M ~ TIME_M * GROUP_M + ",
+          paste0(names(COVARIATE_M), collapse = " + ")
+        )))
       } else {
         mod1 <-
           with(data = imp,
@@ -173,12 +227,47 @@ FIGURE.2 <-
                  fixed = OUTCOME_M ~ TIME_M * GROUP_M,
                  random = ~ 1 | ID_M / TIME_M
                ))
-        mod1.aov <-
-          quiet(miceadds::mi.anova(imp, formula = "OUTCOME_M ~ TIME_M * GROUP_M"))
+        mod1.aov <- quiet(miceadds::mi.anova(imp, formula = "OUTCOME_M ~ TIME_M * GROUP_M"))
       }
       mod1.aov <- mod1.aov$anova.table[1:3, 2:5]
       mod1.aov <- rbind(rep(NA, 4), mod1.aov)
     }
+    
+    # calcula e preenche o N e o DESFECHO da tabela de resultados
+    N <- c()
+    desfecho <- c()
+    media <- c()
+    p.values <- c()
+    for (i in 1:length(wt.labels)) {
+      for (j in 1:nlevels(bw.factor)) {
+        # dados válidos
+        N <-
+          rbind(N, (paste("(n = ", sum(
+            !is.na(OUTCOME_ORIG[TIME_M == wt.values[i] &
+                                  GROUP_M == levels(bw.factor)[j]])
+          ), ")", sep = "")))
+        # média (DP)
+        desfecho <-
+          rbind(desfecho, paste(
+            format(round(
+              mean(OUTCOME_M[TIME_M == wt.values[i] &
+                               GROUP_M == levels(bw.factor)[j]], na.rm = TRUE), digits = n.digits
+            ), nsmall = n.digits),
+            " (",
+            format(round(
+              sd(OUTCOME_M[TIME_M == wt.values[i] &
+                             GROUP_M == levels(bw.factor)[j]], na.rm = TRUE), digits = n.digits
+            ), nsmall = n.digits),
+            ")",
+            sep = ""
+          ))
+      }
+    }
+    
+    mix.mod.res[1, ] <- rep(wt.labels, each = nlevels(bw.factor))
+    mix.mod.res[2, ] <- rep(levels(bw.factor), length(wt.labels))
+    mix.mod.res[3, ] <- N
+    mix.mod.res[4, ] <- desfecho
     
     # p-valores para efeito de interação
     p.value <- mod1.aov[4, 4]
@@ -190,23 +279,20 @@ FIGURE.2 <-
     if (p.value < 0.001) {
       p.value <- "<0.001"
     } else {
-      p.value <-
-        paste("=", format(round(p.value, digits = 3), nsmall = 3), sep = "")
+      p.value <- paste("=", format(round(p.value, digits = 3), nsmall = 3), sep = "")
     }
-    interaction <-
-      paste(
-        "Interaction: F(",
-        format(round(mod1.aov[4, 1], digits = 0), nsmall = 0),
-        ",",
-        format(round(mod1.aov[4, 2], digits = 0),
-               nsmall = 0),
-        ") = ",
-        format(round(mod1.aov[4, 3], digits = 3), nsmall = 3),
-        ", p",
-        p.value,
-        flag,
-        sep = ""
-      )
+    interaction <- paste(
+      "Interaction: F(",
+      format(round(mod1.aov[4, 1], digits = 0), nsmall = 0),
+      ",",
+      format(round(mod1.aov[4, 2], digits = 0), nsmall = 0),
+      ") = ",
+      format(round(mod1.aov[4, 3], digits = 3), nsmall = 3),
+      ", p",
+      p.value,
+      flag,
+      sep = ""
+    )
     
     # calculate CI
     myCI <-
@@ -245,7 +331,7 @@ FIGURE.2 <-
       xaxt = "n",
       xlab = "Endpoint",
       ylab = ylab,
-      xlim = c(min(xlabs) - 1.5, max(xlabs) + 1.5),
+      xlim = c(min(wt.values) - 1.5, max(wt.values) + 1.5),
       ylim = c(min(myCI[, 5]) - min(myCI[, 5]) *
                  0.2, max(myCI[, 3]) + max(myCI[, 3]) * 0.2)
     )
@@ -253,20 +339,20 @@ FIGURE.2 <-
     # plot CI intervals (vertical lines)
     for (i in 1:dim(myCI)[1]) {
       lines(
-        x = rep(xlabs[which(myCI[i, 2] == wt.labels)], 2) + jitter[i],
+        x = rep(wt.values[which(myCI[i, 2] == wt.labels)], 2) + jitter[i],
         y = c(myCI[i, 5], myCI[i, 3]),
         lty = "solid",
         lwd = 1.5,
         col = "darkgrey"
       )
       axis(side = 1,
-           at = xlabs,
+           at = wt.values,
            labels = wt.labels)
     }
     # plot CI intervals (symbols at end lines)
     for (i in 1:dim(myCI)[1]) {
       points(
-        x = rep(xlabs[which(myCI[i, 2] == wt.labels)], 2) + jitter[i],
+        x = rep(wt.values[which(myCI[i, 2] == wt.labels)], 2) + jitter[i],
         y = c(myCI[i, 5], myCI[i, 3]),
         pch = "−",
         cex = 1.5,
@@ -274,13 +360,13 @@ FIGURE.2 <-
         col = "darkgrey"
       )
       axis(side = 1,
-           at = xlabs,
+           at = wt.values,
            labels = wt.labels)
     }
     # plot point estimates
     for (i in 1:nlevels(bw.factor)) {
       lines(
-        x = xlabs + jitter[i],
+        x = wt.values + jitter[i],
         y = myCI[myCI[, 1] == i, 4],
         type = "b",
         pch = symbols[i],
@@ -288,13 +374,13 @@ FIGURE.2 <-
         cex = 1
       )
       axis(side = 1,
-           at = xlabs,
+           at = wt.values,
            labels = wt.labels)
     }
     # add interaction label
     if (mod1.aov[4, 4] < alpha) {
       text(
-        x = min(xlabs) - 1.5,
+        x = min(wt.values) - 1.5,
         y = min(myCI[, 5]) - min(myCI[, 5]) * 0.2,
         labels = interaction,
         adj = c(0, 0),

@@ -1,4 +1,11 @@
-TABLE.3 <- function(dataset, variables, bw.factor, control.g, wt.labels, alpha, n.digits) {
+TABLE.3 <- function(
+        dataset,
+        variables,
+        bw.factor,
+        control.g,
+        wt.labels,
+        alpha,
+        n.digits) {
     # This function outputs a comparison table for two-way cross-tables
     # dataset: a 2D dataframe (rows: participants, columns: variables)
     # variables: a 1D variable labels (within-group) bw.factor: a 1D

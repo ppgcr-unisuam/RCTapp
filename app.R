@@ -28,8 +28,7 @@ source("RCT-Table2a.R", local = TRUE) # numeric variables, linear mixed model an
 source("RCT-Table2b.R", local = TRUE) # numeric variables, linear mixed model analysis, between- AND within-factor WITHOUT baseline adjustment
 source("RCT-Figure2.R", local = TRUE) # numeric variables, plot of descriptive analysis (mean and CI)
 source("RCT-Table3.R", local = TRUE) #  ordinal variables, ridit analysis, ONLY within-factor
-source("RCT-Missingness.R", local = TRUE) # missing data analysis
-source("RCT-RegressionDiagnosis.R", local = TRUE) # regression diagnosis on original dataset
+source("RCT-Diagnosis.R", local = TRUE) # diagnosis on original dataset and model
 
 # use this code to debug
 # rsconnect::showLogs()
@@ -124,10 +123,15 @@ ui <- shiny::fluidPage(
       shiny::fluidRow(
         shiny::column(
           3,
-          # add title
-          shiny::h4("1. Study design", style = "text-align:center; font-weight:bold;"),
-          # add horizontal line
-          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
+          shiny::br(),
+          # add button to run analysis
+          shiny::actionButton(
+            inputId = "study",
+            label = "Study Design",
+            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          ),
+          shiny::br(),
+          shiny::br(),
           # add checkbox for between-subject factors (BGF)
           shinyWidgets::virtualSelectInput(
             inputId = "BGF",
@@ -186,10 +190,7 @@ ui <- shiny::fluidPage(
         ),
         shiny::column(
           3,
-          # add title
-          shiny::h4("2. Summary analysis", style = "text-align:center; font-weight:bold;"),
-          # add horizontal line
-          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
+          shiny::br(),
           shiny::actionButton(
             inputId = "runTable1",
             icon = shiny::icon("play"),
@@ -229,10 +230,7 @@ ui <- shiny::fluidPage(
         ),
         shiny::column(
           3,
-          # add title
-          shiny::h4("3. Linear mixed model analysis", style = "text-align:center; font-weight:bold;"),
-          # add horizontal line
-          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
+          shiny::br(),
           shiny::fluidRow(
             shiny::column(
               6,
@@ -281,9 +279,9 @@ ui <- shiny::fluidPage(
             value = TRUE,
             width = "100%"
           ),
-          # add checkbox for covariates (CV)
+          # add checkbox for covariates (COV)
           shinyWidgets::virtualSelectInput(
-            inputId = "CV",
+            inputId = "COV",
             label = "Covariates",
             choices = NULL,
             selected = NA,
@@ -343,48 +341,26 @@ ui <- shiny::fluidPage(
             multiple = FALSE,
             width = "100%"
           ),
-          shiny::fluidRow(
-            shiny::column(
-              5,
-              # show options for missing data
-              shinyWidgets::virtualSelectInput(
-                inputId = "missingTest",
-                label = "Missing data test",
-                choices = c("None", "Little"),
-                selected = "Little",
-                showValueAsTags = TRUE,
-                search = TRUE,
-                multiple = FALSE,
-                width = "100%"
-              ),
+          # show options for regression diagnosis
+          shinyWidgets::virtualSelectInput(
+            inputId = "regressionDiag",
+            label = "Diagnosis",
+            choices = c(
+              "Missing Data",
+              "Component-Plus-Residual",
+              "Variance Inflation Factor"
             ),
-            shiny::column(
-              7,
-              # show options for regression diagnosis
-              shinyWidgets::virtualSelectInput(
-                inputId = "regressionDiag",
-                label = "Regression diagnosis",
-                choices = c(
-                  "Component-Plus-Residual",
-                  "Influence",
-                  "Variance Inflation Factor"
-                ),
-                selected = NA,
-                showValueAsTags = TRUE,
-                search = TRUE,
-                multiple = TRUE,
-                width = "100%"
-              ),
-            ),
+            selected = NA,
+            showValueAsTags = TRUE,
+            search = TRUE,
+            multiple = TRUE,
+            width = "100%"
           ),
         ),
         # add column for buttons
         shiny::column(
           3,
-          # add title
-          shiny::h4("4. Ridit analysis", style = "text-align:center; font-weight:bold;"),
-          # add horizontal line
-          shiny::tags$hr(style = "border-color: #2C3E50; border-width: 2px;"),
+          shiny::br(),
           # add button to run analysis
           shiny::actionButton(
             inputId = "runTable3",
@@ -440,9 +416,6 @@ ui <- shiny::fluidPage(
       # show table of results
       DT::dataTableOutput("table2"),
       shiny::br(),
-      # show output text of missing data
-      shiny::htmlOutput("table2missingData"),
-      shiny::br(),
       # download Word format
       shiny::downloadButton(
         outputId = "downloadTable2",
@@ -486,11 +459,6 @@ ui <- shiny::fluidPage(
       shiny::br(),
     ),
     shiny::tabPanel(
-      icon = list(fontawesome::fa("person-circle-question")),
-      title = "Missing data",
-      shiny::br(),
-    ),
-    shiny::tabPanel(
       icon = list(fontawesome::fa("stethoscope")),
       title = "Diagnostics",
       shiny::br(),
@@ -499,25 +467,28 @@ ui <- shiny::fluidPage(
         id = "diagTab",
         type = "tabs",
         shiny::tabPanel(
-          title = "Component-Plus-Residual",
-          icon = fontawesome::fa("chart-line"),
+          title = "Missing data",
+          icon = fontawesome::fa("person-circle-question"),
           shiny::br(),
           # add plot
-          shiny::plotOutput("plotDiag1")
+          shiny::plotOutput("plotDiag1"),
+          shiny::br(),
+          # show output text of missing data
+          shiny::htmlOutput("table2missingData"),
         ),
         shiny::tabPanel(
-          title = "Influence",
-          icon = fontawesome::fa("chart-line"),
+          title = "Component-Plus-Residual",
+          icon = fontawesome::fa("table-columns"),
           shiny::br(),
           # add plot
           shiny::plotOutput("plotDiag2")
         ),
         shiny::tabPanel(
           title = "Variance Inflation Factor",
-          icon = fontawesome::fa("chart-line"),
+          icon = fontawesome::fa("table"),
           shiny::br(),
           # add table
-          shiny::tableOutput("tableDiag3")
+          shiny::tableOutput("tableDiag4")
         ),
       ),
     ),
@@ -707,7 +678,7 @@ server <- function(input, output, session) {
     )
     # update list of covariates from rawdata header
     shinyWidgets::updateVirtualSelect(
-      inputId = "CV",
+      inputId = "COV",
       choices = colnames(rawdata),
       selected = NA
     )
@@ -920,7 +891,6 @@ server <- function(input, output, session) {
     shiny::req(input[["controlgroup"]])
     shiny::req(input[["endpointNames"]])
     shiny::req(input[["missing"]])
-    shiny::req(input[["missingTest"]])
     shiny::req(input[["alpha"]])
     
     # read file
@@ -935,7 +905,7 @@ server <- function(input, output, session) {
     rawdata <- as.NA(rawdata)
     
     # select columns from checked variables
-    rawdata <- rawdata[, unique(c(input[["BGF"]], input[["CV"]], input[["OV"]]))]
+    rawdata <- rawdata[, unique(c(input[["BGF"]], input[["COV"]], input[["OV"]]))]
     
     # add column based on treatment group names per user input
     if (!is.null(input[["BGF"]])) {
@@ -952,14 +922,13 @@ server <- function(input, output, session) {
       results <- TABLE.2a(
         dataset = rawdata,
         variables = input[["OV"]],
-        covariate = input[["CV"]],
+        covariate = rawdata[input[["COV"]]],
         bw.factor = rawdata$TREATMENT,
         control.g = input[["controlgroup"]],
         wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
         wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
         missing = tolower(gsub(" ", ".", input[["missing"]])),
         m.imputations = as.numeric(input[["MICEresamples"]]),
-        test.missing = input[["missingTest"]],
         alpha = as.numeric(input[["alpha"]]),
         n.digits = 2
       )
@@ -967,7 +936,7 @@ server <- function(input, output, session) {
       results <- TABLE.2b(
         dataset = rawdata,
         variables = input[["OV"]],
-        covariate = input[["CV"]],
+        covariate = rawdata[input[["COV"]]],
         bw.factor = rawdata$TREATMENT,
         control.g = input[["controlgroup"]],
         # drop 1
@@ -975,11 +944,11 @@ server <- function(input, output, session) {
         wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]][-1]),
         missing = tolower(gsub(" ", ".", input[["missing"]])),
         m.imputations = as.numeric(input[["MICEresamples"]]),
-        test.missing = input[["missingTest"]],
         alpha = as.numeric(input[["alpha"]]),
         n.digits = 2
       )
     }
+    
     return(results)
   })
   
@@ -992,10 +961,9 @@ server <- function(input, output, session) {
     shiny::req(input[["endpointNames"]])
     shiny::req(input[["endpointValues"]])
     shiny::req(input[["missing"]])
-    shiny::req(input[["missingTest"]])
     shiny::req(input[["alpha"]])
     shiny::req(input[["regressionDiag"]])
-
+    
     # read file
     rawdata <- readxl::read_xlsx(rawdata())
     # remove empty columns
@@ -1008,7 +976,7 @@ server <- function(input, output, session) {
     rawdata <- as.NA(rawdata)
     
     # select columns from checked variables
-    rawdata <- rawdata[, unique(c(input[["BGF"]], input[["CV"]], input[["OV"]]))]
+    rawdata <- rawdata[, unique(c(input[["BGF"]], input[["COV"]], input[["OV"]]))]
     
     # add column based on treatment group names per user input
     if (!is.null(input[["BGF"]])) {
@@ -1023,10 +991,11 @@ server <- function(input, output, session) {
     results <- test.model.fit(
       dataset = rawdata,
       variables = input[["OV"]],
-      covariate = input[["CV"]],
+      covariate = rawdata[input[["COV"]]],
       bw.factor = rawdata$TREATMENT,
       wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
       wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
+      missing = tolower(gsub(" ", ".", input[["missing"]])),
       alpha = as.numeric(input[["alpha"]]),
       p.digits = 3,
       diagnostics = input[["regressionDiag"]]
@@ -1063,8 +1032,22 @@ server <- function(input, output, session) {
     # use outcome names
     results[, 1] <- gsub("Outcome", input[["OutcomeName"]], results[, 1])
     
-    caption <- paste0("Table 2: Two-way linear mixed model analysis (", input[["OutcomeName"]], ").")
-    
+    if(!sjmisc::is_empty(input[["COV"]])){
+      caption <- paste0(
+        "Table 2: Two-way linear mixed model analysis of ",
+        input[["OutcomeName"]],
+        " (adjusted by ",
+        paste0(input[["COV"]], collapse = ", "),
+        ")."
+      )
+    } else {
+      caption <- paste0(
+        "Table 2: Two-way linear mixed model analysis of ",
+        input[["OutcomeName"]],
+        "."
+      )
+    }
+
     # Define text styles for caption and footnotes
     caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
     footnote_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
@@ -1109,9 +1092,6 @@ server <- function(input, output, session) {
           "SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).",
           prop = footnote_style
         )
-      )) %>%
-      officer::body_add_fpar(officer::fpar(
-        officer::ftext(table2()$missingtest.res, prop = footnote_style)
       )) %>%  # Add footnote
       print(target = file.path(dir.name, "Table 2.docx"))
     
@@ -1143,12 +1123,6 @@ server <- function(input, output, session) {
       DT::formatStyle(columns = 1, fontWeight = "bold") %>%
       DT::formatStyle(columns = 3:ncol(results), textAlign = "right")
   }, server = FALSE)
-  
-  # show text for table2missingData
-  output[["table2missingData"]] <- shiny::renderUI({
-    shiny::req(table2())
-    shiny::HTML(table2()$missingtest.res)
-  })
   
   # Download table 2 ------------------------------------------------
   output$downloadTable2 <- shiny::downloadHandler(
@@ -1200,7 +1174,7 @@ server <- function(input, output, session) {
     FIGURE.2(
       dataset = rawdata,
       variables = input[["OV"]],
-      covariate = input[["CV"]],
+      covariate = rawdata[input[["COV"]]],
       bw.factor = rawdata$TREATMENT,
       wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
       wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
@@ -1209,7 +1183,8 @@ server <- function(input, output, session) {
       xlabs = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
       ylab = input[["OutcomeName"]],
       legend.opt = input[["legendOptions"]],
-      alpha = as.numeric(input[["alpha"]])
+      alpha = as.numeric(input[["alpha"]]),
+      n.digits = 2
     )
     
     # save plot
@@ -1380,10 +1355,18 @@ server <- function(input, output, session) {
     }
   )
   
-  # show plot regression diagnosis
-  output[["plotDiag1"]] <- shiny::renderPlot({
+  # show text for table2missingData
+  output[["table2missingData"]] <- shiny::renderUI({
     shiny::req(input[["regressionDiag"]])
-    shiny::req(regression())
+    shiny::req(regression()$Little_Test_Res)
+    
+    shiny::HTML(regression()$Little_Test_Res)
+  })
+  
+  # show plot regression diagnosis
+  output[["plotDiag2"]] <- shiny::renderPlot({
+    shiny::req(input[["regressionDiag"]])
+    shiny::req(regression()$Comp_Plus_Res)
     
     plot(
       regression()$Comp_Plus_Res,
@@ -1391,29 +1374,15 @@ server <- function(input, output, session) {
       main = "Component-plus-residual plot for the interaction effect",
       xlab = "Time (endpoints)",
       ylab = input[["OutcomeName"]]
-      )
-  })
-  
-  # show plot regression diagnosis
-  output[["plotDiag2"]] <- shiny::renderPlot({
-    shiny::req(input[["regressionDiag"]])
-    shiny::req(regression())
-    
-    plot(
-      regression()$Inf_Fixed,
-      main = "Influence plot",
-      xlab = "Time (endpoints)",
-      ylab = input[["OutcomeName"]]
     )
   })
   
-  # show tableDiag3 with VIF values
-  output[["tableDiag3"]] <- shiny::renderTable({
+  # show table with VIF values
+  output[["tableDiag4"]] <- shiny::renderTable({
     shiny::req(input[["regressionDiag"]])
-    shiny::req(regression())
+    shiny::req(regression()$VIF)
     
     results <- regression()$VIF
-    
     # if results is a matrix
     if (is.matrix(results)) {
       results <- results %>%

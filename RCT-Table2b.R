@@ -7,14 +7,15 @@ TABLE.2b <- function(dataset,
                      wt.values,
                      missing = c("complete.cases", "mean.imputation", "multiple.imputation"),
                      m.imputations,
-                     test.missing = c("None", "Little"),
                      alpha,
                      n.digits) {
   # This function outputs a comparison table for two-way mixed-models
   # dataset: a 2D dataframe (rows: participants, columns: variables)
   # variables: a 1D variable labels (within-group)
+  # covariate: a 2D dataframe (rows: participants, columns: covariates)
   # bw.factor: a 1D between-group factor
   # wt.labels: a 1D variable labels for each level
+  # wt.values: a 1D variable values for each level
   # missing: method for handling missing balues (complete.cases, mean inputation, multiple imputation)
   # alpha: the type-I error level
   # n.digits: number of decimal places to be presented for continuous variables
@@ -73,18 +74,6 @@ TABLE.2b <- function(dataset,
   # matriz de resultados de interação
   interaction <- c()
   
-  # missing data analysis BEFORE imputation, if any
-  if(test.missing == "None"){
-    missingtest.res <- "Missing data pattern not analyzed."
-  } else {
-    missingtest.res <- "There are no missing values to be analyzed."
-    try(missingtest.res <- missing.data(test.missing = test.missing,
-                                        dataset = dataset,
-                                        variables = variables,
-                                        covariate = covariate),
-        silent = TRUE)
-  }
-  
   # preparação e análise do modelo misto
   ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
   TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
@@ -96,7 +85,6 @@ TABLE.2b <- function(dataset,
     for (i in 1:length(wt.labels)) {
       COVARIATE_M <- rbind(COVARIATE_M, covariate)
     }
-    names(COVARIATE_M) <- names(covariate)
   }
   
   # decide como lidar com os dados perdidos
@@ -116,7 +104,6 @@ TABLE.2b <- function(dataset,
         COVARIATE_M <- rbind(COVARIATE_M, covariate)
       }
     }
-    names(COVARIATE_M) <- names(covariate)
   }
   
   if (missing == "mean.imputation") {
@@ -140,7 +127,6 @@ TABLE.2b <- function(dataset,
         COVARIATE_M <- rbind(COVARIATE_M, covariate)
       }
     }
-    names(COVARIATE_M) <- names(covariate)
   }
   
   if (missing == "multiple.imputation") {
@@ -426,17 +412,12 @@ TABLE.2b <- function(dataset,
     "SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).",
     quote = FALSE
   )
-  print(
-    missingtest.res,
-    quote = FALSE
-  )
   print("", quote = FALSE)
   
   # output results
   return(list(
     'mix.mod.res' = mix.mod.res,
     'wt.diff' = wt.diff,
-    'bw.diff' = bw.diff,
-    'missingtest.res' = missingtest.res
+    'bw.diff' = bw.diff
   ))
 }

@@ -5,9 +5,8 @@ account: sciencer
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 12850532
-bundleId: 9850258
+bundleId: 9890383
 url: https://sciencer.shinyapps.io/RCTapp/
 version: 1
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: 95589_book_item_95589.pdf
