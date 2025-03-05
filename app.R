@@ -34,6 +34,9 @@ source("RCT-Diagnosis.R", local = TRUE) # diagnosis on original dataset and mode
 # rsconnect::showLogs()
 
 ui <- shiny::fluidPage(
+  # add custom CSS to justify
+  tags$style('ul.nav-pills{display: flex !important;justify-content: center !important;}'),
+  
   # add favicon
   shiny::tags$head(
     shiny::tags$link(rel = "shortcut icon", href = "www/favicon_io/favicon.ico"),
@@ -104,18 +107,19 @@ ui <- shiny::fluidPage(
     type = "tabs",
     shiny::tabPanel(
       title = list(fontawesome::fa("database"), "Data"),
-      shiny::br(),
-      # input Excel file data
-      shiny::fileInput(
-        inputId = "InputFile",
-        label = NULL,
-        multiple = FALSE,
-        buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
-        accept = c(".xlsx"),
-        width = "100%",
-        placeholder = "Upload XLSX data in wide format (one row per subject, multiple columns for repeated measures)."
+      shiny::wellPanel(
+        # input Excel file data
+        shiny::fileInput(
+          inputId = "InputFile",
+          label = NULL,
+          multiple = FALSE,
+          buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
+          accept = c(".xlsx"),
+          width = "100%",
+          placeholder = "Upload XLSX data in wide format (one row per subject, multiple columns for repeated measures)."
+        ),
+        DT::DTOutput(outputId = "rawtable"),
       ),
-      DT::DTOutput(outputId = "rawtable"),
     ),
     shiny::tabPanel(
       title = list(fontawesome::fa("list-check"), "Plan"),
@@ -123,270 +127,289 @@ ui <- shiny::fluidPage(
       shiny::fluidRow(
         shiny::column(
           3,
-          shiny::br(),
-          # add button to run analysis
-          shiny::actionButton(
-            inputId = "study",
-            label = "Study Design",
-            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-          ),
-          shiny::br(),
-          shiny::br(),
-          # add checkbox for between-subject factors (BGF)
-          shinyWidgets::virtualSelectInput(
-            inputId = "BGF",
-            label = "Treatment groups",
-            choices = NULL,
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = FALSE,
-            width = "100%"
-          ),
-          # show text input to change treatment group names
-          shiny::textInput(
-            inputId = "treatmentNames",
-            label = "Treatment labels (csv)",
-            value = "Control,Treatment",
-            width = "100%"
-          ),
-          # show options for control group
-          shinyWidgets::virtualSelectInput(
-            inputId = "controlgroup",
-            label = "Control group",
-            choices = NULL,
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = FALSE,
-            width = "100%"
-          ),
-          shiny::br(),
-          # show text for endpoint names
-          shiny::textInput(
-            inputId = "endpointNames",
-            label = "Endpoint labels (csv)",
-            value = "Baseline,Follow-up",
-            width = "100%"
-          ),
-          # show text for endpoint
-          shiny::textInput(
-            inputId = "endpointValues",
-            label = "Endpoint value (csv)",
-            value = "0,1",
-            width = "100%"
-          ),
-          shiny::br(),
-          # alpha level for statistical significance
-          shiny::numericInput(
-            inputId = "alpha",
-            label = "Alpha level",
-            value = 0.05,
-            min = 0.001,
-            max = 0.20,
-            step = 0.01,
-            width = "100%"
+          shiny::wellPanel(
+            # add button to run analysis
+            shiny::actionButton(
+              inputId = "study",
+              label = "Study Design",
+              style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+            ),
+            shiny::br(),
+            shiny::br(),
+            # add checkbox for between-subject factors (BGF)
+            shinyWidgets::virtualSelectInput(
+              inputId = "BGF",
+              label = "Treatment groups",
+              choices = NULL,
+              selected = NA,
+              showValueAsTags = TRUE,
+              search = TRUE,
+              multiple = FALSE,
+              width = "100%"
+            ),
+            # show text input to change treatment group names
+            shiny::textInput(
+              inputId = "treatmentNames",
+              label = "Treatment labels (csv)",
+              value = "Control,Intervention",
+              width = "100%"
+            ),
+            # show options for control group
+            shinyWidgets::virtualSelectInput(
+              inputId = "controlgroup",
+              label = "Control group",
+              choices = NULL,
+              selected = NA,
+              showValueAsTags = TRUE,
+              search = TRUE,
+              multiple = FALSE,
+              width = "100%"
+            ),
+            # number of endpoits
+            shiny::numericInput(
+              inputId = "endpointN",
+              label = "Endpoints",
+              value = 2,
+              min = 2,
+              step = 1,
+              width = "100%"
+            ),
+            # show text for endpoint names
+            shiny::textInput(
+              inputId = "endpointNames",
+              label = "Endpoint labels (csv)",
+              value = "Baseline,Follow-up",
+              width = "100%"
+            ),
+            # show text for endpoint
+            shiny::textInput(
+              inputId = "endpointValues",
+              label = "Endpoint value (csv)",
+              value = "0,1",
+              width = "100%"
+            ),
+            # alpha level for statistical significance
+            shiny::numericInput(
+              inputId = "alpha",
+              label = "Alpha level",
+              value = 0.05,
+              min = 0.001,
+              max = 0.20,
+              step = 0.01,
+              width = "100%"
+            ),
           ),
         ),
         shiny::column(
           3,
-          shiny::br(),
-          shiny::actionButton(
-            inputId = "runTable1",
-            icon = shiny::icon("play"),
-            label = "Table 1",
-            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-          ),
-          shiny::br(),
-          shiny::br(),
-          # add checkbox for baseline variables (BV)
-          shinyWidgets::virtualSelectInput(
-            inputId = "BV",
-            label = "Baseline variables",
-            choices = NULL,
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = TRUE,
-            width = "100%"
-          ),
-          # show maxlevels for between-subject factors
-          shiny::numericInput(
-            inputId = "maxlevels",
-            label = "Max levels (categorical variables)",
-            value = 5,
-            min = 1,
-            max = 10,
-            step = 1,
-            width = "100%"
-          ),
-          # add checkbox for show p-value
-          shiny::checkboxInput(
-            inputId = "showPvalue",
-            label = "Show P-value",
-            value = FALSE,
-            width = "100%"
+          shiny::wellPanel(
+            shiny::actionButton(
+              inputId = "runTable1",
+              icon = shiny::icon("play"),
+              label = "Table 1",
+              style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+            ),
+            shiny::br(),
+            shiny::br(),
+            # add checkbox for baseline variables (BV)
+            shinyWidgets::virtualSelectInput(
+              inputId = "BV",
+              label = "Baseline variables",
+              choices = NULL,
+              selected = NA,
+              showValueAsTags = TRUE,
+              search = TRUE,
+              multiple = TRUE,
+              width = "100%"
+            ),
+            # show maxlevels for between-subject factors
+            shiny::numericInput(
+              inputId = "maxlevels",
+              label = "Max levels (categorical variables)",
+              value = 5,
+              min = 1,
+              max = 10,
+              step = 1,
+              width = "100%"
+            ),
+            # add checkbox for show p-value
+            shiny::checkboxInput(
+              inputId = "showPvalue",
+              label = "Show P-value",
+              value = FALSE,
+              width = "100%"
+            ),
           ),
         ),
         shiny::column(
           3,
-          shiny::br(),
-          shiny::fluidRow(
-            shiny::column(
-              6,
-              # add button to run analysis
-              shiny::actionButton(
-                inputId = "runTable2",
-                icon = shiny::icon("play"),
-                label = "Table 2",
-                style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          shiny::wellPanel(
+            shiny::fluidRow(
+              shiny::column(
+                6,
+                # add button to run analysis
+                shiny::actionButton(
+                  inputId = "runTable2",
+                  icon = shiny::icon("play"),
+                  label = "Table 2",
+                  style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                ),
+              ),
+              shiny::column(
+                6,
+                # add button to run analysis
+                shiny::actionButton(
+                  inputId = "runFigure2",
+                  icon = shiny::icon("play"),
+                  label = "Figure 2",
+                  style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                ),
               ),
             ),
-            shiny::column(
-              6,
-              # add button to run analysis
-              shiny::actionButton(
-                inputId = "runFigure2",
-                icon = shiny::icon("play"),
-                label = "Figure 2",
-                style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+            shiny::br(),
+            # add checkbox for outcome variables (OV)
+            shinyWidgets::virtualSelectInput(
+              inputId = "OV",
+              label = "Outcome variable (all columns)",
+              choices = NULL,
+              selected = NA,
+              showValueAsTags = TRUE,
+              search = TRUE,
+              multiple = TRUE,
+              width = "100%"
+            ),
+            # show text input to change outcome name
+            shiny::textInput(
+              inputId = "OutcomeName",
+              label = "Outcome label",
+              value = "Outcome",
+              width = "100%"
+            ),
+            # show checkbox for indicating outcomes has baseline data
+            shiny::checkboxInput(
+              inputId = "hasBaseline",
+              label = "Baseline data is available",
+              value = TRUE,
+              width = "100%"
+            ),
+            # add checkbox for covariates (COV)
+            shinyWidgets::virtualSelectInput(
+              inputId = "COV",
+              label = "Covariates",
+              choices = NULL,
+              selected = NA,
+              showValueAsTags = TRUE,
+              search = TRUE,
+              multiple = TRUE,
+              width = "100%"
+            ),
+            shiny::fluidRow(
+              shiny::column(
+                8,
+                # show options for missing data
+                shinyWidgets::virtualSelectInput(
+                  inputId = "missing",
+                  label = "Missing data (imputation)",
+                  choices = c("Complete cases", "Mean imputation", "Multiple imputation"),
+                  selected = "Multiple imputation",
+                  showValueAsTags = TRUE,
+                  search = TRUE,
+                  multiple = FALSE,
+                  width = "100%"
+                ),
+              ),
+              shiny::column(
+                4,
+                # number of resamples
+                shiny::numericInput(
+                  inputId = "MICEresamples",
+                  label = "Resamples",
+                  value = 50,
+                  min = 1,
+                  max = 100,
+                  step = 1,
+                  width = "100%"
+                ),
               ),
             ),
-          ),
-          shiny::br(),
-          # add checkbox for outcome variables (OV)
-          shinyWidgets::virtualSelectInput(
-            inputId = "OV",
-            label = "Outcome variable (all columns)",
-            choices = NULL,
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = TRUE,
-            width = "100%"
-          ),
-          # show text input to change outcome name
-          shiny::textInput(
-            inputId = "OutcomeName",
-            label = "Outcome label",
-            value = "Outcome",
-            width = "100%"
-          ),
-          # show checkbox for indicating outcomes has baseline data
-          shiny::checkboxInput(
-            inputId = "hasBaseline",
-            label = "Baseline data is available",
-            value = TRUE,
-            width = "100%"
-          ),
-          # add checkbox for covariates (COV)
-          shinyWidgets::virtualSelectInput(
-            inputId = "COV",
-            label = "Covariates",
-            choices = NULL,
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = TRUE,
-            width = "100%"
-          ),
-          shiny::fluidRow(
-            shiny::column(
-              8,
-              # show options for missing data
-              shinyWidgets::virtualSelectInput(
-                inputId = "missing",
-                label = "Missing data (imputation)",
-                choices = c("Complete cases", "Mean imputation", "Multiple imputation"),
-                selected = "Complete cases",
-                showValueAsTags = TRUE,
-                search = TRUE,
-                multiple = FALSE,
-                width = "100%"
+            # options for legend
+            shinyWidgets::virtualSelectInput(
+              inputId = "legendOptions",
+              label = "Legend (position)",
+              choices = c(
+                "none",
+                "top",
+                "topleft",
+                "topright",
+                "bottom",
+                "bottomleft",
+                "bottomright",
+                "left",
+                "right",
+                "center"
               ),
+              selected = "top",
+              showValueAsTags = TRUE,
+              search = TRUE,
+              multiple = FALSE,
+              width = "100%"
             ),
-            shiny::column(
-              4,
-              # number of resamples
-              shiny::numericInput(
-                inputId = "MICEresamples",
-                label = "Resamples",
-                value = 50,
-                min = 1,
-                max = 100,
-                step = 1,
-                width = "100%"
+            # show options for regression diagnosis
+            shinyWidgets::virtualSelectInput(
+              inputId = "regressionDiag",
+              label = "Diagnosis",
+              choices = c(
+                "Missing Data",
+                "Imputed Data",
+                "Convergence",
+                "Component-Plus-Residual",
+                "Variance Inflation Factor"
               ),
+              selected = c(
+                "Missing Data",
+                "Imputed Data",
+                "Convergence",
+                "Component-Plus-Residual",
+                "Variance Inflation Factor"
+              ),
+              showValueAsTags = TRUE,
+              search = TRUE,
+              multiple = TRUE,
+              width = "100%"
             ),
-          ),
-          # options for legend
-          shinyWidgets::virtualSelectInput(
-            inputId = "legendOptions",
-            label = "Legend (position)",
-            choices = c(
-              "none",
-              "top",
-              "topleft",
-              "topright",
-              "bottom",
-              "bottomleft",
-              "bottomright",
-              "left",
-              "right",
-              "center"
-            ),
-            selected = "none",
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = FALSE,
-            width = "100%"
-          ),
-          # show options for regression diagnosis
-          shinyWidgets::virtualSelectInput(
-            inputId = "regressionDiag",
-            label = "Diagnosis",
-            choices = c(
-              "Missing Data",
-              "Component-Plus-Residual",
-              "Variance Inflation Factor"
-            ),
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = TRUE,
-            width = "100%"
           ),
         ),
         # add column for buttons
         shiny::column(
           3,
-          shiny::br(),
-          # add button to run analysis
-          shiny::actionButton(
-            inputId = "runTable3",
-            icon = shiny::icon("play"),
-            label = "Table 3",
-            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-          ),
-          shiny::br(),
-          shiny::br(),
-          # add checkbox for outcome variables (OV)
-          shinyWidgets::virtualSelectInput(
-            inputId = "OVRidit",
-            label = "Outcome variable (all columns)",
-            choices = NULL,
-            selected = NA,
-            showValueAsTags = TRUE,
-            search = TRUE,
-            multiple = TRUE,
-            width = "100%"
-          ),
-          # show text input to change outcome name
-          shiny::textInput(
-            inputId = "OutcomeNameRidit",
-            label = "Outcome label",
-            value = "Outcome",
-            width = "100%"
+          shiny::wellPanel(
+            # add button to run analysis
+            shiny::actionButton(
+              inputId = "runTable3",
+              icon = shiny::icon("play"),
+              label = "Table 3",
+              style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+            ),
+            shiny::br(),
+            shiny::br(),
+            # add checkbox for outcome variables (OV)
+            shinyWidgets::virtualSelectInput(
+              inputId = "OVRidit",
+              label = "Outcome variable (all columns)",
+              choices = NULL,
+              selected = NA,
+              showValueAsTags = TRUE,
+              search = TRUE,
+              multiple = TRUE,
+              width = "100%"
+            ),
+            # show text input to change outcome name
+            shiny::textInput(
+              inputId = "OutcomeNameRidit",
+              label = "Outcome label",
+              value = "Outcome",
+              width = "100%"
+            ),
           ),
         ),
       ),
@@ -395,100 +418,120 @@ ui <- shiny::fluidPage(
     shiny::tabPanel(
       title = "Table 1",
       icon = fontawesome::fa("table"),
-      shiny::br(),
-      # show table of results
-      DT::dataTableOutput("table1"),
-      shiny::br(),
-      # download Word format
-      shiny::downloadButton(
-        outputId = "downloadTable1",
-        label = "Download Table 1 (.DOCX)",
-        style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+      shiny::wellPanel(
+        # show table of results
+        DT::dataTableOutput("table1"),
+        shiny::br(),
+        # download Word format
+        shiny::downloadButton(
+          outputId = "downloadTable1",
+          label = "Download Table 1 (.DOCX)",
+          style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+        ),
+        shiny::br(),
+        shiny::br(),
       ),
-      shiny::br(),
-      shiny::br(),
     ),
     # tab for table 2 of results
     shiny::tabPanel(
       title = "Table 2",
       icon = fontawesome::fa("table"),
-      shiny::br(),
-      # show table of results
-      DT::dataTableOutput("table2"),
-      shiny::br(),
-      # download Word format
-      shiny::downloadButton(
-        outputId = "downloadTable2",
-        label = "Download Table 2 (.DOCX)",
-        style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+      shiny::wellPanel(
+        # show table of results
+        DT::dataTableOutput("table2"),
+        shiny::br(),
+        # download Word format
+        shiny::downloadButton(
+          outputId = "downloadTable2",
+          label = "Download Table 2 (.DOCX)",
+          style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+        ),
+        shiny::br(),
+        shiny::br(),
       ),
-      shiny::br(),
-      shiny::br(),
     ),
     # tab for plot of results
     shiny::tabPanel(
       title = "Figure 2",
       icon = fontawesome::fa("chart-line"),
-      # show plot of results
-      shiny::plotOutput("plot"),
-      shiny::br(),
-      # download TIFF format
-      shiny::downloadButton(
-        outputId = "downloadFigure2",
-        label = "Download Figure 2 (.TIFF)",
-        style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+      shiny::wellPanel(
+        # show plot of results
+        shiny::plotOutput("plot"),
+        shiny::br(),
+        # download TIFF format
+        shiny::downloadButton(
+          outputId = "downloadFigure2",
+          label = "Download Figure 2 (.TIFF)",
+          style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+        ),
+        shiny::br(),
+        shiny::br(),
       ),
-      shiny::br(),
-      shiny::br(),
     ),
     # tab for table 3 of results
     shiny::tabPanel(
       title = "Table 3",
       icon = fontawesome::fa("table"),
-      shiny::br(),
-      # show table of results
-      DT::dataTableOutput("table3"),
-      shiny::br(),
-      # download Word format
-      shiny::downloadButton(
-        outputId = "downloadTable3",
-        label = "Download Table 3 (.DOCX)",
-        style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+      shiny::wellPanel(
+        # show table of results
+        DT::dataTableOutput("table3"),
+        shiny::br(),
+        # download Word format
+        shiny::downloadButton(
+          outputId = "downloadTable3",
+          label = "Download Table 3 (.DOCX)",
+          style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+        ),
+        shiny::br(),
+        shiny::br(),
       ),
-      shiny::br(),
-      shiny::br(),
     ),
     shiny::tabPanel(
       icon = list(fontawesome::fa("stethoscope")),
       title = "Diagnostics",
-      shiny::br(),
-      # add tab panel
-      shiny::tabsetPanel(
-        id = "diagTab",
-        type = "tabs",
-        shiny::tabPanel(
-          title = "Missing data",
-          icon = fontawesome::fa("person-circle-question"),
-          shiny::br(),
-          # add plot
-          shiny::plotOutput("plotDiag1"),
-          shiny::br(),
-          # show output text of missing data
-          shiny::htmlOutput("table2missingData"),
-        ),
-        shiny::tabPanel(
-          title = "Component-Plus-Residual",
-          icon = fontawesome::fa("table-columns"),
-          shiny::br(),
-          # add plot
-          shiny::plotOutput("plotDiag2")
-        ),
-        shiny::tabPanel(
-          title = "Variance Inflation Factor",
-          icon = fontawesome::fa("table"),
-          shiny::br(),
-          # add table
-          shiny::tableOutput("tableDiag4")
+      shiny::wellPanel(
+        # add tab panel
+        shiny::tabsetPanel(
+          id = "diagTab",
+          type = "pills",
+          shiny::tabPanel(
+            title = "Missing Data",
+            icon = fontawesome::fa("person-circle-question"),
+            shiny::br(),
+            # add plot
+            shiny::plotOutput("plotDiag1"),
+            shiny::br(),
+            # show output text of missing data
+            shiny::htmlOutput("tableDiag1"),
+          ),
+          shiny::tabPanel(
+            title = "Imputed Data",
+            icon = fontawesome::fa("arrows-to-dot"),
+            shiny::br(),
+            # add plot
+            shiny::plotOutput("plotDiag2")
+          ),
+          shiny::tabPanel(
+            title = "Convergence",
+            icon = fontawesome::fa("chart-line"),
+            shiny::br(),
+            # add plot
+            shiny::plotOutput("plotDiag3")
+          ),
+          shiny::tabPanel(
+            title = "Component-Plus-Residual",
+            icon = fontawesome::fa("table-columns"),
+            shiny::br(),
+            # add plot
+            shiny::plotOutput("plotDiag4")
+          ),
+          shiny::tabPanel(
+            title = "Variance Inflation Factor",
+            icon = fontawesome::fa("table"),
+            shiny::br(),
+            # add table
+            shiny::tableOutput("tableDiag5")
+          ),
         ),
       ),
     ),
@@ -635,6 +678,38 @@ server <- function(input, output, session) {
     } else {
       shinyjs::disable("MICEresamples")
     }
+  })
+  
+  # create labels for endpointNames based on endpointN
+  shiny::observeEvent(input$endpointN, {
+    shiny::updateTextInput(session,
+                           "endpointNames",
+                           value = paste0("T", 1:input$endpointN, collapse = ","))
+    shiny::updateTextInput(session,
+                           "endpointValues",
+                           value = paste0(0:(input$endpointN - 1), collapse = ","))
+  })
+  
+  shiny::observeEvent(input$BGF, {
+    shiny::req(rawdata())
+    shiny::req(input[["BGF"]])
+    
+    # read file
+    rawdata <- readxl::read_xlsx(rawdata())
+    # remove empty columns
+    rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
+    # remove empty rows
+    rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
+    # clean variable names
+    colnames(rawdata) <- janitor::make_clean_names(colnames(rawdata))
+    # clean NA values
+    rawdata <- as.NA(rawdata)
+    
+    # update treatmentNames after number of levels from BGV
+    shiny::updateTextInput(
+      inputId = "treatmentNames",
+      value = paste0(unique(rawdata[[input[["BGF"]]]]), collapse = ",")
+    )
   })
   
   rawdata <- shiny::reactive({
@@ -849,6 +924,7 @@ server <- function(input, output, session) {
     
     # output results
     DT::datatable(
+      class = "compact",
       data = results,
       caption = caption,
       extensions = c('ColReorder'),
@@ -869,7 +945,10 @@ server <- function(input, output, session) {
     ) %>%
       DT::formatStyle(columns = 1, fontWeight = "bold") %>%
       DT::formatStyle(columns = 2, fontStyle = "italic") %>%
-      DT::formatStyle(columns = 3:ncol(results), textAlign = "right")
+      DT::formatStyle(columns = 3:ncol(results), textAlign = "right") %>%
+      DT::formatStyle(
+        columns = 1:ncol(results),
+        backgroundColor = 'White')
   }, server = FALSE)
   
   # Download Handler
@@ -962,6 +1041,7 @@ server <- function(input, output, session) {
     shiny::req(input[["endpointNames"]])
     shiny::req(input[["endpointValues"]])
     shiny::req(input[["missing"]])
+    shiny::req(input[["MICEresamples"]])
     shiny::req(input[["alpha"]])
     shiny::req(input[["regressionDiag"]])
     
@@ -997,6 +1077,7 @@ server <- function(input, output, session) {
       wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
       wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
       missing = tolower(gsub(" ", ".", input[["missing"]])),
+      m.imputations = as.numeric(input[["MICEresamples"]]),
       alpha = as.numeric(input[["alpha"]]),
       p.digits = 3,
       diagnostics = input[["regressionDiag"]]
@@ -1048,7 +1129,7 @@ server <- function(input, output, session) {
         "."
       )
     }
-
+    
     # Define text styles for caption and footnotes
     caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
     footnote_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
@@ -1098,6 +1179,7 @@ server <- function(input, output, session) {
     
     # output results
     DT::datatable(
+      class = "compact",
       data = results,
       caption = caption,
       extensions = c('ColReorder'),
@@ -1114,15 +1196,25 @@ server <- function(input, output, session) {
         columnDefs = list(
           list(
             className = 'dt-center',
-            targets = 1:ncol(results),
+            targets = 1:(ncol(results)-1),
             defaultContent = "-",
             targets = "_all"
           )
         )
       )
     ) %>%
-      DT::formatStyle(columns = 1, fontWeight = "bold") %>%
-      DT::formatStyle(columns = 3:ncol(results), textAlign = "right")
+      DT::formatStyle(columns = 3:ncol(results), textAlign = "right") %>%
+      DT::formatStyle(
+        columns = 1:ncol(results),
+        backgroundColor = 'White') %>%
+      DT::formatStyle(
+        columns = 1:ncol(results),
+        valueColumns = 1,
+        backgroundColor = DT::styleEqual("Within-subjects", 'LightGray')) %>%
+      DT::formatStyle(
+        columns = 1:ncol(results),
+        valueColumns = 1,
+        backgroundColor = DT::styleEqual("Between-subjects", 'WhiteSmoke'))
   }, server = FALSE)
   
   # Download table 2 ------------------------------------------------
@@ -1148,7 +1240,7 @@ server <- function(input, output, session) {
     shiny::req(input[["alpha"]])
     shiny::req(input[["OutcomeName"]])
     shiny::req(input[["legendOptions"]])
-
+    
     # read file
     rawdata <- readxl::read_xlsx(rawdata())
     # remove empty columns
@@ -1320,6 +1412,7 @@ server <- function(input, output, session) {
     
     # output results
     DT::datatable(
+      class = "compact",
       data = results,
       caption = caption,
       extensions = c('ColReorder'),
@@ -1336,7 +1429,7 @@ server <- function(input, output, session) {
         columnDefs = list(
           list(
             className = 'dt-center',
-            targets = 1:ncol(results),
+            targets = 1:(ncol(results)-1),
             defaultContent = "-",
             targets = "_all"
           )
@@ -1344,7 +1437,19 @@ server <- function(input, output, session) {
       )
     ) %>%
       DT::formatStyle(columns = 1, fontWeight = "bold") %>%
-      DT::formatStyle(columns = 3:ncol(results), textAlign = "right")
+      DT::formatStyle(columns = 3:ncol(results), textAlign = "right") %>%
+      DT::formatStyle(columns = 3:ncol(results), textAlign = "right") %>%
+      DT::formatStyle(
+        columns = 1:ncol(results),
+        backgroundColor = 'White') %>%
+      DT::formatStyle(
+        columns = 1:ncol(results),
+        valueColumns = 1,
+        backgroundColor = DT::styleEqual("Between-subjects", 'LightGray')) %>%
+      DT::formatStyle(
+        columns = 1:ncol(results),
+        valueColumns = 1,
+        backgroundColor = DT::styleEqual("Levels", 'WhiteSmoke'))
   }, server = FALSE)
   
   # Download table 3 ------------------------------------------------
@@ -1357,8 +1462,8 @@ server <- function(input, output, session) {
     }
   )
   
-  # show text for table2missingData
-  output[["table2missingData"]] <- shiny::renderUI({
+  # show text for tableDiag1
+  output[["tableDiag1"]] <- shiny::renderUI({
     shiny::req(input[["regressionDiag"]])
     shiny::req(regression()$Little_Test_Res)
     
@@ -1367,6 +1472,28 @@ server <- function(input, output, session) {
   
   # show plot regression diagnosis
   output[["plotDiag2"]] <- shiny::renderPlot({
+    shiny::req(input[["OutcomeName"]])
+    shiny::req(input[["regressionDiag"]])
+    shiny::req(regression()$Imp_Data)
+    
+    plot(
+      regression()$Imp_Data
+    )
+  })
+  
+  # show plot regression diagnosis
+  output[["plotDiag3"]] <- shiny::renderPlot({
+    shiny::req(input[["OutcomeName"]])
+    shiny::req(input[["regressionDiag"]])
+    shiny::req(regression()$Convergence)
+    
+    plot(
+      regression()$Convergence
+    )
+  })
+  
+  # show plot regression diagnosis
+  output[["plotDiag4"]] <- shiny::renderPlot({
     shiny::req(input[["regressionDiag"]])
     shiny::req(regression()$Comp_Plus_Res)
     
@@ -1380,7 +1507,7 @@ server <- function(input, output, session) {
   })
   
   # show table with VIF values
-  output[["tableDiag4"]] <- shiny::renderTable({
+  output[["tableDiag5"]] <- shiny::renderTable({
     shiny::req(input[["regressionDiag"]])
     shiny::req(regression()$VIF)
     

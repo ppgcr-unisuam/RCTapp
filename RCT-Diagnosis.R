@@ -5,6 +5,7 @@ test.model.fit <- function(dataset,
                            wt.labels,
                            wt.values,
                            missing = c("complete.cases"),
+                           m.imputations,
                            alpha,
                            p.digits = 3,
                            diagnostics) {
@@ -17,24 +18,28 @@ test.model.fit <- function(dataset,
   dataset <- dataset[, colnames(dataset) %in% variables]
   
   Little_Test_Res <- NULL
-  if ("Missing Data" %in% diagnostics) {
-    # Little's MCAR test
-    missingtest <- misty::na.test(
-      dataset,
-      digits = 2,
-      p.digits = p.digits
-    )
-    
-    Little_Test_Res <- paste0(
-      "Little's Missing Completely at Random (MCAR) Test: ",
-      paste(
+  if(any(is.na(dataset))) {
+    if ("Missing Data" %in% diagnostics) {
+      # Little's MCAR test
+      missingtest <- misty::na.test(
+        dataset,
+        digits = 2,
+        p.digits = p.digits
+      )
+      
+      Little_Test_Res <- paste0(
+        "Little's Missing Completely at Random (MCAR) Test: ",
         paste(
-          names(missingtest$result$little),
-          format(missingtest$result$little, digits = 3),
-          sep = " = "
-        ),
-        collapse = ", "
-      ))
+          paste(
+            names(missingtest$result$little),
+            format(missingtest$result$little, digits = 3),
+            sep = " = "
+          ),
+          collapse = ", "
+        ))
+    }
+  } else {
+    Little_Test_Res <- "No missing data detected."
   }
   
   # preparação e análise do modelo misto
@@ -50,6 +55,46 @@ test.model.fit <- function(dataset,
     }
   }
   
+  # cria o dataset com os valores após imputação ou não de dados
+  if (!sjmisc::is_empty(covariate)) {
+    data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, COVARIATE_M, check.names = FALSE)
+  } else {
+    data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, check.names = FALSE)
+  }
+  # change TIME_M to numeric
+  data_M$TIME_M <- as.numeric(as.character(data_M$TIME_M))
+  
+  if("Imputed Data" %in% diagnostics | "Convergence" %in% diagnostics){
+    # fit linear mixed model (same as Table 2a and Tableb 2b)
+    ini <- mice::mice(data = data_M, maxit = 0)
+    pred <- ini$pred
+    pred["OUTCOME_M", "ID_M"] <- -2
+    imp <-
+      mice::mice(
+        data_M,
+        pred = pred,
+        method = "2l.pan",
+        m = m.imputations,
+        seed = 0,
+        print = FALSE
+      )
+  }
+  
+  Imp_Data <- NULL
+  if ("Imputed Data" %in% diagnostics) {
+    Imp_Data <- mice::stripplot(
+      imp,
+      OUTCOME_M ~ TIME_M | GROUP_M,
+      pch = c(1, 20),
+      layout = c(1, length(unique(GROUP_M)))
+    )
+  }
+  
+  Convergence <- NULL
+  if ("Convergence" %in% diagnostics) {
+    Convergence <- plot(imp, layout = c(1,2))
+  }
+
   # decide como lidar com os dados perdidos
   missing = "complete.cases" # run all diagnostics with complete cases
   if (missing == "complete.cases") {
@@ -99,7 +144,6 @@ test.model.fit <- function(dataset,
     ))
   }
   
-  # epty plot
   Comp_Plus_Res <- NULL
   if ("Component-Plus-Residual" %in% diagnostics) {
     Comp_Plus_Res <- effects::Effect(c("TIME_M", "GROUP_M"), mod1, residuals = TRUE)
@@ -112,6 +156,8 @@ test.model.fit <- function(dataset,
   
   return(list(
     'Little_Test_Res' = Little_Test_Res,
+    'Imp_Data' = Imp_Data,
+    'Convergence' = Convergence,
     'Comp_Plus_Res' = Comp_Plus_Res,
     'VIF' = VIF
   ))

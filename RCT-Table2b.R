@@ -17,6 +17,7 @@ TABLE.2b <- function(dataset,
   # wt.labels: a 1D variable labels for each level
   # wt.values: a 1D variable values for each level
   # missing: method for handling missing balues (complete.cases, mean inputation, multiple imputation)
+  # m.imputations: number of imputations
   # alpha: the type-I error level
   # n.digits: number of decimal places to be presented for continuous variables
   
@@ -372,6 +373,7 @@ TABLE.2b <- function(dataset,
     group_data <- as.character(bw.factor)
     group_data[bw.factor == bw.factor] <- 0
     group_data[bw.factor != control.g] <- 1
+    group_data <- as.numeric(group_data)
     data <- data.frame(group_data, OUTCOME_M[TIME_M == i])
     smd <- stddiff::stddiff.numeric(data = data,
                            gcol = 1,

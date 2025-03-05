@@ -45,46 +45,6 @@ FIGURE.2 <-
     # remove variáveis não usadas
     dataset <- dataset[, colnames(dataset) %in% variables]
     
-    # inicializa a matriz de resultados
-    t.labels <- c("Within-subjects",
-                  "Between-subjects",
-                  "N",
-                  "Outcome",
-                  "P-value")
-    mix.mod.res <- matrix("",
-                          nrow = length(head(t.labels, -1)),
-                          ncol = nlevels(bw.factor) * length(wt.labels))
-    rownames(mix.mod.res) <- head(t.labels, -1)
-    colnames(mix.mod.res) <-
-      rep("", nlevels(bw.factor) * length(wt.labels))
-    
-    # matriz de resultados intra-grupo
-    wt.diff <-
-      matrix("",
-             nrow = length(t.labels),
-             ncol = nlevels(bw.factor) * (length(wt.labels) - 1))
-    rownames(wt.diff) <- t.labels
-    colnames(wt.diff) <-
-      rep("", nlevels(bw.factor) * (length(wt.labels) - 1))
-    
-    # matriz de resultados entre-grupos
-    N.comb <- dim(combn(nlevels(bw.factor), 2))[2]
-    bw.diff <-
-      matrix("",
-             nrow = length(t.labels) + 1,
-             ncol = N.comb * (length(wt.labels) - 1))
-    rownames(bw.diff) <- c(t.labels, "SMD¹")
-    colnames(bw.diff) <- rep("", N.comb * (length(wt.labels) - 1))
-    
-    # matriz de resultados do modelo
-    model.res <-
-      matrix("", nrow = length(head(t.labels, -1)), ncol = 1)
-    rownames(model.res) <- head(t.labels, -1)
-    colnames(model.res) <- c("Mixed-model effects")
-    
-    # matriz de resultados de interação
-    interaction <- c()
-    
     # preparação e análise do modelo misto
     ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
     TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
@@ -260,11 +220,6 @@ FIGURE.2 <-
           ))
       }
     }
-    
-    mix.mod.res[1, ] <- rep(wt.labels, each = nlevels(bw.factor))
-    mix.mod.res[2, ] <- rep(levels(bw.factor), length(wt.labels))
-    mix.mod.res[3, ] <- N
-    mix.mod.res[4, ] <- desfecho
     
     # p-valores para efeito de interação
     p.value <- mod1.aov[4, 4]
