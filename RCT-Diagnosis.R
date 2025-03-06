@@ -40,8 +40,6 @@ test.model.fit <- function(dataset,
           collapse = ", "
         ))
       
-      # UpSet plot
-      
       Upset_Plot <- naniar::gg_miss_upset(
         dataset,
         nsets = 10,
@@ -162,6 +160,35 @@ test.model.fit <- function(dataset,
     ))
   }
   
+  Scaled_Res <- NULL
+  Shapiro_Wilk_Res <- NULL
+  if ("Scaled Residuals" %in% diagnostics) {
+    residuals <- residuals(mod1, type = "normalized")
+    Scaled_Res <- hist(
+      x = residuals,
+      freq = FALSE,
+      main = "Scaled Residuals",
+      xlab = "Residuals",
+      ylab = "Density"
+    )
+    Shapiro_Wilk_out <- shapiro.test(residuals)
+    # format p value with <0.001 if lower
+    Shapiro_Wilk_out$p.value <- ifelse(Shapiro_Wilk_out$p.value < 0.001,
+                                       "<0.001",
+                                       round(Shapiro_Wilk_out$p.value, digits = p.digits)
+                                       )
+    Shapiro_Wilk_Res <- paste0(
+      "Shapiro-Wilk test for scaled residuals: ",
+      paste(
+        paste(
+          names(Shapiro_Wilk_out),
+          format(Shapiro_Wilk_out, digits = 3),
+          sep = " = "
+        ),
+        collapse = ", "
+      ))
+  }
+  
   Comp_Plus_Res <- NULL
   if ("Component-Plus-Residual" %in% diagnostics) {
     Comp_Plus_Res <- effects::Effect(c("TIME_M", "GROUP_M"), mod1, residuals = TRUE)
@@ -175,6 +202,8 @@ test.model.fit <- function(dataset,
   return(list(
     'Little_Test_Res' = Little_Test_Res,
     'Upset_Plot' = Upset_Plot,
+    'Scaled_Res' = Scaled_Res,
+    'Shapiro_Wilk_Res' = Shapiro_Wilk_Res,
     'Imp_Data' = Imp_Data,
     'Convergence' = Convergence,
     'Comp_Plus_Res' = Comp_Plus_Res,

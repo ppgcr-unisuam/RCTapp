@@ -362,12 +362,14 @@ ui <- shiny::fluidPage(
                 "Missing Data",
                 "Imputed Data",
                 "Convergence",
+                "Scaled Residuals",
                 "Component-Plus-Residual",
                 "Variance Inflation Factor"
               ),
               selected = c(
                 "Missing Data",
                 "Imputed Data",
+                "Scaled Residuals",
                 "Convergence",
                 "Component-Plus-Residual",
                 "Variance Inflation Factor"
@@ -512,25 +514,35 @@ ui <- shiny::fluidPage(
             shiny::plotOutput("plotDiag2")
           ),
           shiny::tabPanel(
+            title = "Scaled Residuals",
+            icon = fontawesome::fa("chart-bar"),
+            shiny::br(),
+            # add plot
+            shiny::plotOutput("plotDiag3"),
+            shiny::br(),
+            # show output text from scaled residuals
+            shiny::htmlOutput("tableDiag3"),
+          ),
+          shiny::tabPanel(
             title = "Convergence",
             icon = fontawesome::fa("chart-line"),
             shiny::br(),
             # add plot
-            shiny::plotOutput("plotDiag3")
+            shiny::plotOutput("plotDiag4")
           ),
           shiny::tabPanel(
             title = "Component-Plus-Residual",
             icon = fontawesome::fa("table-columns"),
             shiny::br(),
             # add plot
-            shiny::plotOutput("plotDiag4")
+            shiny::plotOutput("plotDiag5")
           ),
           shiny::tabPanel(
             title = "Variance Inflation Factor",
             icon = fontawesome::fa("table"),
             shiny::br(),
             # add table
-            shiny::tableOutput("tableDiag5")
+            shiny::tableOutput("tableDiag6")
           ),
         ),
       ),
@@ -1527,6 +1539,25 @@ server <- function(input, output, session) {
   output[["plotDiag3"]] <- shiny::renderPlot({
     shiny::req(input[["OutcomeName"]])
     shiny::req(input[["regressionDiag"]])
+    shiny::req(regression()$Scaled_Res)
+    
+    plot(
+      regression()$Scaled_Res
+    )
+  })
+  
+  # show text for tableDiag3
+  output[["tableDiag3"]] <- shiny::renderUI({
+    shiny::req(input[["regressionDiag"]])
+    shiny::req(regression()$Shapiro_Wilk_Res)
+    
+    shiny::HTML(regression()$Shapiro_Wilk_Res)
+  })
+  
+  # show plot regression diagnosis
+  output[["plotDiag4"]] <- shiny::renderPlot({
+    shiny::req(input[["OutcomeName"]])
+    shiny::req(input[["regressionDiag"]])
     shiny::req(regression()$Convergence)
     
     plot(
@@ -1535,7 +1566,7 @@ server <- function(input, output, session) {
   })
   
   # show plot regression diagnosis
-  output[["plotDiag4"]] <- shiny::renderPlot({
+  output[["plotDiag5"]] <- shiny::renderPlot({
     shiny::req(input[["regressionDiag"]])
     shiny::req(regression()$Comp_Plus_Res)
     
@@ -1549,7 +1580,7 @@ server <- function(input, output, session) {
   })
   
   # show table with VIF values
-  output[["tableDiag5"]] <- shiny::renderTable({
+  output[["tableDiag6"]] <- shiny::renderTable({
     shiny::req(input[["regressionDiag"]])
     shiny::req(regression()$VIF)
     
