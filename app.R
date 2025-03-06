@@ -1505,6 +1505,14 @@ server <- function(input, output, session) {
   })
   
   # show plot regression diagnosis
+  output[["plotDiag1"]] <- shiny::renderPlot({
+    shiny::req(input[["regressionDiag"]])
+    shiny::req(regression()$Upset_Plot)
+    
+    regression()$Upset_Plot
+  })
+  
+  # show plot regression diagnosis
   output[["plotDiag2"]] <- shiny::renderPlot({
     shiny::req(input[["OutcomeName"]])
     shiny::req(input[["regressionDiag"]])

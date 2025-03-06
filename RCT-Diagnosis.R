@@ -19,6 +19,7 @@ test.model.fit <- function(dataset,
   dataset <- dataset[, colnames(dataset) %in% variables]
   
   Little_Test_Res <- NULL
+  Upset_Plot <- NULL
   if(any(is.na(dataset))) {
     if ("Missing Data" %in% diagnostics) {
       # Little's MCAR test
@@ -38,9 +39,21 @@ test.model.fit <- function(dataset,
           ),
           collapse = ", "
         ))
+      
+      # UpSet plot
+      
+      Upset_Plot <- naniar::gg_miss_upset(
+        dataset,
+        nsets = 10,
+        nintersects = NA,
+        order.by = "freq",
+        keep.order = TRUE,
+        empty.intersections = "on"
+        )
     }
   } else {
     Little_Test_Res <- "No missing data detected."
+    Upset_Plot <- plot(1, type = "n", xlab = "", ylab = "")
   }
   
   # preparação e análise do modelo misto
@@ -161,6 +174,7 @@ test.model.fit <- function(dataset,
   
   return(list(
     'Little_Test_Res' = Little_Test_Res,
+    'Upset_Plot' = Upset_Plot,
     'Imp_Data' = Imp_Data,
     'Convergence' = Convergence,
     'Comp_Plus_Res' = Comp_Plus_Res,
