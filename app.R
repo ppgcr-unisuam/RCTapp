@@ -64,29 +64,11 @@ ui <- shiny::fluidPage(
   
   # Application title
   shiny::titlePanel(
-    shiny::fluidRow(
-      shiny::column(
-        8,
-        list(
-          fontawesome::fa("users"),
-          fontawesome::fa("shuffle"),
-          fontawesome::fa("users"),
-          shiny::HTML("<strong>RCTapp</strong>")
-        ),
-        style = "text-align:left;"
-      ),
-      shiny::column(
-        4,
-        tags$a(
-          id = "restart",
-          class = "btn btn-primary",
-          href = "javascript:history.go(0)",
-          shiny::HTML('<i class="fa fa-refresh fa-1x"></i>'),
-          title = "restart",
-          style = "color:white; border-color:white; border-radius:100%"
-        ),
-        style = "text-align:right;"
-      )
+    list(
+      fontawesome::fa("users"),
+      fontawesome::fa("shuffle"),
+      fontawesome::fa("users"),
+      shiny::HTML("<strong>RCTapp</strong>")
     ),
     windowTitle = "RCTapp | Randomized Clinical Trial"
   ),
@@ -108,15 +90,33 @@ ui <- shiny::fluidPage(
     shiny::tabPanel(
       title = list(fontawesome::fa("database"), "Data"),
       shiny::wellPanel(
-        # input Excel file data
-        shiny::fileInput(
-          inputId = "InputFile",
-          label = NULL,
-          multiple = FALSE,
-          buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
-          accept = c(".xlsx"),
-          width = "100%",
-          placeholder = "Upload XLSX data in wide format (one row per subject, multiple columns for repeated measures)."
+        shiny::fluidRow(
+          shiny::column(
+            11,
+            # input Excel file data
+            shiny::fileInput(
+              inputId = "InputFile",
+              label = NULL,
+              multiple = FALSE,
+              buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
+              accept = c(".xlsx"),
+              width = "100%",
+              placeholder = "Upload XLSX data in wide format (one row per subject, multiple columns for repeated measures)"
+            ),
+            style = "text-align:center;"
+          ),
+          shiny::column(
+            1,
+            shiny::tags$a(
+              id = "restart",
+              class = "btn btn-primary",
+              href = "javascript:history.go(0)",
+              shiny::HTML('<i class="fa fa-refresh fa-1x"></i>'),
+              title = "restart",
+              style = "color:white; border-color:white; border-radius:100%;"
+            ),
+            style = "text-align:center;"
+          ),
         ),
         DT::DTOutput(outputId = "rawtable"),
       ),
@@ -194,8 +194,8 @@ ui <- shiny::fluidPage(
               label = "Alpha level",
               value = 0.05,
               min = 0.001,
-              max = 0.20,
-              step = 0.01,
+              max = 0.999,
+              step = 0.001,
               width = "100%"
             ),
           ),
@@ -310,7 +310,7 @@ ui <- shiny::fluidPage(
                 shinyWidgets::virtualSelectInput(
                   inputId = "missing",
                   label = "Missing data (imputation)",
-                  choices = c("Complete cases", "Mean imputation", "Multiple imputation"),
+                  choices = c("Multiple imputation", "Mean imputation", "Complete cases"),
                   selected = "Multiple imputation",
                   showValueAsTags = TRUE,
                   search = TRUE,
@@ -557,7 +557,7 @@ ui <- shiny::fluidPage(
     ),
     shiny::tabPanel(
       icon = list(fontawesome::fa("people-group")),
-      title = "Authors",
+      title = "Credits",
       shiny::br(),
       shiny::HTML(
         "<b>Arthur de Sá Ferreira, DSc</b> (Developer)"),
@@ -626,7 +626,7 @@ ui <- shiny::fluidPage(
       shiny::br(),
       shiny::HTML(
         "<b>Centro Universitário Augusto Motta</b> (Affiliation) <br>
-        <a href=\"https://www.unisuam.edu.br/programa-pos-graduacao-ciencias-da-reabilitacao\">PPGCR</a> | Programa de Pós-graduação em Ciências da Reabilitação <br>
+        Programa de Pós-graduação em Ciências da Reabilitação <br>
         Rio de Janeiro, RJ, Brazil"),
       shiny::br(),
       shiny::HTML(
@@ -643,16 +643,11 @@ ui <- shiny::fluidPage(
       shiny::HTML(
         "This work is licensed under an <a rel=\"license\" data-spdx=\"Apache-2.0\" href=\"https://www.apache.org/licenses/LICENSE-2.0\">Apache License 2.0</a>."
       ),
-    ),
-    # add panel for citation
-    shiny::tabPanel(
-      icon = shiny::icon("quote-left"),
-      title = "Citation",
       shiny::br(),
-      shiny::h4(
-        shiny::HTML(
-          "Ferreira, A. de S., & Meziat Filho, N. (2024). RCTapp Randomized Clinical Trial (1.0.0). Zenodo. <a href=\"https://doi.org/10.5281/zenodo.13848816\" target=\"_blank\">https://doi.org/10.5281/zenodo.13848816</a>"
-        ),
+      shiny::br(),
+      shiny::HTML("<b>Citation</b>"),
+      shiny::HTML(
+        "Ferreira, A. de S., & Meziat Filho, N. (2024). RCTapp Randomized Clinical Trial (1.0.0). Zenodo. <a href=\"https://doi.org/10.5281/zenodo.13848816\" target=\"_blank\">https://doi.org/10.5281/zenodo.13848816</a>"
       ),
     ),
   ),
@@ -680,7 +675,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # create labels for endpointNames based on endpointN
+  # create automatic endopoint names and values based on endpointN
   shiny::observeEvent(input$endpointN, {
     shiny::updateTextInput(session,
                            "endpointNames",
@@ -710,6 +705,44 @@ server <- function(input, output, session) {
       inputId = "treatmentNames",
       value = paste0(unique(rawdata[[input[["BGF"]]]]), collapse = ",")
     )
+  })
+  
+  # observe BGF to select missing
+  shiny::observeEvent(input$OV, {
+    shiny::req(rawdata())
+    shiny::req(input[["OV"]])
+    
+    # read file
+    rawdata <- readxl::read_xlsx(rawdata())
+    # remove empty columns
+    rawdata <- rawdata[, colSums(is.na(rawdata)) != nrow(rawdata)]
+    # remove empty rows
+    rawdata <- rawdata[rowSums(is.na(rawdata)) != ncol(rawdata), ]
+    # clean variable names
+    colnames(rawdata) <- janitor::make_clean_names(colnames(rawdata))
+    # clean NA values
+    rawdata <- as.NA(rawdata)
+    
+    # select columns from checked variables
+    rawdata <- rawdata[, unique(c(input[["COV"]], input[["OV"]]))]
+    
+    print(any(is.na(rawdata)))
+    print(rawdata)
+    
+    # update missing (if there are no missing data use only Complete Cases
+    if (!any(is.na(rawdata))){
+      shinyjs::disable(id = "missing")
+      shiny::updateSelectInput(
+        inputId = "missing",
+        selected = "Complete cases"
+      )
+    } else {
+      shinyjs::enable(id = "missing")
+      shiny::updateSelectInput(
+        inputId = "missing",
+        selected = "Multiple imputation"
+      )
+    }
   })
   
   rawdata <- shiny::reactive({
@@ -1038,6 +1071,7 @@ server <- function(input, output, session) {
     shiny::req(input[["OV"]])
     shiny::req(input[["treatmentNames"]])
     shiny::req(input[["controlgroup"]])
+    shiny::req(input[["OutcomeName"]])
     shiny::req(input[["endpointNames"]])
     shiny::req(input[["endpointValues"]])
     shiny::req(input[["missing"]])
@@ -1072,6 +1106,7 @@ server <- function(input, output, session) {
     results <- test.model.fit(
       dataset = rawdata,
       variables = input[["OV"]],
+      ov.name <- input[["OutcomeName"]],
       covariate = rawdata[input[["COV"]]],
       bw.factor = rawdata$TREATMENT,
       wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
@@ -1438,7 +1473,6 @@ server <- function(input, output, session) {
     ) %>%
       DT::formatStyle(columns = 1, fontWeight = "bold") %>%
       DT::formatStyle(columns = 3:ncol(results), textAlign = "right") %>%
-      DT::formatStyle(columns = 3:ncol(results), textAlign = "right") %>%
       DT::formatStyle(
         columns = 1:ncol(results),
         backgroundColor = 'White') %>%
@@ -1449,7 +1483,7 @@ server <- function(input, output, session) {
       DT::formatStyle(
         columns = 1:ncol(results),
         valueColumns = 1,
-        backgroundColor = DT::styleEqual("Levels", 'WhiteSmoke'))
+        backgroundColor = DT::styleEqual("Level", 'WhiteSmoke'))
   }, server = FALSE)
   
   # Download table 3 ------------------------------------------------

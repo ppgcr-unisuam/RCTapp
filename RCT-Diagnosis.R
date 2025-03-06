@@ -1,5 +1,6 @@
 test.model.fit <- function(dataset,
                            variables,
+                           ov.name,
                            covariate,
                            bw.factor,
                            wt.labels,
@@ -76,7 +77,8 @@ test.model.fit <- function(dataset,
         method = "2l.pan",
         m = m.imputations,
         seed = 0,
-        print = FALSE
+        print = FALSE,
+        maxit = 50
       )
   }
   
@@ -86,7 +88,10 @@ test.model.fit <- function(dataset,
       imp,
       OUTCOME_M ~ TIME_M | GROUP_M,
       pch = c(1, 20),
-      layout = c(1, length(unique(GROUP_M)))
+      layout = c(1, length(unique(GROUP_M))),
+      main = "Imputed Data",
+      xlab = "Time (endpoints)",
+      ylab = ov.name
     )
   }
   

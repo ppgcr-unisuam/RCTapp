@@ -190,7 +190,8 @@ TABLE.2a <- function(dataset,
         method = "2l.pan",
         m = m.imputations,
         seed = 0,
-        print = FALSE
+        print = FALSE,
+        maxit = 50
       )
     if (!sjmisc::is_empty(covariate)) {
       mod1 <-
@@ -413,7 +414,8 @@ TABLE.2a <- function(dataset,
           method = "2l.pan",
           m = m.imputations,
           seed = 0,
-          print = FALSE
+          print = FALSE,
+          maxit = 50
         )
       # create a list of completed data sets
       implist <- mitml::mids2mitml.list(imp)

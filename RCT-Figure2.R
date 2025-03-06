@@ -161,7 +161,8 @@ FIGURE.2 <-
           method = "2l.pan",
           m = m.imputations,
           seed = 0,
-          print = FALSE
+          print = FALSE,
+          maxit = 50
         )
       if (!sjmisc::is_empty(covariate)) {
         mod1 <-
