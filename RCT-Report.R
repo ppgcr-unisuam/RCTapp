@@ -50,7 +50,7 @@ sap <- function(BGF,
     if(!!sjmisc::is_empty(missing)){
       paste0(" Missing data was handled using ",
              if(missing == "Multiple imputation"){
-               paste0("multiple imputation with ", MICEresamples, " resamples.")
+               paste0("Multiple imputation by Chained Equations (predictive mean matching method) with ", MICEresamples, " resamples.")
              } else if (missing == "Mean imputation"){
                "mean imputation."
              } else if (missing == "Complete cases"){

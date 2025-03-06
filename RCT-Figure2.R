@@ -158,7 +158,7 @@ FIGURE.2 <-
         mice::mice(
           data_M,
           pred = pred,
-          method = "2l.pan",
+          method = "pmm",
           m = m.imputations,
           seed = 0,
           print = FALSE,

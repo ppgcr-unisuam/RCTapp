@@ -362,8 +362,8 @@ ui <- shiny::fluidPage(
               choices = c(
                 "Missing Data",
                 "Imputed Data",
-                "Convergence",
                 "Scaled Residuals",
+                "Convergence",
                 "Component-Plus-Residual",
                 "Variance Inflation Factor"
               ),
@@ -534,7 +534,7 @@ ui <- shiny::fluidPage(
           ),
           shiny::tabPanel(
             title = "Scaled Residuals",
-            icon = fontawesome::fa("chart-bar"),
+            icon = fontawesome::fa("chart-column"),
             shiny::br(),
             # add plot
             shiny::plotOutput("plotDiag3"),

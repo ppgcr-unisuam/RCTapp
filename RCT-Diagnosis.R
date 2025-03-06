@@ -85,7 +85,7 @@ test.model.fit <- function(dataset,
       mice::mice(
         data_M,
         pred = pred,
-        method = "2l.pan",
+        method = "pmm",
         m = m.imputations,
         seed = 0,
         print = FALSE,
@@ -200,13 +200,13 @@ test.model.fit <- function(dataset,
   }
   
   return(list(
-    'Little_Test_Res' = Little_Test_Res,
-    'Upset_Plot' = Upset_Plot,
-    'Scaled_Res' = Scaled_Res,
-    'Shapiro_Wilk_Res' = Shapiro_Wilk_Res,
-    'Imp_Data' = Imp_Data,
-    'Convergence' = Convergence,
-    'Comp_Plus_Res' = Comp_Plus_Res,
-    'VIF' = VIF
+    'Little_Test_Res' = Little_Test_Res, # missing data
+    'Upset_Plot' = Upset_Plot, # missing data
+    'Imp_Data' = Imp_Data, # imputed data
+    'Convergence' = Convergence, # imputed data
+    'Scaled_Res' = Scaled_Res, # residuals
+    'Shapiro_Wilk_Res' = Shapiro_Wilk_Res, # residuals
+    'Comp_Plus_Res' = Comp_Plus_Res, # residuals
+    'VIF' = VIF # multicollinarity
   ))
 }
