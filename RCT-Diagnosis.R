@@ -47,7 +47,7 @@ test.model.fit <- function(dataset,
         order.by = "freq",
         keep.order = TRUE,
         empty.intersections = "on"
-        )
+      )
     }
   } else {
     Little_Test_Res <- "No missing data detected."
@@ -110,7 +110,7 @@ test.model.fit <- function(dataset,
   if ("Convergence" %in% diagnostics) {
     Convergence <- plot(imp, layout = c(1,2))
   }
-
+  
   # decide como lidar com os dados perdidos
   missing = "complete.cases" # run all diagnostics with complete cases
   if (missing == "complete.cases") {
@@ -176,7 +176,7 @@ test.model.fit <- function(dataset,
     Shapiro_Wilk_out$p.value <- ifelse(Shapiro_Wilk_out$p.value < 0.001,
                                        "<0.001",
                                        round(Shapiro_Wilk_out$p.value, digits = p.digits)
-                                       )
+    )
     Shapiro_Wilk_Res <- paste0(
       "Shapiro-Wilk test for scaled residuals: ",
       paste(

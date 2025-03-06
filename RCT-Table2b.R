@@ -377,8 +377,8 @@ TABLE.2b <- function(dataset,
     group_data <- as.numeric(group_data)
     data <- data.frame(group_data, OUTCOME_M[TIME_M == i])
     smd <- stddiff::stddiff.numeric(data = data,
-                           gcol = 1,
-                           vcol = 2)
+                                    gcol = 1,
+                                    vcol = 2)
     estimate <- round(smd[7], digits = n.digits)
     lower <- round(smd[8], digits = n.digits)
     upper <- round(smd[9], digits = n.digits)

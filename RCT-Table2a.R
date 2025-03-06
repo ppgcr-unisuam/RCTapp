@@ -105,7 +105,7 @@ TABLE.2a <- function(dataset,
     COVARIATE_M <- NULL
     if (!sjmisc::is_empty(covariate)) {
       COVARIATE_M <- do.call(rbind, replicate(length(wt.labels), covariate, simplify = FALSE))
-      }
+    }
   }
   
   if (missing == "mean.imputation") {

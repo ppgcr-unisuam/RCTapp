@@ -13,7 +13,7 @@ TABLE.3 <- function(
     # in ridit analysis wt.labels: a 1D variable labels for each level alpha:
     # the type-I error level n.digits: number of decimal places to be presented
     # for continuous variables
-
+    
     # default values
     if (alpha == "") {
         alpha = 0.05
@@ -21,28 +21,28 @@ TABLE.3 <- function(
     if (n.digits == "") {
         n.digits = 3
     }
-
+    
     # confirma a estrutura dos dados
     dataset <- data.frame(dataset)
     bw.factor <- factor(bw.factor, exclude = NULL)
-
+    
     # remove variáveis não usadas
     dataset <- dataset[, colnames(dataset) %in% variables]
-
+    
     # inicializa a matriz de resultados
     t.labels <- c("Between-subjects", "Level", wt.labels)
     c.labels <- seq(min(na.omit(dataset)), max(na.omit(dataset)))
     cross.tab.res <- matrix("", nrow = length(t.labels), ncol = nlevels(bw.factor) * length(c.labels))
     rownames(cross.tab.res) <- t.labels
     colnames(cross.tab.res) <- rep("", nlevels(bw.factor) * length(c.labels))
-
+    
     # matriz de resultados entre-grupos
     bw.diff <- matrix("", nrow = length(t.labels), ncol = 1)
     rownames(bw.diff) <- t.labels
     colnames(bw.diff) <- rep("", 1)
     cross.tab.res[1, ] <- rep(levels(bw.factor), each = length(c.labels))
     cross.tab.res[2, ] <- rep(c.labels, nlevels(bw.factor))
-
+    
     # calcula e preenche o N e o DESFECHO da tabela de resultados
     z.p <- c()
     for (i in 1:length(wt.labels)) {
@@ -54,11 +54,11 @@ TABLE.3 <- function(
         }
         # ridit analysis
         r1 <- ridittools::meanridits(table(dataset[, i], bw.factor), margin = 2, ref = control.g)[levels(bw.factor) ==
-            control.g]
+                                                                                                      control.g]
         r2 <- ridittools::meanridits(table(dataset[, i], bw.factor), margin = 2, ref = control.g)[levels(bw.factor) !=
-            control.g]
+                                                                                                      control.g]
         se.diff <- ridittools::seriditdiff(table(dataset[, i], bw.factor)[levels(bw.factor) ==
-            control.g], table(dataset[, i], bw.factor)[levels(bw.factor) != control.g])
+                                                                              control.g], table(dataset[, i], bw.factor)[levels(bw.factor) != control.g])
         z.score <- abs((r2 - r1)/se.diff)
         p.value <- 2 * pnorm(abs(z.score), lower.tail = F)
         if (p.value < alpha) {
@@ -70,10 +70,10 @@ TABLE.3 <- function(
             p.value <- "<0.001"
         } else {
             p.value <- paste("=", format(round(p.value, digits = 3), nsmall = 3),
-                sep = "")
+                             sep = "")
         }
         z.p <- rbind(z.p, paste("z=", format(round(z.score, digits = 3), nsmall = 3),
-            ", p", p.value, sep = ""))
+                                ", p", p.value, sep = ""))
         cross.tab.res[i + 2, ] <- desfecho
     }
     bw.diff[, 1] <- rbind("", "", z.p)

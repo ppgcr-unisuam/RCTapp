@@ -42,7 +42,7 @@ TABLE.1 <- function(dataset, variables, bw.factor, max.levels = 2, alpha = 0.05,
       p.value <- suppressWarnings(chisq.test(freq_table, simulate.p.value = TRUE)$p.value)
       # format p values < 0.001 as "<0.001"
       if (p.value < 0.001) {p.value <- "<0.001"}
-
+      
       for (lvl in levels_data) {
         if (lvl %in% rownames(freq_table)) {
           freq_row <- sapply(seq_len(nlevels(bw.factor)), function(idx) {

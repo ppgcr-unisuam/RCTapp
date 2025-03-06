@@ -899,6 +899,7 @@ server <- function(input, output, session) {
                    endpointNames = input[["endpointNames"]],
                    endpointValues = input[["endpointValues"]],
                    alpha = input[["alpha"]],
+                   showPvalue = input[["showPvalue"]],
                    BV = input[["BV"]],
                    OV = input[["OV"]],
                    OutcomeName = input[["OutcomeName"]],
@@ -909,7 +910,7 @@ server <- function(input, output, session) {
                    OVRidit = input[["OVRidit"]],
                    OutcomeNameRidit = input[["OutcomeNameRidit"]]
     )
-
+    
     shiny::HTML(results$report)
   })
   
