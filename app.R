@@ -29,6 +29,7 @@ source("RCT-Table2b.R", local = TRUE) # numeric variables, linear mixed model an
 source("RCT-Figure2.R", local = TRUE) # numeric variables, plot of descriptive analysis (mean and CI)
 source("RCT-Table3.R", local = TRUE) #  ordinal variables, ridit analysis, ONLY within-factor
 source("RCT-Diagnosis.R", local = TRUE) # diagnosis on original dataset and model
+source("RCT-Report.R", local = TRUE) # report the statistical analysis plan in text format
 
 # use this code to debug
 # rsconnect::showLogs()
@@ -416,6 +417,24 @@ ui <- shiny::fluidPage(
         ),
       ),
     ),
+    # tab for reporting the statistical analysis plan
+    shiny::tabPanel(
+      title = "Report",
+      icon = fontawesome::fa("file-alt"),
+      shiny::wellPanel(
+        # show text output
+        shiny::htmlOutput("SAP"),
+        shiny::br(),
+        # download Word format
+        shiny::downloadButton(
+          outputId = "downloadSAP",
+          label = "Download SAP (.DOCX)",
+          style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+        ),
+        shiny::br(),
+        shiny::br(),
+      ),
+    ),
     # tab for table 1 of results
     shiny::tabPanel(
       title = "Table 1",
@@ -738,9 +757,6 @@ server <- function(input, output, session) {
     # select columns from checked variables
     rawdata <- rawdata[, unique(c(input[["COV"]], input[["OV"]]))]
     
-    print(any(is.na(rawdata)))
-    print(rawdata)
-    
     # update missing (if there are no missing data use only Complete Cases
     if (!any(is.na(rawdata))){
       shinyjs::disable(id = "missing")
@@ -872,6 +888,29 @@ server <- function(input, output, session) {
     shiny::updateTabsetPanel(session = session,
                              inputId = "tabs",
                              selected = "Table 3")
+  })
+  
+  # Report generation -----------------------------------------------------------
+  output[["SAP"]] <- shiny::renderUI({
+    shiny::req(rawdata())
+    results <- sap(BGF = input[["BGF"]],
+                   treatmentNames = input[["treatmentNames"]],
+                   controlgroup = input[["controlgroup"]],
+                   endpointNames = input[["endpointNames"]],
+                   endpointValues = input[["endpointValues"]],
+                   alpha = input[["alpha"]],
+                   BV = input[["BV"]],
+                   OV = input[["OV"]],
+                   OutcomeName = input[["OutcomeName"]],
+                   COV = input[["COV"]],
+                   missing = input[["missing"]],
+                   MICEresamples = input[["MICEresamples"]],
+                   regressionDiag = input[["regressionDiag"]],
+                   OVRidit = input[["OVRidit"]],
+                   OutcomeNameRidit = input[["OutcomeNameRidit"]]
+    )
+
+    shiny::HTML(results$report)
   })
   
   # run table 1 on runTable1 click ------------------------------------------------
