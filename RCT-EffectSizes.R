@@ -1,7 +1,7 @@
 esize_inter <- function(rules) {
   value <- seq(0,5,0.01)
   interpretations <- data.frame(
-    value = test,
+    value = value,
     cohen1988 = effectsize::interpret_cohens_d(value, , rules = "cohen1988"),
     sawilowsky2009 = effectsize::interpret_hedges_g(value, rules = "sawilowsky2009"),
     gignac2016 = effectsize::interpret_hedges_g(value, rules = "gignac2016"),

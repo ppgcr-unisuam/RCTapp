@@ -62,7 +62,7 @@ TABLE.2b <- function(dataset,
   colnames(wt.diff) <- rep("", nlevels(bw.factor) * (length(wt.labels) - 1))
   
   # matriz de resultados entre-grupos
-  bw.diff <- matrix("", nrow = length(t.labels) + 1, ncol = (length(wt.labels)))
+  bw.diff <- matrix("", nrow = length(t.labels) + 1, ncol = length(wt.labels))
   rownames(bw.diff) <- c(t.labels, "SMD¹")
   colnames(bw.diff) <- rep("", (length(wt.labels)))
   
@@ -76,7 +76,7 @@ TABLE.2b <- function(dataset,
   
   # preparação e análise do modelo misto
   ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
-  TIME_M <- as.factor(c(rep(wt.values, each = length(bw.factor))))
+  TIME_M <- as.factor(c(rep(seq(1, length(wt.labels)), each = length(bw.factor))))
   GROUP_M <- rep(bw.factor, length(wt.labels))
   OUTCOME_ORIG <- c(as.matrix(dataset))
   OUTCOME_M <- c(as.matrix(dataset))
@@ -193,13 +193,13 @@ TABLE.2b <- function(dataset,
         print = FALSE,
         maxit = 50
       )
-    if (!is.null(covariate)) {
+    if (!sjmisc::is_empty(covariate)) {
       mod1 <-
         with(data = imp,
              nlme::lme(
                fixed = as.formula(paste0(
                  "OUTCOME_M ~ TIME_M * GROUP_M + ",
-                 paste0(colnames(COVARIATE_M), collapse = " + ")
+                 paste0(names(COVARIATE_M), collapse = " + ")
                )),
                random = ~ 1 | ID_M / TIME_M
              ))

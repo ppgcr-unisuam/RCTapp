@@ -182,26 +182,34 @@ ui <- shiny::fluidPage(
               value = "0,1",
               width = "100%"
             ),
-            # alpha level for statistical significance
-            shiny::numericInput(
-              inputId = "alpha",
-              label = "Alpha level",
-              value = 0.05,
-              min = 0.001,
-              max = 0.999,
-              step = 0.001,
-              width = "100%"
-            ),
-            # effect size interpretation rules
-            shinyWidgets::virtualSelectInput(
-              inputId = "effectSize",
-              label = "Effect size interpretation",
-              choices = c("Cohen (1988)", "Gignac (2016)", "Sawilowsky (2009)", "Lovakov (2021)"),
-              selected = "Cohen (1988)",
-              showValueAsTags = TRUE,
-              search = FALSE,
-              multiple = FALSE,
-              width = "100%"
+            shiny::fluidRow(
+              shiny::column(
+                6,
+                # alpha level for statistical significance
+                shiny::numericInput(
+                  inputId = "alpha",
+                  label = "Alpha level",
+                  value = 0.05,
+                  min = 0.001,
+                  max = 0.999,
+                  step = 0.001,
+                  width = "100%"
+                ),
+              ),
+              shiny::column(
+                6,
+                # effect size interpretation rules
+                shinyWidgets::virtualSelectInput(
+                  inputId = "effectSize",
+                  label = "Effect size",
+                  choices = c("Cohen (1988)", "Gignac (2016)", "Sawilowsky (2009)", "Lovakov (2021)"),
+                  selected = "Cohen (1988)",
+                  showValueAsTags = TRUE,
+                  search = FALSE,
+                  multiple = FALSE,
+                  width = "100%"
+                ),
+              ),
             ),
           ),
         ),
@@ -937,7 +945,7 @@ server <- function(input, output, session) {
       type = "continuous",
       page_margins = officer::page_mar()
     )
-
+    
     # Create Word document with formatted caption
     officer::read_docx() %>%
       officer::body_set_default_section(sect_properties) %>%
@@ -1407,21 +1415,42 @@ server <- function(input, output, session) {
         ))
     }
     
-    FIGURE.2(
-      dataset = rawdata,
-      variables = input[["OV"]],
-      covariate = rawdata[input[["COV"]]],
-      bw.factor = rawdata$TREATMENT,
-      wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
-      wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
-      missing = tolower(gsub(" ", ".", input[["missing"]])),
-      m.imputations = as.numeric(input[["MICEresamples"]]),
-      xlabs = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
-      ylab = input[["OutcomeName"]],
-      legend.opt = input[["legendOptions"]],
-      alpha = as.numeric(input[["alpha"]]),
-      n.digits = 2
-    )
+    # check if data has baseline from checkbox
+    if (input[["hasBaseline"]]) {
+      FIGURE.2(
+        dataset = rawdata,
+        variables = input[["OV"]],
+        covariate = rawdata[input[["COV"]]],
+        bw.factor = rawdata$TREATMENT,
+        wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
+        wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
+        missing = tolower(gsub(" ", ".", input[["missing"]])),
+        m.imputations = as.numeric(input[["MICEresamples"]]),
+        xlabs = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
+        ylab = input[["OutcomeName"]],
+        legend.opt = input[["legendOptions"]],
+        alpha = as.numeric(input[["alpha"]]),
+        n.digits = 2
+      )
+    } else {
+      FIGURE.2(
+        dataset = rawdata,
+        variables = input[["OV"]],
+        covariate = rawdata[input[["COV"]]],
+        bw.factor = rawdata$TREATMENT,
+        # drop 1 (no baseline)
+        wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
+        # drop 1 (no baseline)
+        wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]][-1]),
+        missing = tolower(gsub(" ", ".", input[["missing"]])),
+        m.imputations = as.numeric(input[["MICEresamples"]]),
+        xlabs = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
+        ylab = input[["OutcomeName"]],
+        legend.opt = input[["legendOptions"]],
+        alpha = as.numeric(input[["alpha"]]),
+        n.digits = 2
+      )
+    }
     
     # save plot
     dev.copy(
