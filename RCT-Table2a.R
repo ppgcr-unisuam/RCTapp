@@ -5,7 +5,7 @@ TABLE.2a <- function(dataset,
                      control.g,
                      wt.labels,
                      wt.values,
-                     missing = c("complete.cases", "mean.imputation", "multiple.imputation"),
+                     missing = c("Multiple imputation", "Mean imputation", "Complete cases"),
                      m.imputations,
                      alpha,
                      n.digits) {
@@ -88,7 +88,7 @@ TABLE.2a <- function(dataset,
   }
   
   # decide como lidar com os dados perdidos
-  if (missing == "complete.cases") {
+  if (missing == "Complete cases") {
     if (!sjmisc::is_empty(covariate)) {
       include <- complete.cases(dataset, covariate)
     } else {
@@ -108,7 +108,7 @@ TABLE.2a <- function(dataset,
     }
   }
   
-  if (missing == "mean.imputation") {
+  if (missing == "Mean imputation") {
     # Calculate the mean for imputation for each group
     for (i in 1:length(wt.labels)) {
       temp.imp <- dataset[, i]
@@ -129,7 +129,7 @@ TABLE.2a <- function(dataset,
     }
   }
   
-  if (missing == "multiple.imputation") {
+  if (missing == "Multiple imputation") {
     dataset <- dataset
     bw.factor <- bw.factor
     ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
@@ -159,7 +159,7 @@ TABLE.2a <- function(dataset,
   }
   
   # fit linear mixed model
-  if (missing != "multiple.imputation") {
+  if (missing != "Multiple imputation") {
     if (!sjmisc::is_empty(covariate)) {
       mod1 <-
         nlme::lme(
@@ -357,7 +357,7 @@ TABLE.2a <- function(dataset,
       matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, i]
     CHANGE_M <- FOLLOWUP_M - BASELINE_M
     COVARIATE_M <- COVARIATE_M[1:length(ID), ]
-    if (missing != "multiple.imputation") {
+    if (missing != "Multiple imputation") {
       if (!sjmisc::is_empty(covariate)) {
         df <-
           data.frame(ID,

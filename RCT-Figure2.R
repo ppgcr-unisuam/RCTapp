@@ -5,7 +5,7 @@ FIGURE.2 <-
            bw.factor,
            wt.labels,
            wt.values,
-           missing = c("complete.cases", "mean.imputation", "multiple.imputation"),
+           missing = c("Multiple imputation", "Mean imputation", "Complete cases"),
            m.imputations,
            xlabs,
            ylab,
@@ -59,7 +59,7 @@ FIGURE.2 <-
     }
     
     # decide como lidar com os dados perdidos
-    if (missing == "complete.cases") {
+    if (missing == "Complete cases") {
       if (!sjmisc::is_empty(covariate)) {
         include <- complete.cases(dataset, covariate)
       } else {
@@ -79,7 +79,7 @@ FIGURE.2 <-
       }
     }
     
-    if (missing == "mean.imputation") {
+    if (missing == "Mean imputation") {
       # Calculate the mean for imputation for each group
       for (i in 1:length(wt.labels)) {
         temp.imp <- dataset[, i]
@@ -100,7 +100,7 @@ FIGURE.2 <-
       }
     }
     
-    if (missing == "multiple.imputation") {
+    if (missing == "Multiple imputation") {
       dataset <- dataset
       bw.factor <- bw.factor
       ID_M <- rep(seq(1:length(bw.factor)), length(wt.labels))
@@ -130,7 +130,7 @@ FIGURE.2 <-
     }
     
     # fit linear mixed model
-    if (missing != "multiple.imputation") {
+    if (missing != "Multiple imputation") {
       if (!sjmisc::is_empty(covariate)) {
         mod1 <-
           nlme::lme(

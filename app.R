@@ -124,7 +124,7 @@ ui <- shiny::fluidPage(
       ),
     ),
     shiny::tabPanel(
-      title = list(fontawesome::fa("list-check"), "Plan"),
+      title = list(fontawesome::fa("list-check"), "Analysis"),
       # split panel into 4 columns
       shiny::fluidRow(
         shiny::column(
@@ -372,20 +372,20 @@ ui <- shiny::fluidPage(
               inputId = "regressionDiag",
               label = "Diagnosis",
               choices = c(
+                "Scaled Residuals",
+                "Component-Plus-Residual",
+                "Variance Inflation Factor",
                 "Missing Data",
                 "Imputed Data",
-                "Scaled Residuals",
-                "Convergence",
-                "Component-Plus-Residual",
-                "Variance Inflation Factor"
+                "Convergence"
               ),
               selected = c(
+                "Scaled Residuals",
+                "Component-Plus-Residual",
+                "Variance Inflation Factor",
                 "Missing Data",
                 "Imputed Data",
-                "Scaled Residuals",
-                "Convergence",
-                "Component-Plus-Residual",
-                "Variance Inflation Factor"
+                "Convergence"
               ),
               showValueAsTags = TRUE,
               search = TRUE,
@@ -431,7 +431,7 @@ ui <- shiny::fluidPage(
     ),
     # tab for reporting the statistical analysis plan
     shiny::tabPanel(
-      title = "Report",
+      title = "Plan",
       icon = fontawesome::fa("file-alt"),
       shiny::wellPanel(
         # show text output
@@ -528,6 +528,30 @@ ui <- shiny::fluidPage(
           id = "diagTab",
           type = "pills",
           shiny::tabPanel(
+            title = "Scaled Residuals",
+            icon = fontawesome::fa("chart-column"),
+            shiny::br(),
+            # add plot
+            shiny::plotOutput("plotDiag3"),
+            shiny::br(),
+            # show output text from scaled residuals
+            shiny::htmlOutput("tableDiag3"),
+          ),
+          shiny::tabPanel(
+            title = "Component-Plus-Residual",
+            icon = fontawesome::fa("table-columns"),
+            shiny::br(),
+            # add plot
+            shiny::plotOutput("plotDiag5")
+          ),
+          shiny::tabPanel(
+            title = "Variance Inflation Factor",
+            icon = fontawesome::fa("table"),
+            shiny::br(),
+            # add table
+            shiny::tableOutput("tableDiag6")
+          ),
+          shiny::tabPanel(
             title = "Missing Data",
             icon = fontawesome::fa("person-circle-question"),
             shiny::br(),
@@ -545,35 +569,11 @@ ui <- shiny::fluidPage(
             shiny::plotOutput("plotDiag2")
           ),
           shiny::tabPanel(
-            title = "Scaled Residuals",
-            icon = fontawesome::fa("chart-column"),
-            shiny::br(),
-            # add plot
-            shiny::plotOutput("plotDiag3"),
-            shiny::br(),
-            # show output text from scaled residuals
-            shiny::htmlOutput("tableDiag3"),
-          ),
-          shiny::tabPanel(
             title = "Convergence",
             icon = fontawesome::fa("chart-line"),
             shiny::br(),
             # add plot
             shiny::plotOutput("plotDiag4")
-          ),
-          shiny::tabPanel(
-            title = "Component-Plus-Residual",
-            icon = fontawesome::fa("table-columns"),
-            shiny::br(),
-            # add plot
-            shiny::plotOutput("plotDiag5")
-          ),
-          shiny::tabPanel(
-            title = "Variance Inflation Factor",
-            icon = fontawesome::fa("table"),
-            shiny::br(),
-            # add table
-            shiny::tableOutput("tableDiag6")
           ),
         ),
       ),
@@ -861,13 +861,13 @@ server <- function(input, output, session) {
       rownames = FALSE,
       options = list(
         searching = FALSE,
-        colReorder = TRUE,
+        colReorder = FALSE,
         pageLength = 10,
         width = "100%",
         fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender();}'),
         scrollX = TRUE,
         dom = 'tipr'
-      )
+      ), selection = "none"
     )
   }, server = FALSE)
   
@@ -1080,7 +1080,7 @@ server <- function(input, output, session) {
       rownames = TRUE,
       options = list(
         searching = FALSE,
-        colReorder = TRUE,
+        colReorder = FALSE,
         pageLength = nrow(results),
         width = "100%",
         fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender();}'),
@@ -1090,7 +1090,7 @@ server <- function(input, output, session) {
           list(className = 'dt-center', targets = 1:ncol(results)),
           list(visible = FALSE, targets = 0)
         )
-      )
+      ), selection = "none"
     ) %>%
       DT::formatStyle(columns = 1, fontWeight = "bold") %>%
       DT::formatStyle(columns = 2, fontStyle = "italic") %>%
@@ -1155,7 +1155,7 @@ server <- function(input, output, session) {
         control.g = input[["controlgroup"]],
         wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
         wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
-        missing = tolower(gsub(" ", ".", input[["missing"]])),
+        missing = input[["missing"]],
         m.imputations = as.numeric(input[["MICEresamples"]]),
         alpha = as.numeric(input[["alpha"]]),
         n.digits = 2
@@ -1171,7 +1171,7 @@ server <- function(input, output, session) {
         wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
         # drop 1 (no baseline)
         wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]][-1]),
-        missing = tolower(gsub(" ", ".", input[["missing"]])),
+        missing = input[["missing"]],
         m.imputations = as.numeric(input[["MICEresamples"]]),
         alpha = as.numeric(input[["alpha"]]),
         n.digits = 2
@@ -1219,20 +1219,39 @@ server <- function(input, output, session) {
         ))
     }
     
-    results <- test.model.fit(
-      dataset = rawdata,
-      variables = input[["OV"]],
-      ov.name <- input[["OutcomeName"]],
-      covariate = rawdata[input[["COV"]]],
-      bw.factor = rawdata$TREATMENT,
-      wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
-      wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
-      missing = tolower(gsub(" ", ".", input[["missing"]])),
-      m.imputations = as.numeric(input[["MICEresamples"]]),
-      alpha = as.numeric(input[["alpha"]]),
-      p.digits = 3,
-      diagnostics = input[["regressionDiag"]]
-    )
+    if(input[["hasBaseline"]]) {
+      results <- test.model.fit(
+        dataset = rawdata,
+        variables = input[["OV"]],
+        ov.name <- input[["OutcomeName"]],
+        covariate = rawdata[input[["COV"]]],
+        bw.factor = rawdata$TREATMENT,
+        wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
+        wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
+        missing = input[["missing"]],
+        m.imputations = as.numeric(input[["MICEresamples"]]),
+        alpha = as.numeric(input[["alpha"]]),
+        p.digits = 3,
+        diagnostics = input[["regressionDiag"]]
+      )
+    } else {
+      results <- test.model.fit(
+        dataset = rawdata,
+        variables = input[["OV"]],
+        ov.name <- input[["OutcomeName"]],
+        covariate = rawdata[input[["COV"]]],
+        bw.factor = rawdata$TREATMENT,
+        # drop 1 (no baseline)
+        wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
+        # drop 1 (no baseline)
+        wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]][-1]),
+        missing = input[["missing"]],
+        m.imputations = as.numeric(input[["MICEresamples"]]),
+        alpha = as.numeric(input[["alpha"]]),
+        p.digits = 3,
+        diagnostics = input[["regressionDiag"]]
+      )
+    }
     
     return(results)
   })
@@ -1337,7 +1356,7 @@ server <- function(input, output, session) {
       colnames = NULL,
       options = list(
         searching = FALSE,
-        colReorder = TRUE,
+        colReorder = FALSE,
         pageLength = nrow(results),
         width = "100%",
         fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender();}'),
@@ -1351,7 +1370,7 @@ server <- function(input, output, session) {
             targets = "_all"
           )
         )
-      )
+      ), selection = "none"
     ) %>%
       DT::formatStyle(columns = 3:ncol(results), textAlign = "right") %>%
       DT::formatStyle(
@@ -1424,7 +1443,7 @@ server <- function(input, output, session) {
         bw.factor = rawdata$TREATMENT,
         wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
         wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
-        missing = tolower(gsub(" ", ".", input[["missing"]])),
+        missing = input[["missing"]],
         m.imputations = as.numeric(input[["MICEresamples"]]),
         xlabs = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
         ylab = input[["OutcomeName"]],
@@ -1442,7 +1461,7 @@ server <- function(input, output, session) {
         wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
         # drop 1 (no baseline)
         wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]][-1]),
-        missing = tolower(gsub(" ", ".", input[["missing"]])),
+        missing = input[["missing"]],
         m.imputations = as.numeric(input[["MICEresamples"]]),
         xlabs = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
         ylab = input[["OutcomeName"]],
@@ -1590,7 +1609,7 @@ server <- function(input, output, session) {
       colnames = NULL,
       options = list(
         searching = FALSE,
-        colReorder = TRUE,
+        colReorder = FALSE,
         pageLength = nrow(results),
         width = "100%",
         fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender();}'),
@@ -1604,7 +1623,7 @@ server <- function(input, output, session) {
             targets = "_all"
           )
         )
-      )
+      ), selection = "none"
     ) %>%
       DT::formatStyle(columns = 1, fontWeight = "bold") %>%
       DT::formatStyle(columns = 3:ncol(results), textAlign = "right") %>%

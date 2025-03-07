@@ -5,7 +5,7 @@ test.model.fit <- function(dataset,
                            bw.factor,
                            wt.labels,
                            wt.values,
-                           missing = c("complete.cases"),
+                           missing = c("Multiple imputation", "Mean imputation", "Complete cases"),
                            m.imputations,
                            alpha,
                            p.digits = 3,
@@ -76,44 +76,45 @@ test.model.fit <- function(dataset,
   # change TIME_M to numeric
   data_M$TIME_M <- as.numeric(as.character(data_M$TIME_M))
   
-  if("Imputed Data" %in% diagnostics | "Convergence" %in% diagnostics){
-    # fit linear mixed model (same as Table 2a and Tableb 2b)
-    ini <- mice::mice(data = data_M, maxit = 0)
-    pred <- ini$pred
-    pred["OUTCOME_M", "ID_M"] <- -2
-    imp <-
-      mice::mice(
-        data_M,
-        pred = pred,
-        method = "pmm",
-        m = m.imputations,
-        seed = 0,
-        print = FALSE,
-        maxit = 50
-      )
-  }
-  
   Imp_Data <- NULL
-  if ("Imputed Data" %in% diagnostics) {
-    Imp_Data <- mice::stripplot(
-      imp,
-      OUTCOME_M ~ TIME_M | GROUP_M,
-      pch = c(1, 20),
-      layout = c(1, length(unique(GROUP_M))),
-      main = "Imputed Data",
-      xlab = "Time (endpoints)",
-      ylab = ov.name
-    )
-  }
-  
   Convergence <- NULL
-  if ("Convergence" %in% diagnostics) {
-    Convergence <- plot(imp, layout = c(1,2))
+  if(missing == "Multiple imputation"){
+    if("Imputed Data" %in% diagnostics | "Convergence" %in% diagnostics){
+      # fit linear mixed model (same as Table 2a and Tableb 2b)
+      ini <- mice::mice(data = data_M, maxit = 0)
+      pred <- ini$pred
+      pred["OUTCOME_M", "ID_M"] <- -2
+      imp <-
+        mice::mice(
+          data_M,
+          pred = pred,
+          method = "pmm",
+          m = m.imputations,
+          seed = 0,
+          print = FALSE,
+          maxit = 50
+        )
+    }
+    
+    if ("Imputed Data" %in% diagnostics) {
+      Imp_Data <- mice::stripplot(
+        imp,
+        OUTCOME_M ~ TIME_M | GROUP_M,
+        pch = c(1, 20),
+        layout = c(1, length(unique(GROUP_M))),
+        main = "Imputed Data",
+        xlab = "Time (endpoints)",
+        ylab = ov.name
+      )
+    }
+    if ("Convergence" %in% diagnostics) {
+      Convergence <- plot(imp, layout = c(1,2))
+    }
   }
   
   # decide como lidar com os dados perdidos
-  missing = "complete.cases" # run all diagnostics with complete cases
-  if (missing == "complete.cases") {
+  # força a exclusão de linhas com dados faltantes para os métodos de imputação
+  if (missing == "Complete cases" | missing == "Multiple imputation") {
     if (!sjmisc::is_empty(covariate)) {
       include <- complete.cases(dataset, covariate)
     } else {
@@ -129,9 +130,28 @@ test.model.fit <- function(dataset,
     OUTCOME_M <- c(as.matrix(dataset))
     COVARIATE_M <- NULL
     if (!sjmisc::is_empty(covariate)) {
-      for (i in 1:length(wt.labels)) {
-        COVARIATE_M <- rbind(COVARIATE_M, covariate)
+      COVARIATE_M <- do.call(rbind, replicate(length(wt.labels), covariate, simplify = FALSE))
+    }
+  }
+  
+  if (missing == "Mean imputation") {
+    # Calculate the mean for imputation for each group
+    for (i in 1:length(wt.labels)) {
+      temp.imp <- dataset[, i]
+      for (j in 1:nlevels(bw.factor)) {
+        temp.imp[which(is.na(temp.imp) & bw.factor == levels(bw.factor)[j])] <-
+          mean(temp.imp[which(bw.factor == levels(bw.factor)[j])], na.rm = TRUE)
       }
+      dataset[, i] <- temp.imp
+    }
+    OUTCOME_M <- c(as.matrix(dataset))
+    
+    # mean imputation of covariate data if any
+    COVARIATE_M <- NULL
+    if (!sjmisc::is_empty(covariate)) {
+      covariate <- covariate %>%
+        dplyr::mutate(dplyr::across(dplyr::everything(), ~ ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+      COVARIATE_M <- do.call(rbind, replicate(length(wt.labels), covariate, simplify = FALSE))
     }
   }
   
@@ -160,7 +180,7 @@ test.model.fit <- function(dataset,
     ))
   }
   
-  Scaled_Res <- NULL
+  x <- NULL
   Shapiro_Wilk_Res <- NULL
   if ("Scaled Residuals" %in% diagnostics) {
     residuals <- residuals(mod1, type = "normalized")
@@ -200,13 +220,13 @@ test.model.fit <- function(dataset,
   }
   
   return(list(
-    'Little_Test_Res' = Little_Test_Res, # missing data
-    'Upset_Plot' = Upset_Plot, # missing data
-    'Imp_Data' = Imp_Data, # imputed data
-    'Convergence' = Convergence, # imputed data
     'Scaled_Res' = Scaled_Res, # residuals
     'Shapiro_Wilk_Res' = Shapiro_Wilk_Res, # residuals
     'Comp_Plus_Res' = Comp_Plus_Res, # residuals
-    'VIF' = VIF # multicollinarity
+    'VIF' = VIF, # multicollinarity
+    'Little_Test_Res' = Little_Test_Res, # missing data
+    'Upset_Plot' = Upset_Plot, # missing data
+    'Imp_Data' = Imp_Data, # imputed data
+    'Convergence' = Convergence # imputed data
   ))
 }
