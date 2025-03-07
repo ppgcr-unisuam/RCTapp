@@ -589,6 +589,12 @@ ui <- shiny::fluidPage(
       shiny::HTML(
         "Avila, L., da Silva, M. D., Neves, M. L., Abreu, A. R., Fiuza, C. R., Fukusawa, L., de Sá Ferreira, A., & Meziat-Filho, N. (2023). Effectiveness of Cognitive Functional Therapy Versus Core Exercises and Manual Therapy in Patients With Chronic Low Back Pain After Spinal Surgery: Randomized Controlled Trial. In Physical Therapy (Vol. 104, Issue 1). Oxford University Press (OUP). <a https://doi.org/10.1093/ptj/pzad105 \">https://doi.org/10.1093/ptj/pzad105</a>"
       ),
+      shiny::br(),
+      shiny::br(),
+      shiny::HTML(
+        "de Lira MR, Meziat-Filho N, Zuelli Martins Silva G, et al Efficacy of cognitive functional therapy for pain intensity and disability in patients with non-specific chronic low back pain: a randomised sham-controlled trial British Journal of Sports Medicine Published Online First: 06 March 2025. <a https://doi.org/10.1136/bjsports-2024-109012 \">https://doi.org/10.1136/bjsports-2024-109012</a>"
+      ),
+      shiny::br(),
     ),
     shiny::tabPanel(
       icon = list(fontawesome::fa("people-group")),
