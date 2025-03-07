@@ -47,7 +47,10 @@ sap <- function(BGF,
     paste0(endpointNames, collapse = ", "),
     ") on the outcome variable (",
     OutcomeName,
-    "), adjusted for baseline.",
+    "), adjusted for baseline values.",
+    " The reference group was ",
+    controlgroup,
+    ".",
     if(!sjmisc::is_empty(COV)){
       paste0(" The model was also adjusted for the following covariates: ", paste0(COV, collapse = ", "), ".")
     },

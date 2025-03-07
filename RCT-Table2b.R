@@ -413,10 +413,13 @@ TABLE.2b <- function(dataset,
   )
   print("", quote = FALSE)
   
+  f.test.res <- cbind(c(t.labels[1:2], c("")), model.res[1:3, 1])
+  
   # output results
   return(list(
     'mix.mod.res' = mix.mod.res,
     'wt.diff' = wt.diff,
-    'bw.diff' = bw.diff
+    'bw.diff' = bw.diff,
+    'f.test.res' = f.test.res
   ))
 }

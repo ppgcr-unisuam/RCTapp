@@ -490,6 +490,7 @@ TABLE.2a <- function(dataset,
     quote = FALSE
   )
   print(cbind(mix.mod.res, model.res), quote = FALSE)
+  print(paste("Interaction effect: ", interaction, sep = ""), quote = FALSE)
   print(cbind(wt.diff), quote = FALSE)
   print(cbind(bw.diff), quote = FALSE)
   print(
@@ -498,10 +499,13 @@ TABLE.2a <- function(dataset,
   )
   print("", quote = FALSE)
   
+  f.test.res <- cbind(c(t.labels[1:2], c("")), model.res[1:3, 1])
+  
   # output results
   return(list(
     'mix.mod.res' = mix.mod.res,
     'wt.diff' = wt.diff,
-    'bw.diff' = bw.diff
+    'bw.diff' = bw.diff,
+    'f.test.res' = f.test.res
   ))
 }

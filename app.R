@@ -21,7 +21,6 @@ library(dplyr)
 library(htmltools)
 
 # source all scripts
-# source("RCT-packages.R", local = TRUE) # to install packages (not required for Shiny app)
 source("RCT-NA.R", local = TRUE) # to convert specific values to NA
 source("RCT-Table1.R", local = TRUE) # numeric and categorical variables, descriptive analysis, between-factor
 source("RCT-Table2a.R", local = TRUE) # numeric variables, linear mixed model analysis, between- AND within-factor WITH baseline adjustment
@@ -129,304 +128,355 @@ ui <- shiny::fluidPage(
       shiny::fluidRow(
         shiny::column(
           3,
+          shiny::br(),
           shiny::wellPanel(
-            # add checkbox for between-subject factors (BGF)
-            shinyWidgets::virtualSelectInput(
-              inputId = "BGF",
-              label = "Treatment groups",
-              choices = NULL,
-              selected = NA,
-              showValueAsTags = TRUE,
-              search = TRUE,
-              multiple = FALSE,
-              width = "100%"
-            ),
-            # show options for control group
-            shinyWidgets::virtualSelectInput(
-              inputId = "controlgroup",
-              label = "Control group",
-              choices = NULL,
-              selected = NA,
-              showValueAsTags = TRUE,
-              search = TRUE,
-              multiple = FALSE,
-              width = "100%"
-            ),
-            # number of endpoits
-            shiny::numericInput(
-              inputId = "endpointN",
-              label = "Endpoints",
-              value = 2,
-              min = 2,
-              step = 1,
-              width = "100%"
-            ),
-            # show text for endpoint
-            shiny::textInput(
-              inputId = "endpointValues",
-              label = "Endpoint value (csv)",
-              value = "0,1",
-              width = "100%"
-            ),
-            shiny::fluidRow(
-              shiny::column(
-                6,
-                # alpha level for statistical significance
-                shiny::numericInput(
-                  inputId = "alpha",
-                  label = "Alpha level",
-                  value = 0.05,
-                  min = 0.001,
-                  max = 0.999,
-                  step = 0.001,
-                  width = "100%"
-                ),
-              ),
-              shiny::column(
-                6,
-                # effect size interpretation rules
+            shiny::HTML("<center><strong>Study design</strong></center>"),
+            shiny::br(),
+            shiny::tabsetPanel(
+              id = "tabset1",
+              shiny::tabPanel(
+                title = "Setup",
+                shiny::br(),
+                # add checkbox for between-subject factors (BGF)
                 shinyWidgets::virtualSelectInput(
-                  inputId = "effectSize",
-                  label = "Effect size",
-                  choices = c("Cohen (1988)", "Gignac (2016)", "Sawilowsky (2009)", "Lovakov (2021)"),
-                  selected = "Cohen (1988)",
+                  inputId = "BGF",
+                  label = "Treatment groups",
+                  choices = NULL,
+                  selected = NA,
                   showValueAsTags = TRUE,
-                  search = FALSE,
+                  search = TRUE,
                   multiple = FALSE,
                   width = "100%"
                 ),
-              ),
-            ),
-          ),
-          shiny::wellPanel(
-            # show text input to change treatment group names
-            shiny::textInput(
-              inputId = "treatmentNames",
-              label = "Treatment labels (csv)",
-              value = "Control,Intervention",
-              width = "100%"
-            ),
-            # show text for endpoint names
-            shiny::textInput(
-              inputId = "endpointNames",
-              label = "Endpoint labels (csv)",
-              value = "Baseline,Follow-up",
-              width = "100%"
-            ),
-          ),
-        ),
-        shiny::column(
-          3,
-          shiny::actionButton(
-            inputId = "runTable1",
-            icon = shiny::icon("play"),
-            label = "Table 1",
-            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-          ),
-          shiny::wellPanel(
-            # add checkbox for baseline variables (BV)
-            shinyWidgets::virtualSelectInput(
-              inputId = "BV",
-              label = "Baseline variables",
-              choices = NULL,
-              selected = NA,
-              showValueAsTags = TRUE,
-              search = TRUE,
-              multiple = TRUE,
-              width = "100%"
-            ),
-            # show maxlevels for between-subject factors
-            shiny::numericInput(
-              inputId = "maxlevels",
-              label = "Max levels (categorical variables)",
-              value = 5,
-              min = 1,
-              max = 10,
-              step = 1,
-              width = "100%"
-            ),
-            # add checkbox for show p-value
-            shiny::checkboxInput(
-              inputId = "showPvalue",
-              label = "Show P-value",
-              value = FALSE,
-              width = "100%"
-            ),
-          ),
-        ),
-        shiny::column(
-          3,
-          shiny::fluidRow(
-            shiny::column(
-              6,
-              # add button to run analysis
-              shiny::actionButton(
-                inputId = "runTable2",
-                icon = shiny::icon("play"),
-                label = "Table 2",
-                style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-              ),
-            ),
-            shiny::column(
-              6,
-              # add button to run analysis
-              shiny::actionButton(
-                inputId = "runFigure2",
-                icon = shiny::icon("play"),
-                label = "Figure 2",
-                style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-              ),
-            ),
-          ),
-          shiny::wellPanel(
-            # add checkbox for outcome variables (OV)
-            shinyWidgets::virtualSelectInput(
-              inputId = "OV",
-              label = "Outcome variable (all columns)",
-              choices = NULL,
-              selected = NA,
-              showValueAsTags = TRUE,
-              search = TRUE,
-              multiple = TRUE,
-              width = "100%"
-            ),
-            # show checkbox for indicating outcomes has baseline data
-            shiny::checkboxInput(
-              inputId = "hasBaseline",
-              label = "Baseline data is available",
-              value = TRUE,
-              width = "100%"
-            ),
-            # add checkbox for covariates (COV)
-            shinyWidgets::virtualSelectInput(
-              inputId = "COV",
-              label = "Covariates",
-              choices = NULL,
-              selected = NA,
-              showValueAsTags = TRUE,
-              search = TRUE,
-              multiple = TRUE,
-              width = "100%"
-            ),
-            shiny::fluidRow(
-              shiny::column(
-                8,
-                # show options for missing data
+                # show options for control group
                 shinyWidgets::virtualSelectInput(
-                  inputId = "missing",
-                  label = "Missing data (imputation)",
-                  choices = c("Multiple imputation", "Mean imputation", "Complete cases"),
-                  selected = "Multiple imputation",
+                  inputId = "controlgroup",
+                  label = "Control group",
+                  choices = NULL,
+                  selected = NA,
+                  showValueAsTags = TRUE,
+                  search = TRUE,
+                  multiple = FALSE,
+                  width = "100%"
+                ),
+                # number of endpoits
+                shiny::numericInput(
+                  inputId = "endpointN",
+                  label = "Endpoints",
+                  value = 2,
+                  min = 2,
+                  step = 1,
+                  width = "100%"
+                ),
+                # show text for endpoint
+                shiny::textInput(
+                  inputId = "endpointValues",
+                  label = "Endpoint value (csv)",
+                  value = "0,1",
+                  width = "100%"
+                ),
+                shiny::fluidRow(
+                  shiny::column(
+                    6,
+                    # alpha level for statistical significance
+                    shiny::numericInput(
+                      inputId = "alpha",
+                      label = "Alpha level",
+                      value = 0.05,
+                      min = 0.001,
+                      max = 0.999,
+                      step = 0.001,
+                      width = "100%"
+                    ),
+                  ),
+                  shiny::column(
+                    6,
+                    # effect size interpretation rules
+                    shinyWidgets::virtualSelectInput(
+                      inputId = "effectSize",
+                      label = "Effect size",
+                      choices = c("Cohen (1988)", "Gignac (2016)", "Sawilowsky (2009)", "Lovakov (2021)"),
+                      selected = "Cohen (1988)",
+                      showValueAsTags = TRUE,
+                      search = FALSE,
+                      multiple = FALSE,
+                      width = "100%"
+                    ),
+                  ),
+                ),
+              ),
+              shiny::tabPanel(
+                title = "Aesthetics",
+                shiny::br(),
+                # show text input to change treatment group names
+                shiny::textInput(
+                  inputId = "treatmentNames",
+                  label = "Treatment labels (csv)",
+                  value = "Control,Intervention",
+                  width = "100%"
+                ),
+                # show text for endpoint names
+                shiny::textInput(
+                  inputId = "endpointNames",
+                  label = "Endpoint labels (csv)",
+                  value = "Baseline,Follow-up",
+                  width = "100%"
+                ),
+              ),
+            ),
+          ),
+        ),
+        shiny::column(
+          3,
+          shiny::br(),
+          shiny::wellPanel(
+            shiny::HTML("<center><strong>Participants' characteristics (Table 1)</strong></center>"),
+            shiny::br(),
+            shiny::tabsetPanel(
+              id = "tabset1",
+              shiny::tabPanel(
+                title = "Setup",
+                shiny::br(),
+                # add checkbox for baseline variables (BV)
+                shinyWidgets::virtualSelectInput(
+                  inputId = "BV",
+                  label = "Baseline variables (all types)",
+                  choices = NULL,
+                  selected = NA,
+                  showValueAsTags = TRUE,
+                  search = TRUE,
+                  multiple = TRUE,
+                  width = "100%"
+                ),
+                # add checkbox for show p-value
+                shiny::checkboxInput(
+                  inputId = "showPvalue",
+                  label = "Show P-value",
+                  value = FALSE,
+                  width = "100%"
+                ),
+              ),
+              shiny::tabPanel(
+                title = "Aesthetics",
+                shiny::br(),
+                # show maxlevels for between-subject factors
+                shiny::numericInput(
+                  inputId = "maxlevels",
+                  label = "Max levels (categorical variables only)",
+                  value = 5,
+                  min = 1,
+                  max = 10,
+                  step = 1,
+                  width = "100%"
+                ),
+              ),
+            ),
+          ),
+          # shiny::actionButton(
+          #   inputId = "runTable1",
+          #   icon = shiny::icon("play"),
+          #   label = "Table 1",
+          #   style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          # ),
+        ),
+        shiny::column(
+          3,
+          shiny::br(),
+          shiny::wellPanel(
+            shiny::HTML("<center><strong>Numerical outcome (Table 2, Figure 2)</strong></center>"),
+            shiny::br(),
+            # add tabset
+            shiny::tabsetPanel(
+              id = "tabset2",
+              shiny::tabPanel(
+                title = "Setup",
+                shiny::br(),
+                # add checkbox for outcome variables (OV)
+                shinyWidgets::virtualSelectInput(
+                  inputId = "OV",
+                  label = "Outcome variable (all columns)",
+                  choices = NULL,
+                  selected = NA,
+                  showValueAsTags = TRUE,
+                  search = TRUE,
+                  multiple = TRUE,
+                  width = "100%"
+                ),
+                # show checkbox for indicating outcomes has baseline data
+                shiny::checkboxInput(
+                  inputId = "hasBaseline",
+                  label = "Baseline data is available",
+                  value = TRUE,
+                  width = "100%"
+                ),
+                # add checkbox for covariates (COV)
+                shinyWidgets::virtualSelectInput(
+                  inputId = "COV",
+                  label = "Covariates",
+                  choices = NULL,
+                  selected = NA,
+                  showValueAsTags = TRUE,
+                  search = TRUE,
+                  multiple = TRUE,
+                  width = "100%"
+                ),
+                shiny::fluidRow(
+                  shiny::column(
+                    8,
+                    # show options for missing data
+                    shinyWidgets::virtualSelectInput(
+                      inputId = "missing",
+                      label = "Missing data imputation",
+                      choices = c("Multiple imputation", "Mean imputation", "Complete cases"),
+                      selected = "Multiple imputation",
+                      showValueAsTags = TRUE,
+                      search = TRUE,
+                      multiple = FALSE,
+                      width = "100%"
+                    ),
+                  ),
+                  shiny::column(
+                    4,
+                    # number of resamples
+                    shiny::numericInput(
+                      inputId = "MICEresamples",
+                      label = "Resamples",
+                      value = 50,
+                      min = 1,
+                      max = 100,
+                      step = 1,
+                      width = "100%"
+                    ),
+                  ),
+                ),
+                # show options for regression diagnosis
+                shinyWidgets::virtualSelectInput(
+                  inputId = "regressionDiag",
+                  label = "Diagnosis",
+                  choices = c(
+                    "Scaled Residuals",
+                    "Component-Plus-Residual",
+                    "Variance Inflation Factor",
+                    "Missing Data",
+                    "Imputed Data",
+                    "Convergence"
+                  ),
+                  selected = c(
+                    "Scaled Residuals",
+                    "Component-Plus-Residual",
+                    "Variance Inflation Factor",
+                    "Missing Data",
+                    "Imputed Data",
+                    "Convergence"
+                  ),
+                  showValueAsTags = TRUE,
+                  search = TRUE,
+                  multiple = TRUE,
+                  width = "100%"
+                ),
+              ),
+              shiny::tabPanel(
+                title = "Aesthethics",
+                shiny::br(),
+                # show text input to change outcome name
+                shiny::textInput(
+                  inputId = "OutcomeName",
+                  label = "Outcome label",
+                  value = "Outcome",
+                  width = "100%"
+                ),
+                # options for legend
+                shinyWidgets::virtualSelectInput(
+                  inputId = "legendOptions",
+                  label = "Legend position",
+                  choices = c(
+                    "none",
+                    "top",
+                    "topleft",
+                    "topright",
+                    "bottom",
+                    "bottomleft",
+                    "bottomright",
+                    "left",
+                    "right",
+                    "center"
+                  ),
+                  selected = "top",
                   showValueAsTags = TRUE,
                   search = TRUE,
                   multiple = FALSE,
                   width = "100%"
                 ),
               ),
-              shiny::column(
-                4,
-                # number of resamples
-                shiny::numericInput(
-                  inputId = "MICEresamples",
-                  label = "Resamples",
-                  value = 50,
-                  min = 1,
-                  max = 100,
-                  step = 1,
-                  width = "100%"
-                ),
-              ),
-            ),
-            # show options for regression diagnosis
-            shinyWidgets::virtualSelectInput(
-              inputId = "regressionDiag",
-              label = "Diagnosis",
-              choices = c(
-                "Scaled Residuals",
-                "Component-Plus-Residual",
-                "Variance Inflation Factor",
-                "Missing Data",
-                "Imputed Data",
-                "Convergence"
-              ),
-              selected = c(
-                "Scaled Residuals",
-                "Component-Plus-Residual",
-                "Variance Inflation Factor",
-                "Missing Data",
-                "Imputed Data",
-                "Convergence"
-              ),
-              showValueAsTags = TRUE,
-              search = TRUE,
-              multiple = TRUE,
-              width = "100%"
             ),
           ),
-          shiny::wellPanel(
-            # show text input to change outcome name
-            shiny::textInput(
-              inputId = "OutcomeName",
-              label = "Outcome label",
-              value = "Outcome",
-              width = "100%"
+          shiny::fluidRow(
+            shiny::column(
+              6,
+              # add button to run analysis
+              # shiny::actionButton(
+              #   inputId = "runTable2",
+              #   icon = shiny::icon("play"),
+              #   label = "Table 2",
+              #   style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+              # ),
             ),
-            # options for legend
-            shinyWidgets::virtualSelectInput(
-              inputId = "legendOptions",
-              label = "Legend position",
-              choices = c(
-                "none",
-                "top",
-                "topleft",
-                "topright",
-                "bottom",
-                "bottomleft",
-                "bottomright",
-                "left",
-                "right",
-                "center"
-              ),
-              selected = "top",
-              showValueAsTags = TRUE,
-              search = TRUE,
-              multiple = FALSE,
-              width = "100%"
+            shiny::column(
+              6,
+              # add button to run analysis
+              # shiny::actionButton(
+              #   inputId = "runFigure2",
+              #   icon = shiny::icon("play"),
+              #   label = "Figure 2",
+              #   style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+              # ),
             ),
           ),
         ),
         # add column for buttons
         shiny::column(
           3,
+          shiny::br(),
+          shiny::wellPanel(
+            shiny::HTML("<center><strong>Categorical outcome (Table 3)</strong></center>"),
+            shiny::br(),
+            shiny::tabsetPanel(
+              id = "tabset4",
+              shiny::tabPanel(
+                title = "Setup",
+                shiny::br(),
+                # add checkbox for outcome variables (OV)
+                shinyWidgets::virtualSelectInput(
+                  inputId = "OVRidit",
+                  label = "Outcome variable (all columns)",
+                  choices = NULL,
+                  selected = NA,
+                  showValueAsTags = TRUE,
+                  search = TRUE,
+                  multiple = TRUE,
+                  width = "100%"
+                ),
+              ),
+              shiny::tabPanel(
+                title = "Aesthetics",
+                shiny::br(),
+                # show text input to change outcome name
+                shiny::textInput(
+                  inputId = "OutcomeNameRidit",
+                  label = "Outcome label",
+                  value = "Outcome",
+                  width = "100%"
+                ),
+              ),
+            ),
+          ),
           # add button to run analysis
-          shiny::actionButton(
-            inputId = "runTable3",
-            icon = shiny::icon("play"),
-            label = "Table 3",
-            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-          ),
-          shiny::wellPanel(
-            # add checkbox for outcome variables (OV)
-            shinyWidgets::virtualSelectInput(
-              inputId = "OVRidit",
-              label = "Outcome variable (all columns)",
-              choices = NULL,
-              selected = NA,
-              showValueAsTags = TRUE,
-              search = TRUE,
-              multiple = TRUE,
-              width = "100%"
-            ),
-          ),
-          shiny::wellPanel(
-            # show text input to change outcome name
-            shiny::textInput(
-              inputId = "OutcomeNameRidit",
-              label = "Outcome label",
-              value = "Outcome",
-              width = "100%"
-            ),
-          ),
+          # shiny::actionButton(
+          #   inputId = "runTable3",
+          #   icon = shiny::icon("play"),
+          #   label = "Table 3",
+          #   style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          # ),
         ),
       ),
     ),
@@ -474,7 +524,10 @@ ui <- shiny::fluidPage(
         # show table of results
         DT::dataTableOutput("table2"),
         shiny::br(),
+        # show output text of table 2
+        shiny::htmlOutput("textTable2"),
         # download Word format
+        shiny::br(),
         shiny::downloadButton(
           outputId = "downloadTable2",
           label = "Download Table 2 (.DOCX)",
@@ -1274,6 +1327,10 @@ server <- function(input, output, session) {
       as.data.frame(check.names = FALSE) %>%
       dplyr::mutate(Variables = rownames(table2()$bw.diff))
     
+    # convert table to multiline text
+    results.model <- paste(table2()$f.test.res[, 1], table2()$f.test.res[, 2], sep = " ", collapse = ", ")
+    print(results.model)
+    
     results <- dplyr::bind_rows(results.mix, results.wt, results.bw) %>% as.data.frame(check.names = FALSE)
     
     # last column first, then the others
@@ -1304,6 +1361,7 @@ server <- function(input, output, session) {
     # Define text styles for caption and footnotes
     caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
     footnote_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
+    SMD.caption <- "SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d)."
     
     # create Word doc from results dataframe
     sect_properties <- officer::prop_section(
@@ -1341,11 +1399,26 @@ server <- function(input, output, session) {
       flextable::body_add_flextable(my_summary_to_save) %>%
       officer::body_add_fpar(officer::fpar(
         officer::ftext(
-          "SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).",
+          results.model,
+          prop = footnote_style
+        )
+      )) %>%  # Add footnote
+      officer::body_add_fpar(officer::fpar(
+        officer::ftext(
+          SMD.caption,
           prop = footnote_style
         )
       )) %>%  # Add footnote
       print(target = file.path(dir.name, "Table 2.docx"))
+    
+    # update text textTable2
+    output[["textTable2"]] <- shiny::renderUI({
+      shiny::HTML(paste(
+        results.model,
+        SMD.caption,
+        sep = "<br>"
+      ))
+    })
     
     # output results
     DT::datatable(
