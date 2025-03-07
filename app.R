@@ -90,41 +90,7 @@ ui <- shiny::fluidPage(
     type = "tabs",
     shiny::tabPanel(
       title = list(fontawesome::fa("database"), "Data"),
-      shiny::wellPanel(
-        shiny::fluidRow(
-          shiny::column(
-            11,
-            # input Excel file data
-            shiny::fileInput(
-              inputId = "InputFile",
-              label = NULL,
-              multiple = FALSE,
-              buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
-              accept = c(".xlsx"),
-              width = "100%",
-              placeholder = "Upload XLSX data in wide format (one row per subject, multiple columns for repeated measures)"
-            ),
-            style = "text-align:center;"
-          ),
-          shiny::column(
-            1,
-            shiny::tags$a(
-              id = "restart",
-              class = "btn btn-primary",
-              href = "javascript:history.go(0)",
-              shiny::HTML('<i class="fa fa-refresh fa-1x"></i>'),
-              title = "restart",
-              style = "color:white; border-color:white; border-radius:100%;"
-            ),
-            style = "text-align:center;"
-          ),
-        ),
-        DT::DTOutput(outputId = "rawtable"),
-      ),
-    ),
-    shiny::tabPanel(
-      title = list(fontawesome::fa("list-check"), "Analysis"),
-      # split panel into 4 columns
+      # split panel into 2 columns
       shiny::fluidRow(
         shiny::column(
           3,
@@ -227,10 +193,51 @@ ui <- shiny::fluidPage(
           ),
         ),
         shiny::column(
-          3,
+          9,
           shiny::br(),
           shiny::wellPanel(
-            shiny::HTML("<center><strong>Participants' characteristics (Table 1)</strong></center>"),
+            shiny::fluidRow(
+              shiny::column(
+                11,
+                # input Excel file data
+                shiny::fileInput(
+                  inputId = "InputFile",
+                  label = NULL,
+                  multiple = FALSE,
+                  buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
+                  accept = c(".xlsx"),
+                  width = "100%",
+                  placeholder = "Upload XLSX data in wide format (one row per subject, multiple columns for repeated measures)"
+                ),
+                style = "text-align:center;"
+              ),
+              shiny::column(
+                1,
+                shiny::tags$a(
+                  id = "restart",
+                  class = "btn btn-primary",
+                  href = "javascript:history.go(0)",
+                  shiny::HTML('<i class="fa fa-refresh fa-1x"></i>'),
+                  title = "restart",
+                  style = "color:white; border-color:white; border-radius:100%;"
+                ),
+                style = "text-align:center;"
+              ),
+            ),
+            DT::DTOutput(outputId = "rawtable"),
+          ),
+        ),
+      ),
+    ),
+    shiny::tabPanel(
+      title = list(fontawesome::fa("list-check"), "Analysis"),
+      # split panel into 3 columns
+      shiny::fluidRow(
+        shiny::column(
+          4,
+          shiny::br(),
+          shiny::wellPanel(
+            shiny::HTML("<center><strong>Participants' characteristics</strong></center>"),
             shiny::br(),
             shiny::tabsetPanel(
               id = "tabset1",
@@ -272,18 +279,19 @@ ui <- shiny::fluidPage(
               ),
             ),
           ),
-          # shiny::actionButton(
-          #   inputId = "runTable1",
-          #   icon = shiny::icon("play"),
-          #   label = "Table 1",
-          #   style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-          # ),
+          # add action button to run table 1
+          shiny::actionButton(
+            inputId = "runTable1",
+            icon = shiny::icon("play"),
+            label = "Table 1",
+            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          ),
         ),
         shiny::column(
-          3,
+          4,
           shiny::br(),
           shiny::wellPanel(
-            shiny::HTML("<center><strong>Numerical outcome (Table 2, Figure 2)</strong></center>"),
+            shiny::HTML("<center><strong>Numerical outcome</strong></center>"),
             shiny::br(),
             # add tabset
             shiny::tabsetPanel(
@@ -414,31 +422,31 @@ ui <- shiny::fluidPage(
             shiny::column(
               6,
               # add button to run analysis
-              # shiny::actionButton(
-              #   inputId = "runTable2",
-              #   icon = shiny::icon("play"),
-              #   label = "Table 2",
-              #   style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-              # ),
+              shiny::actionButton(
+                inputId = "runTable2",
+                icon = shiny::icon("play"),
+                label = "Table 2",
+                style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+              ),
             ),
             shiny::column(
               6,
               # add button to run analysis
-              # shiny::actionButton(
-              #   inputId = "runFigure2",
-              #   icon = shiny::icon("play"),
-              #   label = "Figure 2",
-              #   style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-              # ),
+              shiny::actionButton(
+                inputId = "runFigure2",
+                icon = shiny::icon("play"),
+                label = "Figure 2",
+                style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+              ),
             ),
           ),
         ),
         # add column for buttons
         shiny::column(
-          3,
+          4,
           shiny::br(),
           shiny::wellPanel(
-            shiny::HTML("<center><strong>Categorical outcome (Table 3)</strong></center>"),
+            shiny::HTML("<center><strong>Categorical outcome</strong></center>"),
             shiny::br(),
             shiny::tabsetPanel(
               id = "tabset4",
@@ -471,12 +479,12 @@ ui <- shiny::fluidPage(
             ),
           ),
           # add button to run analysis
-          # shiny::actionButton(
-          #   inputId = "runTable3",
-          #   icon = shiny::icon("play"),
-          #   label = "Table 3",
-          #   style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-          # ),
+          shiny::actionButton(
+            inputId = "runTable3",
+            icon = shiny::icon("play"),
+            label = "Table 3",
+            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          ),
         ),
       ),
     ),
