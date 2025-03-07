@@ -30,6 +30,7 @@ source("RCT-Figure2.R", local = TRUE) # numeric variables, plot of descriptive a
 source("RCT-Table3.R", local = TRUE) #  ordinal variables, ridit analysis, ONLY within-factor
 source("RCT-Diagnosis.R", local = TRUE) # diagnosis on original dataset and model
 source("RCT-Report.R", local = TRUE) # report the statistical analysis plan in text format
+source("RCT-EffectSizes.R", local = TRUE) # effect size interpretation and reporting in text format
 
 # use this code to debug
 # rsconnect::showLogs()
@@ -129,14 +130,6 @@ ui <- shiny::fluidPage(
         shiny::column(
           3,
           shiny::wellPanel(
-            # add button to run analysis
-            shiny::actionButton(
-              inputId = "study",
-              label = "Study Design",
-              style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-            ),
-            shiny::br(),
-            shiny::br(),
             # add checkbox for between-subject factors (BGF)
             shinyWidgets::virtualSelectInput(
               inputId = "BGF",
@@ -197,6 +190,17 @@ ui <- shiny::fluidPage(
               min = 0.001,
               max = 0.999,
               step = 0.001,
+              width = "100%"
+            ),
+            # effect size interpretation rules
+            shinyWidgets::virtualSelectInput(
+              inputId = "effectSize",
+              label = "Effect size interpretation",
+              choices = c("Cohen (1988)", "Gignac (2016)", "Sawilowsky (2009)", "Lovakov (2021)"),
+              selected = "Cohen (1988)",
+              showValueAsTags = TRUE,
+              search = FALSE,
+              multiple = FALSE,
               width = "100%"
             ),
           ),
@@ -900,6 +904,7 @@ server <- function(input, output, session) {
                    endpointValues = input[["endpointValues"]],
                    alpha = input[["alpha"]],
                    showPvalue = input[["showPvalue"]],
+                   effectSize = input[["effectSize"]],
                    BV = input[["BV"]],
                    OV = input[["OV"]],
                    OutcomeName = input[["OutcomeName"]],
@@ -911,8 +916,54 @@ server <- function(input, output, session) {
                    OutcomeNameRidit = input[["OutcomeNameRidit"]]
     )
     
+    caption <- "Statistical analysis plan"
+    
+    # Define text styles for caption and footnotes
+    caption_style <- officer::fp_text(font.size = 12, font.family = "Times New Roman")
+    
+    # create Word doc from results dataframe
+    sect_properties <- officer::prop_section(
+      page_size = officer::page_size(
+        orient = "portrait",
+        width = 8.3,
+        height = 11.7
+      ),
+      type = "continuous",
+      page_margins = officer::page_mar()
+    )
+
+    # Create Word document with formatted caption
+    officer::read_docx() %>%
+      officer::body_set_default_section(sect_properties) %>%
+      officer::body_add_fpar(officer::fpar(officer::ftext(caption, prop = caption_style))) %>%
+      officer::body_add_par(officer::run_linebreak()) %>%
+      officer::body_add_par(htm2txt::htm2txt(results$software)) %>%
+      officer::body_add_par(officer::run_linebreak()) %>%
+      officer::body_add_par(htm2txt::htm2txt(results$table1)) %>%
+      officer::body_add_par(officer::run_linebreak()) %>%
+      officer::body_add_par(htm2txt::htm2txt(results$table2)) %>%
+      officer::body_add_par(officer::run_linebreak()) %>%
+      officer::body_add_par(htm2txt::htm2txt(results$figure2)) %>%
+      officer::body_add_par(officer::run_linebreak()) %>%
+      officer::body_add_par(htm2txt::htm2txt(results$table3)) %>%
+      officer::body_add_par(officer::run_linebreak()) %>%
+      officer::body_add_par(htm2txt::htm2txt(results$p.value)) %>%
+      officer::body_add_par(officer::run_linebreak()) %>%
+      officer::body_add_par(htm2txt::htm2txt(results$e.size)) %>%
+      print(target = file.path(dir.name, "SAP.docx"))
+    
     shiny::HTML(results$report)
   })
+  
+  # download downloadSAP
+  output[["downloadSAP"]] <- shiny::downloadHandler(
+    filename = function() {
+      paste0("SAP.docx")
+    },
+    content = function(file) {
+      file.copy(from = file.path(dir.name, "SAP.docx"), to = file)
+    }
+  )
   
   # run table 1 on runTable1 click ------------------------------------------------
   output[["table1"]] <- DT::renderDT({
@@ -1001,7 +1052,6 @@ server <- function(input, output, session) {
       officer::body_set_default_section(sect_properties) %>%
       officer::body_add_fpar(officer::fpar(officer::ftext(caption, prop = caption_style))) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
-      
       officer::body_add_fpar(officer::fpar(
         officer::ftext("Mean (SD) or count (%)", prop = footnote_style)
       )) %>%  # Add footnote
@@ -1255,7 +1305,6 @@ server <- function(input, output, session) {
       officer::body_set_default_section(sect_properties) %>%
       officer::body_add_fpar(officer::fpar(officer::ftext(caption, prop = caption_style))) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
-      
       officer::body_add_fpar(officer::fpar(
         officer::ftext(
           "SMD¹ = Standardized Mean Difference calculated from marginal estimates (Cohen's d).",
@@ -1493,7 +1542,6 @@ server <- function(input, output, session) {
       officer::body_set_default_section(sect_properties) %>%
       officer::body_add_fpar(officer::fpar(officer::ftext(caption, prop = caption_style))) %>%  # Add caption
       flextable::body_add_flextable(my_summary_to_save) %>%
-      
       officer::body_add_fpar(officer::fpar(officer::ftext("Count (%)", prop = footnote_style))) %>%  # Add footnote
       print(target = file.path(dir.name, "Table 3.docx"))
     
