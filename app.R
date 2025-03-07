@@ -141,13 +141,6 @@ ui <- shiny::fluidPage(
               multiple = FALSE,
               width = "100%"
             ),
-            # show text input to change treatment group names
-            shiny::textInput(
-              inputId = "treatmentNames",
-              label = "Treatment labels (csv)",
-              value = "Control,Intervention",
-              width = "100%"
-            ),
             # show options for control group
             shinyWidgets::virtualSelectInput(
               inputId = "controlgroup",
@@ -166,13 +159,6 @@ ui <- shiny::fluidPage(
               value = 2,
               min = 2,
               step = 1,
-              width = "100%"
-            ),
-            # show text for endpoint names
-            shiny::textInput(
-              inputId = "endpointNames",
-              label = "Endpoint labels (csv)",
-              value = "Baseline,Follow-up",
               width = "100%"
             ),
             # show text for endpoint
@@ -212,18 +198,32 @@ ui <- shiny::fluidPage(
               ),
             ),
           ),
+          shiny::wellPanel(
+            # show text input to change treatment group names
+            shiny::textInput(
+              inputId = "treatmentNames",
+              label = "Treatment labels (csv)",
+              value = "Control,Intervention",
+              width = "100%"
+            ),
+            # show text for endpoint names
+            shiny::textInput(
+              inputId = "endpointNames",
+              label = "Endpoint labels (csv)",
+              value = "Baseline,Follow-up",
+              width = "100%"
+            ),
+          ),
         ),
         shiny::column(
           3,
+          shiny::actionButton(
+            inputId = "runTable1",
+            icon = shiny::icon("play"),
+            label = "Table 1",
+            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          ),
           shiny::wellPanel(
-            shiny::actionButton(
-              inputId = "runTable1",
-              icon = shiny::icon("play"),
-              label = "Table 1",
-              style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-            ),
-            shiny::br(),
-            shiny::br(),
             # add checkbox for baseline variables (BV)
             shinyWidgets::virtualSelectInput(
               inputId = "BV",
@@ -256,30 +256,29 @@ ui <- shiny::fluidPage(
         ),
         shiny::column(
           3,
-          shiny::wellPanel(
-            shiny::fluidRow(
-              shiny::column(
-                6,
-                # add button to run analysis
-                shiny::actionButton(
-                  inputId = "runTable2",
-                  icon = shiny::icon("play"),
-                  label = "Table 2",
-                  style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-                ),
-              ),
-              shiny::column(
-                6,
-                # add button to run analysis
-                shiny::actionButton(
-                  inputId = "runFigure2",
-                  icon = shiny::icon("play"),
-                  label = "Figure 2",
-                  style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-                ),
+          shiny::fluidRow(
+            shiny::column(
+              6,
+              # add button to run analysis
+              shiny::actionButton(
+                inputId = "runTable2",
+                icon = shiny::icon("play"),
+                label = "Table 2",
+                style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
               ),
             ),
-            shiny::br(),
+            shiny::column(
+              6,
+              # add button to run analysis
+              shiny::actionButton(
+                inputId = "runFigure2",
+                icon = shiny::icon("play"),
+                label = "Figure 2",
+                style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+              ),
+            ),
+          ),
+          shiny::wellPanel(
             # add checkbox for outcome variables (OV)
             shinyWidgets::virtualSelectInput(
               inputId = "OV",
@@ -289,13 +288,6 @@ ui <- shiny::fluidPage(
               showValueAsTags = TRUE,
               search = TRUE,
               multiple = TRUE,
-              width = "100%"
-            ),
-            # show text input to change outcome name
-            shiny::textInput(
-              inputId = "OutcomeName",
-              label = "Outcome label",
-              value = "Outcome",
               width = "100%"
             ),
             # show checkbox for indicating outcomes has baseline data
@@ -345,28 +337,6 @@ ui <- shiny::fluidPage(
                 ),
               ),
             ),
-            # options for legend
-            shinyWidgets::virtualSelectInput(
-              inputId = "legendOptions",
-              label = "Legend (position)",
-              choices = c(
-                "none",
-                "top",
-                "topleft",
-                "topright",
-                "bottom",
-                "bottomleft",
-                "bottomright",
-                "left",
-                "right",
-                "center"
-              ),
-              selected = "top",
-              showValueAsTags = TRUE,
-              search = TRUE,
-              multiple = FALSE,
-              width = "100%"
-            ),
             # show options for regression diagnosis
             shinyWidgets::virtualSelectInput(
               inputId = "regressionDiag",
@@ -393,20 +363,49 @@ ui <- shiny::fluidPage(
               width = "100%"
             ),
           ),
+          shiny::wellPanel(
+            # show text input to change outcome name
+            shiny::textInput(
+              inputId = "OutcomeName",
+              label = "Outcome label",
+              value = "Outcome",
+              width = "100%"
+            ),
+            # options for legend
+            shinyWidgets::virtualSelectInput(
+              inputId = "legendOptions",
+              label = "Legend position",
+              choices = c(
+                "none",
+                "top",
+                "topleft",
+                "topright",
+                "bottom",
+                "bottomleft",
+                "bottomright",
+                "left",
+                "right",
+                "center"
+              ),
+              selected = "top",
+              showValueAsTags = TRUE,
+              search = TRUE,
+              multiple = FALSE,
+              width = "100%"
+            ),
+          ),
         ),
         # add column for buttons
         shiny::column(
           3,
+          # add button to run analysis
+          shiny::actionButton(
+            inputId = "runTable3",
+            icon = shiny::icon("play"),
+            label = "Table 3",
+            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+          ),
           shiny::wellPanel(
-            # add button to run analysis
-            shiny::actionButton(
-              inputId = "runTable3",
-              icon = shiny::icon("play"),
-              label = "Table 3",
-              style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-            ),
-            shiny::br(),
-            shiny::br(),
             # add checkbox for outcome variables (OV)
             shinyWidgets::virtualSelectInput(
               inputId = "OVRidit",
@@ -418,6 +417,8 @@ ui <- shiny::fluidPage(
               multiple = TRUE,
               width = "100%"
             ),
+          ),
+          shiny::wellPanel(
             # show text input to change outcome name
             shiny::textInput(
               inputId = "OutcomeNameRidit",
