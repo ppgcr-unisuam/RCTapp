@@ -67,28 +67,13 @@ ui <- shiny::fluidPage(
   
   # Application title
   shiny::titlePanel(
-    shiny::fluidRow(
-      shiny::column(
-        11,
-        list(
-          fontawesome::fa("users"),
-          fontawesome::fa("shuffle"),
-          fontawesome::fa("users"),
-          shiny::HTML("<strong>RCTapp</strong>")
-        ),
-        windowTitle = "RCTapp | Randomized Clinical Trial"
-      ),
-      shiny::column(
-        1,
-        shiny::actionButton(
-          inputId = "help",
-          icon = shiny::icon("question"),
-          label = "Intro",
-          style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-        ),
-        style = "text-align:center;"
-      ),
+    list(
+      fontawesome::fa("users"),
+      fontawesome::fa("shuffle"),
+      fontawesome::fa("users"),
+      shiny::HTML("<strong>RCTapp</strong>")
     ),
+    windowTitle = "RCTapp | Randomized Clinical Trial"
   ),
   
   shiny::HTML(
@@ -116,7 +101,18 @@ ui <- shiny::fluidPage(
           shiny::br(),
           rintrojs::introBox(
             shiny::wellPanel(
-              shiny::HTML("<center><strong>Study design</strong></center>"),
+              shiny::fluidRow(
+                shiny::column(
+                  12,
+                  shiny::actionButton(
+                    inputId = "guide1",
+                    icon = shiny::icon("info-circle"),
+                    label = shiny::HTML("<strong>Study design</strong>"),
+                    style = "color: black; background-color: transparent; border-color: transparent;"
+                  ),
+                ),
+                style = "text-align:center;"
+              ),
               shiny::br(),
               shiny::tabsetPanel(
                 id = "tabset1",
@@ -212,7 +208,10 @@ ui <- shiny::fluidPage(
               ),
             ),
             data.step = 2,
-            data.intro = "Define the treatment groups and the endpoints of the study."
+            data.intro = "Set up the treatment groups selecting a variable name from the dataset.Define the control group and the number of endpoints. Specify the endpoint values in equal time units (e.g., days). Define the alpha level for statistical significance and the effect size interpretation rule.
+            <br>
+            <br>
+            Adjust the aesthetics of the treatment and endpoint by providing custom labels."
           ),
         ),
         shiny::column(
@@ -263,6 +262,7 @@ ui <- shiny::fluidPage(
         shiny::column(
           4,
           shiny::br(),
+          
           shiny::wellPanel(
             shiny::HTML("<center><strong>Participants' characteristics</strong></center>"),
             shiny::br(),
@@ -794,16 +794,11 @@ ui <- shiny::fluidPage(
 # Define server script
 server <- function(input, output, session) {
   
-  # initiate hints on startup with custom button and event
-  rintrojs::hintjs(session, options = list("hintButtonLabel"="Hope this hint was helpful"),
-                   events = list("onhintclose"=I('alert("Wasn\'t that hint helpful")')))
-  
   # start introjs when button is pressed with custom options and events
-  shiny::observeEvent(input$help,
+  shiny::observeEvent(input$guide1,
                       rintrojs::introjs(session, options = list("nextLabel"="Next",
                                                                 "prevLabel"="Previous",
-                                                                "skipLabel"="Skip"),
-                                        events = list("oncomplete"=I('alert("Let\'s go!")')))
+                                                                "skipLabel"="Skip"))
   )
   
   # upload excel file ---------------------------------------------------------
