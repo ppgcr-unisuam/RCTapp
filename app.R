@@ -365,150 +365,180 @@ ui <- shiny::fluidPage(
               ),
               shiny::column(
                 3,
-                # add button to run analysis
-                shiny::actionButton(
-                  inputId = "runTable2",
-                  icon = shiny::icon("play"),
-                  label = "Table 2",
-                  style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                rintrojs::introBox(
+                  # add button to run analysis
+                  shiny::actionButton(
+                    inputId = "runTable2",
+                    icon = shiny::icon("play"),
+                    label = "Table 2",
+                    style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                  ),
+                  data.step = 8,
+                  data.intro = ""
                 ),
               ),
               shiny::column(
                 3,
-                # add button to run analysis
-                shiny::actionButton(
-                  inputId = "runFigure2",
-                  icon = shiny::icon("play"),
-                  label = "Figure 2",
-                  style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                rintrojs::introBox(
+                  # add button to run analysis
+                  shiny::actionButton(
+                    inputId = "runFigure2",
+                    icon = shiny::icon("play"),
+                    label = "Figure 2",
+                    style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                  ),
+                  data.step = 9,
+                  data.intro = ""
                 ),
               ),
               style = "text-align:center;"
             ),
             shiny::br(),
-            # add tabset
-            shiny::tabsetPanel(
-              id = "tabset3",
-              shiny::tabPanel(
-                title = "Setup",
-                shiny::br(),
-                # add checkbox for outcome variables (OV)
-                shinyWidgets::virtualSelectInput(
-                  inputId = "OV",
-                  label = "Outcome variable (all columns)",
-                  choices = NULL,
-                  selected = NA,
-                  showValueAsTags = TRUE,
-                  search = TRUE,
-                  multiple = TRUE,
-                  width = "100%"
-                ),
-                # show checkbox for indicating outcomes has baseline data
-                shiny::checkboxInput(
-                  inputId = "hasBaseline",
-                  label = "Baseline data is available",
-                  value = TRUE,
-                  width = "100%"
-                ),
-                # add checkbox for covariates (COV)
-                shinyWidgets::virtualSelectInput(
-                  inputId = "COV",
-                  label = "Covariates",
-                  choices = NULL,
-                  selected = NA,
-                  showValueAsTags = TRUE,
-                  search = TRUE,
-                  multiple = TRUE,
-                  width = "100%"
-                ),
-                shiny::fluidRow(
-                  shiny::column(
-                    8,
-                    # show options for missing data
-                    shinyWidgets::virtualSelectInput(
-                      inputId = "missing",
-                      label = "Missing data imputation",
-                      choices = c("Multiple imputation", "Mean imputation", "Complete cases"),
-                      selected = "Multiple imputation",
-                      showValueAsTags = TRUE,
-                      search = TRUE,
-                      multiple = FALSE,
-                      width = "100%"
-                    ),
+            rintrojs::introBox(
+              # add checkbox for outcome variables (OV)
+              shinyWidgets::virtualSelectInput(
+                inputId = "OV",
+                label = "Outcome variable (all columns)",
+                choices = NULL,
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = TRUE,
+                width = "100%"
+              ),
+              data.step = 1,
+              data.intro = ""
+            ),
+            rintrojs::introBox(
+              # show checkbox for indicating outcomes has baseline data
+              shiny::checkboxInput(
+                inputId = "hasBaseline",
+                label = "Baseline data is available",
+                value = TRUE,
+                width = "100%"
+              ),
+              data.step = 2,
+              data.intro = ""
+            ),
+            rintrojs::introBox(
+              # add checkbox for covariates (COV)
+              shinyWidgets::virtualSelectInput(
+                inputId = "COV",
+                label = "Covariates",
+                choices = NULL,
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = TRUE,
+                width = "100%"
+              ),
+              data.step = 3,
+              data.intro = ""
+            ),
+            shiny::fluidRow(
+              shiny::column(
+                8,
+                rintrojs::introBox(
+                  # show options for missing data
+                  shinyWidgets::virtualSelectInput(
+                    inputId = "missing",
+                    label = "Missing data imputation",
+                    choices = c("Multiple imputation", "Mean imputation", "Complete cases"),
+                    selected = "Multiple imputation",
+                    showValueAsTags = TRUE,
+                    search = TRUE,
+                    multiple = FALSE,
+                    width = "100%"
                   ),
-                  shiny::column(
-                    4,
-                    # number of resamples
-                    shiny::numericInput(
-                      inputId = "MICEresamples",
-                      label = "Resamples",
-                      value = 50,
-                      min = 1,
-                      max = 100,
-                      step = 1,
-                      width = "100%"
-                    ),
-                  ),
-                ),
-                # show options for regression diagnosis
-                shinyWidgets::virtualSelectInput(
-                  inputId = "regressionDiag",
-                  label = "Diagnosis",
-                  choices = c(
-                    "Scaled Residuals",
-                    "Component-Plus-Residual",
-                    "Variance Inflation Factor",
-                    "Missing Data",
-                    "Imputed Data",
-                    "Convergence"
-                  ),
-                  selected = c(
-                    "Scaled Residuals",
-                    "Component-Plus-Residual",
-                    "Variance Inflation Factor",
-                    "Missing Data",
-                    "Imputed Data",
-                    "Convergence"
-                  ),
-                  showValueAsTags = TRUE,
-                  search = TRUE,
-                  multiple = TRUE,
-                  width = "100%"
+                  data.step = 4,
+                  data.intro = ""
                 ),
               ),
-              shiny::tabPanel(
-                title = "Aesthethics",
-                shiny::br(),
-                # show text input to change outcome name
-                shiny::textInput(
-                  inputId = "OutcomeName",
-                  label = "Outcome label",
-                  value = "Outcome",
-                  width = "100%"
-                ),
-                # options for legend
-                shinyWidgets::virtualSelectInput(
-                  inputId = "legendOptions",
-                  label = "Legend position",
-                  choices = c(
-                    "none",
-                    "top",
-                    "topleft",
-                    "topright",
-                    "bottom",
-                    "bottomleft",
-                    "bottomright",
-                    "left",
-                    "right",
-                    "center"
+              shiny::column(
+                4,
+                rintrojs::introBox(
+                  # number of resamples
+                  shiny::numericInput(
+                    inputId = "MICEresamples",
+                    label = "Resamples",
+                    value = 50,
+                    min = 1,
+                    max = 100,
+                    step = 1,
+                    width = "100%"
                   ),
-                  selected = "top",
-                  showValueAsTags = TRUE,
-                  search = TRUE,
-                  multiple = FALSE,
-                  width = "100%"
+                  data.step = 4,
+                  data.intro = ""
                 ),
               ),
+            ),
+            rintrojs::introBox(
+              # show options for regression diagnosis
+              shinyWidgets::virtualSelectInput(
+                inputId = "regressionDiag",
+                label = "Diagnosis",
+                choices = c(
+                  "Scaled Residuals",
+                  "Component-Plus-Residual",
+                  "Variance Inflation Factor",
+                  "Missing Data",
+                  "Imputed Data",
+                  "Convergence"
+                ),
+                selected = c(
+                  "Scaled Residuals",
+                  "Component-Plus-Residual",
+                  "Variance Inflation Factor",
+                  "Missing Data",
+                  "Imputed Data",
+                  "Convergence"
+                ),
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = TRUE,
+                width = "100%"
+              ),
+              data.step = 5,
+              data.intro = ""
+            ),
+          ),
+          shiny::wellPanel(
+            rintrojs::introBox(
+              # show text input to change outcome name
+              shiny::textInput(
+                inputId = "OutcomeName",
+                label = "Outcome label",
+                value = "Outcome",
+                width = "100%"
+              ),
+              data.step = 6,
+              data.intro = ""
+            ),
+            rintrojs::introBox(
+              # options for legend
+              shinyWidgets::virtualSelectInput(
+                inputId = "legendOptions",
+                label = "Legend position",
+                choices = c(
+                  "none",
+                  "top",
+                  "topleft",
+                  "topright",
+                  "bottom",
+                  "bottomleft",
+                  "bottomright",
+                  "left",
+                  "right",
+                  "center"
+                ),
+                selected = "top",
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = FALSE,
+                width = "100%"
+              ),
+              data.step = 7,
+              data.intro = ""
             ),
           ),
         ),
@@ -529,45 +559,49 @@ ui <- shiny::fluidPage(
               ),
               shiny::column(
                 3,
-                # add button to run analysis
-                shiny::actionButton(
-                  inputId = "runTable3",
-                  icon = shiny::icon("play"),
-                  label = "Table 3",
-                  style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                rintrojs::introBox(
+                  # add button to run analysis
+                  shiny::actionButton(
+                    inputId = "runTable3",
+                    icon = shiny::icon("play"),
+                    label = "Table 3",
+                    style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                  ),
+                  data.step = 3,
+                  data.intro = ""
                 ),
               ),
               style = "text-align:center;"
             ),
             shiny::br(),
-            shiny::tabsetPanel(
-              id = "tabset4",
-              shiny::tabPanel(
-                title = "Setup",
-                shiny::br(),
-                # add checkbox for outcome variables (OV)
-                shinyWidgets::virtualSelectInput(
-                  inputId = "OVRidit",
-                  label = "Outcome variable (all columns)",
-                  choices = NULL,
-                  selected = NA,
-                  showValueAsTags = TRUE,
-                  search = TRUE,
-                  multiple = TRUE,
-                  width = "100%"
-                ),
+            rintrojs::introBox(
+              # add checkbox for outcome variables (OV)
+              shinyWidgets::virtualSelectInput(
+                inputId = "OVRidit",
+                label = "Outcome variable (all columns)",
+                choices = NULL,
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = TRUE,
+                width = "100%"
               ),
-              shiny::tabPanel(
-                title = "Aesthetics",
-                shiny::br(),
-                # show text input to change outcome name
-                shiny::textInput(
-                  inputId = "OutcomeNameRidit",
-                  label = "Outcome label",
-                  value = "Outcome",
-                  width = "100%"
-                ),
+              data.step = 1,
+              data.intro = ""
+            ),
+          ),
+          shiny::wellPanel(
+            shiny::br(),
+            rintrojs::introBox(
+              # show text input to change outcome name
+              shiny::textInput(
+                inputId = "OutcomeNameRidit",
+                label = "Outcome label",
+                value = "Outcome",
+                width = "100%"
               ),
+              data.step = 2,
+              data.intro = ""
             ),
           ),
         ),
@@ -857,13 +891,21 @@ server <- function(input, output, session) {
   # for multiple tabsets
   guidelist <- shiny::reactive(data.table::data.table(
     tab = c("guide1", "guide1", "guide1", "guide1", "guide1", "guide1", "guide1", "guide1",
-            "guide2", "guide2", "guide2", "guide2"),
+            "guide2", "guide2", "guide2", "guide2",
+            "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3",
+            "guide4", "guide4", "guide4"),
     step = c(1,2,3,4,5,6,7,8,
-             1,2,3,4),
+             1,2,3,4,
+             1,2,3,4,5,6,7,8,9,
+             1,2,3),
     element = c("#BGF", "#controlgroup", "#endpointN", "#endpointValues", "#alpha", "#effectSize", "#treatmentNames", "#endpointNames",
-                "#BV", "#showPvalue", "#maxlevels", "#runTable1"),
+                "#BV", "#showPvalue", "#maxlevels", "#runTable1",
+                "#OV", "#COV", "#missing", "#MICEresamples", "#regressionDiag", "#OutcomeName", "#legendOptions", "#runTable2", "#runFigure2", 
+                "#OVRidit", "#OutcomeNameRidit", "#runTable3"),
     intro = c("#BGF", "#controlgroup", "#endpointN", "#endpointValues", "#alpha", "#effectSize", "#treatmentNames", "#endpointNames",
-              "#BV", "#showPvalue", "#maxlevels", "#runTable1")
+              "#BV", "#showPvalue", "#maxlevels", "#runTable1",
+              "#OV", "#COV", "#missing", "#MICEresamples", "#regressionDiag", "#OutcomeName", "#legendOptions", "#runTable2", "#runFigure2",
+              "#OVRidit", "#OutcomeNameRidit", "#runTable3")
   ))
   
   # start introjs when button is pressed with custom options and events
@@ -887,6 +929,30 @@ server <- function(input, output, session) {
                           "showBullets"="false", "showProgress"="true", 
                           "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="Skip",
                           steps=guidelist()[tab == "guide2"]
+                        )
+      )
+    }
+  )
+  shiny::observeEvent(
+    eventExpr = input$guide3,
+    handlerExpr = {
+      rintrojs::introjs(session, 
+                        options = list(
+                          "showBullets"="false", "showProgress"="true", 
+                          "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="Skip",
+                          steps=guidelist()[tab == "guide3"]
+                        )
+      )
+    }
+  )
+  shiny::observeEvent(
+    eventExpr = input$guide4,
+    handlerExpr = {
+      rintrojs::introjs(session, 
+                        options = list(
+                          "showBullets"="false", "showProgress"="true", 
+                          "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="Skip",
+                          steps=guidelist()[tab == "guide4"]
                         )
       )
     }
