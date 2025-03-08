@@ -112,6 +112,17 @@ ui <- shiny::fluidPage(
               ),
               style = "text-align:center;"
             ),
+            shiny::br(),
+              # input Excel file data
+              shiny::fileInput(
+                inputId = "xlsxFile",
+                label = NULL,
+                multiple = FALSE,
+                buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
+                accept = c(".xlsx"),
+                width = "100%",
+                placeholder = "XLSX file"
+            ),
             rintrojs::introBox(
               # add checkbox for between-subject factors (BGF)
               shinyWidgets::virtualSelectInput(
@@ -124,22 +135,7 @@ ui <- shiny::fluidPage(
                 multiple = FALSE,
                 width = "100%"
               ),
-              data.step = 2,
-              data.intro = ""
-            ),
-            rintrojs::introBox(
-              # show options for control group
-              shinyWidgets::virtualSelectInput(
-                inputId = "controlgroup",
-                label = "Control group",
-                choices = NULL,
-                selected = NA,
-                showValueAsTags = TRUE,
-                search = TRUE,
-                multiple = FALSE,
-                width = "100%"
-              ),
-              data.step = 3,
+              data.step = 1,
               data.intro = ""
             ),
             rintrojs::introBox(
@@ -152,7 +148,7 @@ ui <- shiny::fluidPage(
                 step = 1,
                 width = "100%"
               ),
-              data.step = 4,
+              data.step = 2,
               data.intro = ""
             ),
             rintrojs::introBox(
@@ -163,7 +159,7 @@ ui <- shiny::fluidPage(
                 value = "0,1",
                 width = "100%"
               ),
-              data.step = 5,
+              data.step = 3,
               data.intro = ""
             ),
             shiny::fluidRow(
@@ -180,7 +176,7 @@ ui <- shiny::fluidPage(
                     step = 0.001,
                     width = "100%"
                   ),
-                  data.step = 6,
+                  data.step = 4,
                   data.intro = ""
                 ),
               ),
@@ -198,7 +194,7 @@ ui <- shiny::fluidPage(
                     multiple = FALSE,
                     width = "100%"
                   ),
-                  data.step = 7,
+                  data.step = 5,
                   data.intro = ""
                 ),
               ),
@@ -213,7 +209,22 @@ ui <- shiny::fluidPage(
                 value = "Control,Intervention",
                 width = "100%"
               ),
-              data.step = 8,
+              data.step = 6,
+              data.intro = ""
+            ),
+            rintrojs::introBox(
+              # show options for control group
+              shinyWidgets::virtualSelectInput(
+                inputId = "controlgroup",
+                label = "Control group",
+                choices = NULL,
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = FALSE,
+                width = "100%"
+              ),
+              data.step = 7,
               data.intro = ""
             ),
             rintrojs::introBox(
@@ -224,7 +235,7 @@ ui <- shiny::fluidPage(
                 value = "Baseline,Follow-up",
                 width = "100%"
               ),
-              data.step = 9,
+              data.step = 8,
               data.intro = ""
             ),
           ),
@@ -236,20 +247,6 @@ ui <- shiny::fluidPage(
             shiny::fluidRow(
               shiny::column(
                 11,
-                rintrojs::introBox(
-                  # input Excel file data
-                  shiny::fileInput(
-                    inputId = "InputFile",
-                    label = NULL,
-                    multiple = FALSE,
-                    buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
-                    accept = c(".xlsx"),
-                    width = "100%",
-                    placeholder = "XLSX file"
-                  ),
-                  data.step = 1,
-                  data.intro = ""
-                ),
                 style = "text-align:center;"
               ),
               shiny::column(
@@ -333,8 +330,8 @@ ui <- shiny::fluidPage(
             ),
           ),
           shiny::wellPanel(
-            # show maxlevels for between-subject factors
             rintrojs::introBox(
+              # show maxlevels for between-subject factors
               shiny::numericInput(
                 inputId = "maxlevels",
                 label = "Max levels (categorical variables only)",
@@ -467,7 +464,7 @@ ui <- shiny::fluidPage(
                     step = 1,
                     width = "100%"
                   ),
-                  data.step = 4,
+                  data.step = 5,
                   data.intro = ""
                 ),
               ),
@@ -498,7 +495,7 @@ ui <- shiny::fluidPage(
                 multiple = TRUE,
                 width = "100%"
               ),
-              data.step = 5,
+              data.step = 6,
               data.intro = ""
             ),
           ),
@@ -511,7 +508,7 @@ ui <- shiny::fluidPage(
                 value = "Outcome",
                 width = "100%"
               ),
-              data.step = 6,
+              data.step = 7,
               data.intro = ""
             ),
             rintrojs::introBox(
@@ -537,12 +534,11 @@ ui <- shiny::fluidPage(
                 multiple = FALSE,
                 width = "100%"
               ),
-              data.step = 7,
+              data.step = 8,
               data.intro = ""
             ),
           ),
         ),
-        # add column for buttons
         shiny::column(
           4,
           shiny::br(),
@@ -609,8 +605,7 @@ ui <- shiny::fluidPage(
     ),
     # tab for reporting the statistical analysis plan
     shiny::tabPanel(
-      title = "Plan",
-      icon = fontawesome::fa("file-alt"),
+      title = list(fontawesome::fa("file-alt"), "Plan"),
       shiny::wellPanel(
         # show text output
         shiny::htmlOutput("SAP"),
@@ -627,8 +622,7 @@ ui <- shiny::fluidPage(
     ),
     # tab for table 1 of results
     shiny::tabPanel(
-      title = "Table 1",
-      icon = fontawesome::fa("table"),
+      title = list(fontawesome::fa("table"), "Table 1"),
       shiny::wellPanel(
         # show table of results
         DT::dataTableOutput("table1"),
@@ -645,8 +639,7 @@ ui <- shiny::fluidPage(
     ),
     # tab for table 2 of results
     shiny::tabPanel(
-      title = "Table 2",
-      icon = fontawesome::fa("table"),
+      title = list(fontawesome::fa("table"), "Table 2"),
       shiny::wellPanel(
         # show table of results
         DT::dataTableOutput("table2"),
@@ -666,8 +659,7 @@ ui <- shiny::fluidPage(
     ),
     # tab for plot of results
     shiny::tabPanel(
-      title = "Figure 2",
-      icon = fontawesome::fa("chart-line"),
+      title = list(fontawesome::fa("chart-line"), "Figure 2"),
       shiny::wellPanel(
         # show plot of results
         shiny::plotOutput("plot"),
@@ -701,8 +693,7 @@ ui <- shiny::fluidPage(
       ),
     ),
     shiny::tabPanel(
-      icon = list(fontawesome::fa("stethoscope")),
-      title = "Diagnostics",
+      title = list(fontawesome::fa("stethoscope"), "Diagnostics"),
       shiny::wellPanel(
         # add tab panel
         shiny::tabsetPanel(
@@ -760,15 +751,13 @@ ui <- shiny::fluidPage(
       ),
     ),
     shiny::tabPanel(
-      icon = list(fontawesome::fa("book-open")),
-      title = "References",
+      title = list(fontawesome::fa("book-open"), "References"),
       shiny::br(),
       # session info text output
       shiny::htmlOutput("gratrep")
     ),
     shiny::tabPanel(
-      icon = list(fontawesome::fa("file-lines")),
-      title = "Publications",
+      title = list(fontawesome::fa("file-lines"), "Publications"),
       shiny::br(),
       shiny::HTML(
         "Castro, J., Correia, L., Donato, B. de S., Arruda, B., Agulhari, F., Pellegrini, M. J., Belache, F. T. C., de Souza, C. P., Fernandez, J., Nogueira, L. A. C., Reis, F. J. J., Ferreira, A. de S., & Meziat-Filho, N. (2022). Cognitive functional therapy compared with core exercise and manual therapy in patients with chronic low back pain: randomised controlled trial. In Pain (Vol. 163, Issue 12, pp. 2430–2437). Ovid Technologies (Wolters Kluwer Health). <a href=\"https://doi.org/10.1097/j.pain.0000000000002644 \">https://doi.org/10.1097/j.pain.0000000000002644</a>"
@@ -786,8 +775,7 @@ ui <- shiny::fluidPage(
       shiny::br(),
     ),
     shiny::tabPanel(
-      icon = list(fontawesome::fa("people-group")),
-      title = "Credits",
+      title = list(fontawesome::fa("people-group"), "Credits"),
       shiny::br(),
       shiny::HTML(
         "<b>Arthur de Sá Ferreira, DSc</b> (Developer)"),
@@ -898,11 +886,11 @@ server <- function(input, output, session) {
              1,2,3,4,
              1,2,3,4,5,6,7,8,9,
              1,2,3),
-    element = c("#BGF", "#controlgroup", "#endpointN", "#endpointValues", "#alpha", "#effectSize", "#treatmentNames", "#endpointNames",
+    element = c("#BGF", "#endpointN", "#endpointValues", "#alpha", "#effectSize", "#treatmentNames", "#controlgroup", "#endpointNames",
                 "#BV", "#showPvalue", "#maxlevels", "#runTable1",
                 "#OV", "#COV", "#missing", "#MICEresamples", "#regressionDiag", "#OutcomeName", "#legendOptions", "#runTable2", "#runFigure2", 
                 "#OVRidit", "#OutcomeNameRidit", "#runTable3"),
-    intro = c("#BGF", "#controlgroup", "#endpointN", "#endpointValues", "#alpha", "#effectSize", "#treatmentNames", "#endpointNames",
+    intro = c("#BGF", "#endpointN", "#endpointValues", "#alpha", "#effectSize", "#treatmentNames", "#controlgroup", "#endpointNames",
               "#BV", "#showPvalue", "#maxlevels", "#runTable1",
               "#OV", "#COV", "#missing", "#MICEresamples", "#regressionDiag", "#OutcomeName", "#legendOptions", "#runTable2", "#runFigure2",
               "#OVRidit", "#OutcomeNameRidit", "#runTable3")
@@ -915,7 +903,7 @@ server <- function(input, output, session) {
       rintrojs::introjs(session, 
                         options = list(
                           "showBullets"="false", "showProgress"="true", 
-                          "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="Skip",
+                          "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="",
                           steps=guidelist()[tab == "guide1"]
                         )
       )
@@ -927,7 +915,7 @@ server <- function(input, output, session) {
       rintrojs::introjs(session, 
                         options = list(
                           "showBullets"="false", "showProgress"="true", 
-                          "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="Skip",
+                          "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="",
                           steps=guidelist()[tab == "guide2"]
                         )
       )
@@ -939,7 +927,7 @@ server <- function(input, output, session) {
       rintrojs::introjs(session, 
                         options = list(
                           "showBullets"="false", "showProgress"="true", 
-                          "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="Skip",
+                          "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="",
                           steps=guidelist()[tab == "guide3"]
                         )
       )
@@ -951,7 +939,7 @@ server <- function(input, output, session) {
       rintrojs::introjs(session, 
                         options = list(
                           "showBullets"="false", "showProgress"="true", 
-                          "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="Skip",
+                          "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="",
                           steps=guidelist()[tab == "guide4"]
                         )
       )
@@ -961,7 +949,7 @@ server <- function(input, output, session) {
   # upload excel file ---------------------------------------------------------
   values <- shiny::reactiveValues(upload_state = NULL)
   
-  shiny::observeEvent(input$InputFile, {
+  shiny::observeEvent(input$xlsxFile, {
     values$upload_state <- 'uploaded'
   })
   
@@ -1049,7 +1037,7 @@ server <- function(input, output, session) {
     if (is.null(values$upload_state)) {
       return(NULL)
     } else if (values$upload_state == 'uploaded') {
-      return(input[["InputFile"]][["datapath"]])
+      return(input[["xlsxFile"]][["datapath"]])
     } else if (values$upload_state == 'restart') {
       return(NULL)
     }
