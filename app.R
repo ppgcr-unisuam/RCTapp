@@ -21,15 +21,15 @@ library(dplyr)
 library(htmltools)
 
 # source all scripts
+source("RCT-Diagnosis.R", local = TRUE) # diagnosis on original dataset and model
+source("RCT-EffectSizes.R", local = TRUE) # effect size interpretation and reporting in text format
+source("RCT-Figure2.R", local = TRUE) # numeric variables, plot of descriptive analysis (mean and CI)
 source("RCT-NA.R", local = TRUE) # to convert specific values to NA
+source("RCT-Report.R", local = TRUE) # report the statistical analysis plan in text format
 source("RCT-Table1.R", local = TRUE) # numeric and categorical variables, descriptive analysis, between-factor
 source("RCT-Table2a.R", local = TRUE) # numeric variables, linear mixed model analysis, between- AND within-factor WITH baseline adjustment
 source("RCT-Table2b.R", local = TRUE) # numeric variables, linear mixed model analysis, between- AND within-factor WITHOUT baseline adjustment
-source("RCT-Figure2.R", local = TRUE) # numeric variables, plot of descriptive analysis (mean and CI)
 source("RCT-Table3.R", local = TRUE) #  ordinal variables, ridit analysis, ONLY within-factor
-source("RCT-Diagnosis.R", local = TRUE) # diagnosis on original dataset and model
-source("RCT-Report.R", local = TRUE) # report the statistical analysis plan in text format
-source("RCT-EffectSizes.R", local = TRUE) # effect size interpretation and reporting in text format
 
 # use this code to debug
 # rsconnect::showLogs()
@@ -99,129 +99,144 @@ ui <- shiny::fluidPage(
         shiny::column(
           3,
           shiny::br(),
-          rintrojs::introBox(
-            shiny::wellPanel(
-              shiny::fluidRow(
-                shiny::column(
-                  12,
-                  shiny::actionButton(
-                    inputId = "guide1",
-                    icon = shiny::icon("info-circle"),
-                    label = shiny::HTML("<strong>Study design</strong>"),
-                    style = "color: black; background-color: transparent; border-color: transparent;"
-                  ),
+          shiny::wellPanel(
+            shiny::fluidRow(
+              shiny::column(
+                12,
+                shiny::actionButton(
+                  inputId = "guide1",
+                  icon = shiny::icon("info-circle"),
+                  label = shiny::HTML("<strong>Study design</strong>"),
+                  style = "color: black; background-color: transparent; border-color: transparent;"
                 ),
-                style = "text-align:center;"
               ),
-              shiny::br(),
-              shiny::tabsetPanel(
-                id = "tabset1",
-                shiny::tabPanel(
-                  title = "Setup",
-                  shiny::br(),
-                  # add checkbox for between-subject factors (BGF)
-                  shinyWidgets::virtualSelectInput(
-                    inputId = "BGF",
-                    label = "Treatment groups",
-                    choices = NULL,
-                    selected = NA,
-                    showValueAsTags = TRUE,
-                    search = TRUE,
-                    multiple = FALSE,
-                    width = "100%"
-                  ),
-                  # show options for control group
-                  shinyWidgets::virtualSelectInput(
-                    inputId = "controlgroup",
-                    label = "Control group",
-                    choices = NULL,
-                    selected = NA,
-                    showValueAsTags = TRUE,
-                    search = TRUE,
-                    multiple = FALSE,
-                    width = "100%"
-                  ),
-                  # number of endpoits
+              style = "text-align:center;"
+            ),
+            rintrojs::introBox(
+              # add checkbox for between-subject factors (BGF)
+              shinyWidgets::virtualSelectInput(
+                inputId = "BGF",
+                label = "Treatment groups",
+                choices = NULL,
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = FALSE,
+                width = "100%"
+              ),
+              data.step = 2,
+              data.intro = ""
+            ),
+            rintrojs::introBox(
+              # show options for control group
+              shinyWidgets::virtualSelectInput(
+                inputId = "controlgroup",
+                label = "Control group",
+                choices = NULL,
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = FALSE,
+                width = "100%"
+              ),
+              data.step = 3,
+              data.intro = ""
+            ),
+            rintrojs::introBox(
+              # number of endpoits
+              shiny::numericInput(
+                inputId = "endpointN",
+                label = "Endpoints",
+                value = 2,
+                min = 2,
+                step = 1,
+                width = "100%"
+              ),
+              data.step = 4,
+              data.intro = ""
+            ),
+            rintrojs::introBox(
+              # show text for endpoint
+              shiny::textInput(
+                inputId = "endpointValues",
+                label = "Endpoint value (csv)",
+                value = "0,1",
+                width = "100%"
+              ),
+              data.step = 5,
+              data.intro = ""
+            ),
+            shiny::fluidRow(
+              shiny::column(
+                6,
+                rintrojs::introBox(
+                  # alpha level for statistical significance
                   shiny::numericInput(
-                    inputId = "endpointN",
-                    label = "Endpoints",
-                    value = 2,
-                    min = 2,
-                    step = 1,
+                    inputId = "alpha",
+                    label = "Alpha level",
+                    value = 0.05,
+                    min = 0.001,
+                    max = 0.999,
+                    step = 0.001,
                     width = "100%"
                   ),
-                  # show text for endpoint
-                  shiny::textInput(
-                    inputId = "endpointValues",
-                    label = "Endpoint value (csv)",
-                    value = "0,1",
-                    width = "100%"
-                  ),
-                  shiny::fluidRow(
-                    shiny::column(
-                      6,
-                      # alpha level for statistical significance
-                      shiny::numericInput(
-                        inputId = "alpha",
-                        label = "Alpha level",
-                        value = 0.05,
-                        min = 0.001,
-                        max = 0.999,
-                        step = 0.001,
-                        width = "100%"
-                      ),
-                    ),
-                    shiny::column(
-                      6,
-                      # effect size interpretation rules
-                      shinyWidgets::virtualSelectInput(
-                        inputId = "effectSize",
-                        label = "Effect size",
-                        choices = c("Cohen (1988)", "Gignac (2016)", "Sawilowsky (2009)", "Lovakov (2021)"),
-                        selected = "Cohen (1988)",
-                        showValueAsTags = TRUE,
-                        search = FALSE,
-                        multiple = FALSE,
-                        width = "100%"
-                      ),
-                    ),
-                  ),
+                  data.step = 6,
+                  data.intro = ""
                 ),
-                shiny::tabPanel(
-                  title = "Aesthetics",
-                  shiny::br(),
-                  # show text input to change treatment group names
-                  shiny::textInput(
-                    inputId = "treatmentNames",
-                    label = "Treatment labels (csv)",
-                    value = "Control,Intervention",
+              ),
+              shiny::column(
+                6,
+                rintrojs::introBox(
+                  # effect size interpretation rules
+                  shinyWidgets::virtualSelectInput(
+                    inputId = "effectSize",
+                    label = "Effect size",
+                    choices = c("Cohen (1988)", "Gignac (2016)", "Sawilowsky (2009)", "Lovakov (2021)"),
+                    selected = "Cohen (1988)",
+                    showValueAsTags = TRUE,
+                    search = FALSE,
+                    multiple = FALSE,
                     width = "100%"
                   ),
-                  # show text for endpoint names
-                  shiny::textInput(
-                    inputId = "endpointNames",
-                    label = "Endpoint labels (csv)",
-                    value = "Baseline,Follow-up",
-                    width = "100%"
-                  ),
+                  data.step = 7,
+                  data.intro = ""
                 ),
               ),
             ),
-            data.step = 2,
-            data.intro = "Set up the treatment groups selecting a variable name from the dataset.Define the control group and the number of endpoints. Specify the endpoint values in equal time units (e.g., days). Define the alpha level for statistical significance and the effect size interpretation rule.
-            <br>
-            <br>
-            Adjust the aesthetics of the treatment and endpoint by providing custom labels."
+          ),
+          shiny::wellPanel(
+            rintrojs::introBox(
+              # show text input to change treatment group names
+              shiny::textInput(
+                inputId = "treatmentNames",
+                label = "Treatment labels (csv)",
+                value = "Control,Intervention",
+                width = "100%"
+              ),
+              data.step = 8,
+              data.intro = ""
+            ),
+            rintrojs::introBox(
+              # show text for endpoint names
+              shiny::textInput(
+                inputId = "endpointNames",
+                label = "Endpoint labels (csv)",
+                value = "Baseline,Follow-up",
+                width = "100%"
+              ),
+              data.step = 9,
+              data.intro = ""
+            ),
           ),
         ),
         shiny::column(
           9,
           shiny::br(),
-          rintrojs::introBox(
-            shiny::wellPanel(
-              shiny::fluidRow(
-                shiny::column(
-                  11,
+          shiny::wellPanel(
+            shiny::fluidRow(
+              shiny::column(
+                11,
+                rintrojs::introBox(
                   # input Excel file data
                   shiny::fileInput(
                     inputId = "InputFile",
@@ -232,25 +247,25 @@ ui <- shiny::fluidPage(
                     width = "100%",
                     placeholder = "XLSX file"
                   ),
-                  style = "text-align:center;"
+                  data.step = 1,
+                  data.intro = ""
                 ),
-                shiny::column(
-                  1,
-                  shiny::tags$a(
-                    id = "restart",
-                    class = "btn btn-primary",
-                    href = "javascript:history.go(0)",
-                    shiny::HTML('<i class="fa fa-refresh fa-1x"></i>'),
-                    title = "restart",
-                    style = "color:white; border-color:white; border-radius:100%;"
-                  ),
-                  style = "text-align:center;"
-                ),
+                style = "text-align:center;"
               ),
-              DT::DTOutput(outputId = "rawtable"),
+              shiny::column(
+                1,
+                shiny::tags$a(
+                  id = "restart",
+                  class = "btn btn-primary",
+                  href = "javascript:history.go(0)",
+                  shiny::HTML('<i class="fa fa-refresh fa-1x"></i>'),
+                  title = "restart",
+                  style = "color:white; border-color:white; border-radius:100%;"
+                ),
+                style = "text-align:center;"
+              ),
             ),
-            data.step = 1,
-            data.intro = "Upload the data in wide format (one row per subject, multiple columns for repeated measures)."
+            DT::DTOutput(outputId = "rawtable"),
           ),
         ),
       ),
@@ -262,7 +277,6 @@ ui <- shiny::fluidPage(
         shiny::column(
           4,
           shiny::br(),
-          
           shiny::wellPanel(
             shiny::fluidRow(
               shiny::column(
@@ -270,61 +284,68 @@ ui <- shiny::fluidPage(
                 shiny::actionButton(
                   inputId = "guide2",
                   icon = shiny::icon("info-circle"),
-                  label = shiny::HTML("<strong>Participants'characteristics</strong>"),
+                  label = shiny::HTML("<strong>Participants' characteristics</strong>"),
                   style = "color: black; background-color: transparent; border-color: transparent;"
                 ),
               ),
               shiny::column(
                 3,
-                # add action button to run table 1
-                shiny::actionButton(
-                  inputId = "runTable1",
-                  icon = shiny::icon("play"),
-                  label = "Table 1",
-                  style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                rintrojs::introBox(
+                  # add action button to run table 1
+                  shiny::actionButton(
+                    inputId = "runTable1",
+                    icon = shiny::icon("play"),
+                    label = "Table 1",
+                    style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                  ),
+                  data.step = 4,
+                  data.intro = ""
                 ),
               ),
               style = "text-align:center;"
             ),
             shiny::br(),
-            shiny::tabsetPanel(
-              id = "tabset1",
-              shiny::tabPanel(
-                title = "Setup",
-                shiny::br(),
-                # add checkbox for baseline variables (BV)
-                shinyWidgets::virtualSelectInput(
-                  inputId = "BV",
-                  label = "Baseline variables (all types)",
-                  choices = NULL,
-                  selected = NA,
-                  showValueAsTags = TRUE,
-                  search = TRUE,
-                  multiple = TRUE,
-                  width = "100%"
-                ),
-                # add checkbox for show p-value
-                shiny::checkboxInput(
-                  inputId = "showPvalue",
-                  label = "Show P-value",
-                  value = FALSE,
-                  width = "100%"
-                ),
+            rintrojs::introBox(
+              # add checkbox for baseline variables (BV)
+              shinyWidgets::virtualSelectInput(
+                inputId = "BV",
+                label = "Baseline variables (all types)",
+                choices = NULL,
+                selected = NA,
+                showValueAsTags = TRUE,
+                search = TRUE,
+                multiple = TRUE,
+                width = "100%"
               ),
-              shiny::tabPanel(
-                title = "Aesthetics",
-                shiny::br(),
-                # show maxlevels for between-subject factors
-                shiny::numericInput(
-                  inputId = "maxlevels",
-                  label = "Max levels (categorical variables only)",
-                  value = 5,
-                  min = 1,
-                  max = 10,
-                  step = 1,
-                  width = "100%"
-                ),
+              data.step = 1,
+              data.intro = ""
+            ),
+            rintrojs::introBox(
+              # add checkbox for show p-value
+              shiny::checkboxInput(
+                inputId = "showPvalue",
+                label = "Show P-value",
+                value = FALSE,
+                width = "100%"
               ),
+              data.step = 2,
+              data.intro = ""
+            ),
+          ),
+          shiny::wellPanel(
+            # show maxlevels for between-subject factors
+            rintrojs::introBox(
+              shiny::numericInput(
+                inputId = "maxlevels",
+                label = "Max levels (categorical variables only)",
+                value = 5,
+                min = 1,
+                max = 10,
+                step = 1,
+                width = "100%"
+              ),
+              data.step = 3,
+              data.intro = ""
             ),
           ),
         ),
@@ -367,7 +388,7 @@ ui <- shiny::fluidPage(
             shiny::br(),
             # add tabset
             shiny::tabsetPanel(
-              id = "tabset2",
+              id = "tabset3",
               shiny::tabPanel(
                 title = "Setup",
                 shiny::br(),
@@ -833,32 +854,42 @@ ui <- shiny::fluidPage(
 # Define server script
 server <- function(input, output, session) {
   
-  # start introjs when button is pressed with custom options and events
-  shiny::observeEvent(input$guide1,
-                      rintrojs::introjs(session, options = list("nextLabel"="Next",
-                                                                "prevLabel"="Previous",
-                                                                "skipLabel"="Skip"))
-  )
+  # for multiple tabsets
+  guidelist <- shiny::reactive(data.table::data.table(
+    tab = c("guide1", "guide1", "guide1", "guide1", "guide1", "guide1", "guide1", "guide1",
+            "guide2", "guide2", "guide2", "guide2"),
+    step = c(1,2,3,4,5,6,7,8,
+             1,2,3,4),
+    element = c("#BGF", "#controlgroup", "#endpointN", "#endpointValues", "#alpha", "#effectSize", "#treatmentNames", "#endpointNames",
+                "#BV", "#showPvalue", "#maxlevels", "#runTable1"),
+    intro = c("#BGF", "#controlgroup", "#endpointN", "#endpointValues", "#alpha", "#effectSize", "#treatmentNames", "#endpointNames",
+              "#BV", "#showPvalue", "#maxlevels", "#runTable1")
+  ))
   
   # start introjs when button is pressed with custom options and events
-  shiny::observeEvent(input$guide2,
-                      rintrojs::introjs(session, options = list("nextLabel"="Next",
-                                                                "prevLabel"="Previous",
-                                                                "skipLabel"="Skip"))
+  shiny::observeEvent(
+    eventExpr = input$guide1,
+    handlerExpr = {
+      rintrojs::introjs(session, 
+                        options = list(
+                          "showBullets"="false", "showProgress"="true", 
+                          "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="Skip",
+                          steps=guidelist()[tab == "guide1"]
+                        )
+      )
+    }
   )
-  
-  # start introjs when button is pressed with custom options and events
-  shiny::observeEvent(input$guide3,
-                      rintrojs::introjs(session, options = list("nextLabel"="Next",
-                                                                "prevLabel"="Previous",
-                                                                "skipLabel"="Skip"))
-  )
-  
-  # start introjs when button is pressed with custom options and events
-  shiny::observeEvent(input$guide4,
-                      rintrojs::introjs(session, options = list("nextLabel"="Next",
-                                                                "prevLabel"="Previous",
-                                                                "skipLabel"="Skip"))
+  shiny::observeEvent(
+    eventExpr = input$guide2,
+    handlerExpr = {
+      rintrojs::introjs(session, 
+                        options = list(
+                          "showBullets"="false", "showProgress"="true", 
+                          "showStepNumbers"="false","nextLabel"="Next","prevLabel"="Previous","skipLabel"="Skip",
+                          steps=guidelist()[tab == "guide2"]
+                        )
+      )
+    }
   )
   
   # upload excel file ---------------------------------------------------------
