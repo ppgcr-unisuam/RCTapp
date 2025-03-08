@@ -890,7 +890,7 @@ server <- function(input, output, session) {
                 "#BV", "#showPvalue", "#maxlevels", "#runTable1",
                 "#OV", "#COV", "#missing", "#MICEresamples", "#regressionDiag", "#OutcomeName", "#legendOptions", "#runTable2", "#runFigure2", 
                 "#OVRidit", "#OutcomeNameRidit", "#runTable3"),
-    intro = c("#BGF", "#endpointN", "#endpointValues", "#alpha", "#effectSize", "#treatmentNames", "#controlgroup", "#endpointNames",
+    intro = c("Select the between-group factor. The list of variables comprises all columns in your dataset.", "Select the number of endpoints, including the baseline.", "Report the endpoints in the same time unit (e.g., days or months), starting baseline at 0. Use comma separated values.", "Select the pre-specified type-I error.", "Select the rule for interpreting Cohen's d.", "Edit the group labels. These labels appear in tables and figure, and as options to select the control group below. Use comma separated values.", "Select the control group. This group is used as reference for between-group comparisons.", "Edit the endpoint names. These labels appears in tables and figure. Use comma separated values.",
               "#BV", "#showPvalue", "#maxlevels", "#runTable1",
               "#OV", "#COV", "#missing", "#MICEresamples", "#regressionDiag", "#OutcomeName", "#legendOptions", "#runTable2", "#runFigure2",
               "#OVRidit", "#OutcomeNameRidit", "#runTable3")
