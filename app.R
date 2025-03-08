@@ -264,7 +264,28 @@ ui <- shiny::fluidPage(
           shiny::br(),
           
           shiny::wellPanel(
-            shiny::HTML("<center><strong>Participants' characteristics</strong></center>"),
+            shiny::fluidRow(
+              shiny::column(
+                9,
+                shiny::actionButton(
+                  inputId = "guide2",
+                  icon = shiny::icon("info-circle"),
+                  label = shiny::HTML("<strong>Participants'characteristics</strong>"),
+                  style = "color: black; background-color: transparent; border-color: transparent;"
+                ),
+              ),
+              shiny::column(
+                3,
+                # add action button to run table 1
+                shiny::actionButton(
+                  inputId = "runTable1",
+                  icon = shiny::icon("play"),
+                  label = "Table 1",
+                  style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                ),
+              ),
+              style = "text-align:center;"
+            ),
             shiny::br(),
             shiny::tabsetPanel(
               id = "tabset1",
@@ -306,19 +327,43 @@ ui <- shiny::fluidPage(
               ),
             ),
           ),
-          # add action button to run table 1
-          shiny::actionButton(
-            inputId = "runTable1",
-            icon = shiny::icon("play"),
-            label = "Table 1",
-            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-          ),
         ),
         shiny::column(
           4,
           shiny::br(),
           shiny::wellPanel(
-            shiny::HTML("<center><strong>Numerical outcome</strong></center>"),
+            shiny::fluidRow(
+              shiny::column(
+                6,
+                shiny::actionButton(
+                  inputId = "guide3",
+                  icon = shiny::icon("info-circle"),
+                  label = shiny::HTML("<strong>Numerical outcome</strong>"),
+                  style = "color: black; background-color: transparent; border-color: transparent;"
+                ),
+              ),
+              shiny::column(
+                3,
+                # add button to run analysis
+                shiny::actionButton(
+                  inputId = "runTable2",
+                  icon = shiny::icon("play"),
+                  label = "Table 2",
+                  style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                ),
+              ),
+              shiny::column(
+                3,
+                # add button to run analysis
+                shiny::actionButton(
+                  inputId = "runFigure2",
+                  icon = shiny::icon("play"),
+                  label = "Figure 2",
+                  style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                ),
+              ),
+              style = "text-align:center;"
+            ),
             shiny::br(),
             # add tabset
             shiny::tabsetPanel(
@@ -445,35 +490,34 @@ ui <- shiny::fluidPage(
               ),
             ),
           ),
-          shiny::fluidRow(
-            shiny::column(
-              6,
-              # add button to run analysis
-              shiny::actionButton(
-                inputId = "runTable2",
-                icon = shiny::icon("play"),
-                label = "Table 2",
-                style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-              ),
-            ),
-            shiny::column(
-              6,
-              # add button to run analysis
-              shiny::actionButton(
-                inputId = "runFigure2",
-                icon = shiny::icon("play"),
-                label = "Figure 2",
-                style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-              ),
-            ),
-          ),
         ),
         # add column for buttons
         shiny::column(
           4,
           shiny::br(),
           shiny::wellPanel(
-            shiny::HTML("<center><strong>Categorical outcome</strong></center>"),
+            shiny::fluidRow(
+              shiny::column(
+                9,
+                shiny::actionButton(
+                  inputId = "guide4",
+                  icon = shiny::icon("info-circle"),
+                  label = shiny::HTML("<strong>Categorical outcome</strong>"),
+                  style = "color: black; background-color: transparent; border-color: transparent;"
+                ),
+              ),
+              shiny::column(
+                3,
+                # add button to run analysis
+                shiny::actionButton(
+                  inputId = "runTable3",
+                  icon = shiny::icon("play"),
+                  label = "Table 3",
+                  style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
+                ),
+              ),
+              style = "text-align:center;"
+            ),
             shiny::br(),
             shiny::tabsetPanel(
               id = "tabset4",
@@ -504,13 +548,6 @@ ui <- shiny::fluidPage(
                 ),
               ),
             ),
-          ),
-          # add button to run analysis
-          shiny::actionButton(
-            inputId = "runTable3",
-            icon = shiny::icon("play"),
-            label = "Table 3",
-            style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
           ),
         ),
       ),
@@ -787,6 +824,8 @@ ui <- shiny::fluidPage(
       shiny::HTML(
         "Ferreira, A. de S., & Meziat Filho, N. (2024). RCTapp Randomized Clinical Trial (1.0.0). Zenodo. <a href=\"https://doi.org/10.5281/zenodo.13848816\" target=\"_blank\">https://doi.org/10.5281/zenodo.13848816</a>"
       ),
+      shiny::br(),
+      shiny::br(),
     ),
   ),
 )
@@ -796,6 +835,27 @@ server <- function(input, output, session) {
   
   # start introjs when button is pressed with custom options and events
   shiny::observeEvent(input$guide1,
+                      rintrojs::introjs(session, options = list("nextLabel"="Next",
+                                                                "prevLabel"="Previous",
+                                                                "skipLabel"="Skip"))
+  )
+  
+  # start introjs when button is pressed with custom options and events
+  shiny::observeEvent(input$guide2,
+                      rintrojs::introjs(session, options = list("nextLabel"="Next",
+                                                                "prevLabel"="Previous",
+                                                                "skipLabel"="Skip"))
+  )
+  
+  # start introjs when button is pressed with custom options and events
+  shiny::observeEvent(input$guide3,
+                      rintrojs::introjs(session, options = list("nextLabel"="Next",
+                                                                "prevLabel"="Previous",
+                                                                "skipLabel"="Skip"))
+  )
+  
+  # start introjs when button is pressed with custom options and events
+  shiny::observeEvent(input$guide4,
                       rintrojs::introjs(session, options = list("nextLabel"="Next",
                                                                 "prevLabel"="Previous",
                                                                 "skipLabel"="Skip"))
