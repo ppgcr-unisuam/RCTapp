@@ -113,15 +113,33 @@ ui <- shiny::fluidPage(
               style = "text-align:center;"
             ),
             shiny::br(),
-              # input Excel file data
-              shiny::fileInput(
-                inputId = "xlsxFile",
-                label = NULL,
-                multiple = FALSE,
-                buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
-                accept = c(".xlsx"),
-                width = "100%",
-                placeholder = "XLSX file"
+            shiny::fluidRow(
+              shiny::column(
+                9,
+                # input Excel file data
+                shiny::fileInput(
+                  inputId = "xlsxFile",
+                  label = NULL,
+                  multiple = FALSE,
+                  buttonLabel = list(fontawesome::fa("file-excel"), "Upload"),
+                  accept = c(".xlsx"),
+                  width = "100%",
+                  placeholder = "XLSX file"
+                ),
+                style = "text-align:center;"
+              ),
+              shiny::column(
+                3,
+                shiny::tags$a(
+                  id = "restart",
+                  class = "btn btn-primary",
+                  href = "javascript:history.go(0)",
+                  shiny::HTML('<i class="fa fa-refresh fa-1x"></i>'),
+                  title = "restart",
+                  style = "color:white; border-color:white; border-radius:100%;"
+                ),
+                style = "text-align:center;"
+              ),
             ),
             rintrojs::introBox(
               # add checkbox for between-subject factors (BGF)
@@ -244,24 +262,6 @@ ui <- shiny::fluidPage(
           9,
           shiny::br(),
           shiny::wellPanel(
-            shiny::fluidRow(
-              shiny::column(
-                11,
-                style = "text-align:center;"
-              ),
-              shiny::column(
-                1,
-                shiny::tags$a(
-                  id = "restart",
-                  class = "btn btn-primary",
-                  href = "javascript:history.go(0)",
-                  shiny::HTML('<i class="fa fa-refresh fa-1x"></i>'),
-                  title = "restart",
-                  style = "color:white; border-color:white; border-radius:100%;"
-                ),
-                style = "text-align:center;"
-              ),
-            ),
             DT::DTOutput(outputId = "rawtable"),
           ),
         ),
@@ -549,7 +549,7 @@ ui <- shiny::fluidPage(
                 shiny::actionButton(
                   inputId = "guide4",
                   icon = shiny::icon("info-circle"),
-                  label = shiny::HTML("<strong>Categorical outcome</strong>"),
+                  label = shiny::HTML("<strong>Ordinal outcome</strong>"),
                   style = "color: black; background-color: transparent; border-color: transparent;"
                 ),
               ),
@@ -880,20 +880,20 @@ server <- function(input, output, session) {
   guidelist <- shiny::reactive(data.table::data.table(
     tab = c("guide1", "guide1", "guide1", "guide1", "guide1", "guide1", "guide1", "guide1",
             "guide2", "guide2", "guide2", "guide2",
-            "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3",
+            "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3",
             "guide4", "guide4", "guide4"),
     step = c(1,2,3,4,5,6,7,8,
              1,2,3,4,
-             1,2,3,4,5,6,7,8,9,
+             1,2,3,4,5,6,7,8,9,10,
              1,2,3),
     element = c("#BGF", "#endpointN", "#endpointValues", "#alpha", "#effectSize", "#treatmentNames", "#controlgroup", "#endpointNames",
                 "#BV", "#showPvalue", "#maxlevels", "#runTable1",
-                "#OV", "#COV", "#missing", "#MICEresamples", "#regressionDiag", "#OutcomeName", "#legendOptions", "#runTable2", "#runFigure2", 
+                "#OV", "#hasBaseline", "#COV", "#missing", "#MICEresamples", "#regressionDiag", "#OutcomeName", "#legendOptions", "#runTable2", "#runFigure2", 
                 "#OVRidit", "#OutcomeNameRidit", "#runTable3"),
-    intro = c("Select the between-group factor. The list of variables comprises all columns in your dataset.", "Select the number of endpoints, including the baseline.", "Report the endpoints in the same time unit (e.g., days or months), starting baseline at 0. Use comma separated values.", "Select the pre-specified type-I error.", "Select the rule for interpreting Cohen's d.", "Edit the group labels. These labels appear in tables and figure, and as options to select the control group below. Use comma separated values.", "Select the control group. This group is used as reference for between-group comparisons.", "Edit the endpoint names. These labels appears in tables and figure. Use comma separated values.",
-              "#BV", "#showPvalue", "#maxlevels", "#runTable1",
-              "#OV", "#COV", "#missing", "#MICEresamples", "#regressionDiag", "#OutcomeName", "#legendOptions", "#runTable2", "#runFigure2",
-              "#OVRidit", "#OutcomeNameRidit", "#runTable3")
+    intro = c("Select the between-group factor. The list of variables comprises all columns in your dataset.", "Select the number of endpoints, including the baseline.", "Report all the endpoints in the same time unit (e.g., days or months), starting baseline at 0. Use comma separated values.", "Select the pre-specified type-I error.", "Select the rule for interpreting Cohen's d.", "Edit the group labels. These labels appear in tables and figure, and as options to select the control group below. Use comma separated values.", "Select the control group. This group is used as reference for between-group comparisons.", "Edit the endpoint names. These labels appears in tables and figure. Use comma separated values.",
+              "Select the variables (all types included: numeric, ordinal, categorical) measured at baseline for between-group reporting.", "Check this box to report P-values for between-group baseline comparisons.", "Indicate the maximum number of levels for a variable to be considered as categorical.", "Run 'Table 1!' to get the sample's baseline summary.",
+              "Select the numeric outcome variable, one per endpoint. The number of selected columns must match the number of endpoint names and values.", "Check this box to indicate that baseline values are available. Alternatively, uncheck this box.", "Select the covariates (all types included: numeric, ordinal, categorical), if any.", "Select how to handle missing data in analysis.", "If multiple imputation is selected, indicate the number of resamples for the multiple imputation by chained equations.", "Select diagnostic analysis of missing data, model fit and multiple imputation, if any.", "Edit the outcome label. This label appears in tables and figure.", "Select the position of the plot legend, if any.", "Run 'Table 2!' to get the linear mixed model (interaction, between- and within-group comparisons) summary.", "Run 'Figure 2' to get the interaction plot for the linear mixed model.",
+              "Select the ordinal outcome variable, one per endpoint. The number of selected columns must match the number of endpoint names and values.", "Edit the outcome label. This label appears in table.", "Run 'Table 3' to get the summary of the Ridit analysis.")
   ))
   
   # start introjs when button is pressed with custom options and events
@@ -1098,13 +1098,13 @@ server <- function(input, output, session) {
     )
     
     DT::datatable(
+      class = "compact",
       data = rawdata,
-      extensions = c('ColReorder'),
       rownames = FALSE,
       options = list(
         searching = FALSE,
         colReorder = FALSE,
-        pageLength = 10,
+        pageLength = 30,
         width = "100%",
         fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender();}'),
         scrollX = TRUE,
@@ -1318,7 +1318,6 @@ server <- function(input, output, session) {
       class = "compact",
       data = results,
       caption = caption,
-      extensions = c('ColReorder'),
       rownames = TRUE,
       options = list(
         searching = FALSE,
@@ -1613,7 +1612,6 @@ server <- function(input, output, session) {
       class = "compact",
       data = results,
       caption = caption,
-      extensions = c('ColReorder'),
       rownames = FALSE,
       colnames = NULL,
       options = list(
@@ -1866,7 +1864,6 @@ server <- function(input, output, session) {
       class = "compact",
       data = results,
       caption = caption,
-      extensions = c('ColReorder'),
       rownames = FALSE,
       colnames = NULL,
       options = list(
