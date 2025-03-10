@@ -77,7 +77,7 @@ ui <- shiny::fluidPage(
   ),
   
   shiny::HTML(
-    "<a href=\"https://doi.org/10.5281/zenodo.13848815\" style=\"vertical-align:middle;\"><img src=\"https://zenodo.org/badge/DOI/10.5281/zenodo.10439718.svg\" alt=\"DOI\"  style=\"vertical-align:top;\"></a>"
+    "<a href=\"https://doi.org/10.5281/zenodo.13848815\" style=\"vertical-align:middle;\"><img src=\"https://zenodo.org/badge/DOI/10.5281/zenodo.13848815.svg\" alt=\"DOI\"  style=\"vertical-align:top;\"></a>"
   ),
   
   shiny::br(),
@@ -865,7 +865,7 @@ ui <- shiny::fluidPage(
       shiny::br(),
       shiny::HTML("<b>Citation</b>"),
       shiny::HTML(
-        "Ferreira, A. de S., & Meziat Filho, N. (2024). RCTapp Randomized Clinical Trial (1.0.0). Zenodo. <a href=\"https://doi.org/10.5281/zenodo.13848816\" target=\"_blank\">https://doi.org/10.5281/zenodo.13848816</a>"
+        "Ferreira, A. de S., & Meziat Filho, N. (2024). RCTapp. Zenodo. <a href=\"https://doi.org/10.5281/zenodo.13848815\" target=\"_blank\">https://doi.org/10.5281/zenodo.13848815</a>"
       ),
       shiny::br(),
       shiny::br(),
