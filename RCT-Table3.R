@@ -32,12 +32,12 @@ TABLE.3 <- function(
     # inicializa a matriz de resultados
     t.labels <- c("Between-subjects", "Level", wt.labels)
     c.labels <- seq(min(na.omit(dataset)), max(na.omit(dataset)))
-    cross.tab.res <- matrix("", nrow = length(t.labels), ncol = nlevels(bw.factor) * length(c.labels))
+    cross.tab.res <- matrix(NA, nrow = length(t.labels), ncol = nlevels(bw.factor) * length(c.labels))
     rownames(cross.tab.res) <- t.labels
     colnames(cross.tab.res) <- rep("", nlevels(bw.factor) * length(c.labels))
     
     # matriz de resultados entre-grupos
-    bw.diff <- matrix("", nrow = length(t.labels), ncol = 1)
+    bw.diff <- matrix(NA, nrow = length(t.labels), ncol = 1)
     rownames(bw.diff) <- t.labels
     colnames(bw.diff) <- rep("", 1)
     cross.tab.res[1, ] <- rep(levels(bw.factor), each = length(c.labels))

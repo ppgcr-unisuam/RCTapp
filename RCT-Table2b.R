@@ -48,26 +48,26 @@ TABLE.2b <- function(dataset,
                 "N",
                 "Outcome",
                 "P-value")
-  mix.mod.res <- matrix("",
+  mix.mod.res <- matrix(NA,
                         nrow = length(t.labels),
                         ncol = nlevels(bw.factor) * length(wt.labels))
   rownames(mix.mod.res) <- t.labels
   colnames(mix.mod.res) <- rep("", nlevels(bw.factor) * length(wt.labels))
   
   # matriz de resultados intra-grupo
-  wt.diff <- matrix("",
+  wt.diff <- matrix(NA,
                     nrow = length(t.labels),
                     ncol = nlevels(bw.factor) * (length(wt.labels) - 1))
   rownames(wt.diff) <- t.labels
   colnames(wt.diff) <- rep("", nlevels(bw.factor) * (length(wt.labels) - 1))
   
   # matriz de resultados entre-grupos
-  bw.diff <- matrix("", nrow = length(t.labels) + 1, ncol = length(wt.labels))
+  bw.diff <- matrix(NA, nrow = length(t.labels) + 1, ncol = length(wt.labels))
   rownames(bw.diff) <- c(t.labels, "SMD¹")
   colnames(bw.diff) <- rep("", (length(wt.labels)))
   
   # matriz de resultados do modelo
-  model.res <- matrix("", nrow = length(t.labels), ncol = 1)
+  model.res <- matrix(NA, nrow = length(t.labels), ncol = 1)
   rownames(model.res) <- t.labels
   colnames(model.res) <- c("Mixed-model effects")
   

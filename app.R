@@ -1516,8 +1516,7 @@ server <- function(input, output, session) {
     
     # convert table to multiline text
     results.model <- paste(table2()$f.test.res[, 1], table2()$f.test.res[, 2], sep = " ", collapse = ", ")
-    print(results.model)
-    
+
     results <- dplyr::bind_rows(results.mix, results.wt, results.bw) %>% as.data.frame(check.names = FALSE)
     
     # last column first, then the others
@@ -1526,6 +1525,10 @@ server <- function(input, output, session) {
     # remove names
     rownames(results) <- rep(NULL, nrow(results))
     
+    # drop rows where all n-1 columns are empty (i.e. only the 1st column value is N)
+    remove <- which(results[, 1] == "N" & is.na(results[, 2]))
+    results <- results[-remove, ]
+
     # use outcome names
     results[, 1] <- gsub("Outcome", input[["OutcomeName"]], results[, 1])
     
@@ -1574,6 +1577,7 @@ server <- function(input, output, session) {
       results %>%
       as.data.frame(check.names = FALSE, row.names = NULL) %>%
       flextable::regulartable() %>%
+      flextable::set_header_labels(values = c("Analysis", sprintf("Endpoint %0d", 1:(ncol(results) - 1)))) %>%
       FitFlextableToPage() %>%
       flextable::font(fontname = "Times New Roman", part = "all") %>%
       flextable::fontsize(size = 12, part = "all")
@@ -1626,13 +1630,13 @@ server <- function(input, output, session) {
           list(
             className = 'dt-center',
             targets = 1:(ncol(results)-1),
-            defaultContent = "-",
+            defaultContent = "",
             targets = "_all"
           )
         )
       ), selection = "none"
     ) %>%
-      DT::formatStyle(columns = 3:ncol(results), textAlign = "right") %>%
+      DT::formatStyle(columns = 2:ncol(results), textAlign = "right") %>%
       DT::formatStyle(
         columns = 1:ncol(results),
         backgroundColor = 'White') %>%
@@ -1878,14 +1882,14 @@ server <- function(input, output, session) {
           list(
             className = 'dt-center',
             targets = 1:(ncol(results)-1),
-            defaultContent = "-",
+            defaultContent = "",
             targets = "_all"
           )
         )
       ), selection = "none"
     ) %>%
       DT::formatStyle(columns = 1, fontWeight = "bold") %>%
-      DT::formatStyle(columns = 3:ncol(results), textAlign = "right") %>%
+      DT::formatStyle(columns = 2:ncol(results), textAlign = "right") %>%
       DT::formatStyle(
         columns = 1:ncol(results),
         backgroundColor = 'White') %>%
