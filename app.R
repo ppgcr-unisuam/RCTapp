@@ -102,12 +102,19 @@ ui <- shiny::fluidPage(
           shiny::wellPanel(
             shiny::fluidRow(
               shiny::column(
-                12,
+                9,
                 shiny::actionButton(
-                  inputId = "guide1",
-                  icon = shiny::icon("info-circle"),
+                  inputId = "guide1label",
                   label = shiny::HTML("<strong>Study design</strong>"),
                   style = "color: black; background-color: transparent; border-color: transparent;"
+                ),
+              ),
+              shiny::column(
+                3,
+                shiny::actionButton(
+                  inputId = "guide1",
+                  label = list(shiny::icon("info-circle")),
+                  style = "color: black; background-color: transparent; border-color: black;"
                 ),
               ),
               style = "text-align:center;"
@@ -279,24 +286,17 @@ ui <- shiny::fluidPage(
               shiny::column(
                 9,
                 shiny::actionButton(
-                  inputId = "guide2",
-                  icon = shiny::icon("info-circle"),
-                  label = shiny::HTML("<strong>Participants' characteristics</strong>"),
+                  inputId = "guide2label",
+                  label = shiny::HTML("<strong>Participants' characteristics (Table 1)</strong>"),
                   style = "color: black; background-color: transparent; border-color: transparent;"
                 ),
               ),
               shiny::column(
                 3,
-                rintrojs::introBox(
-                  # add action button to run table 1
-                  shiny::actionButton(
-                    inputId = "runTable1",
-                    icon = shiny::icon("play"),
-                    label = "Table 1",
-                    style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-                  ),
-                  data.step = 4,
-                  data.intro = ""
+                shiny::actionButton(
+                  inputId = "guide2",
+                  label = list(shiny::icon("info-circle")),
+                  style = "color: black; background-color: transparent; border-color: black;"
                 ),
               ),
               style = "text-align:center;"
@@ -352,40 +352,19 @@ ui <- shiny::fluidPage(
           shiny::wellPanel(
             shiny::fluidRow(
               shiny::column(
-                6,
+                9,
                 shiny::actionButton(
-                  inputId = "guide3",
-                  icon = shiny::icon("info-circle"),
-                  label = shiny::HTML("<strong>Numerical outcome</strong>"),
+                  inputId = "guide3label",
+                  label = shiny::HTML("<strong>Numerical outcome (Table 2, FIgure 2)</strong>"),
                   style = "color: black; background-color: transparent; border-color: transparent;"
                 ),
               ),
               shiny::column(
                 3,
-                rintrojs::introBox(
-                  # add button to run analysis
-                  shiny::actionButton(
-                    inputId = "runTable2",
-                    icon = shiny::icon("play"),
-                    label = "Table 2",
-                    style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-                  ),
-                  data.step = 8,
-                  data.intro = ""
-                ),
-              ),
-              shiny::column(
-                3,
-                rintrojs::introBox(
-                  # add button to run analysis
-                  shiny::actionButton(
-                    inputId = "runFigure2",
-                    icon = shiny::icon("play"),
-                    label = "Figure 2",
-                    style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-                  ),
-                  data.step = 9,
-                  data.intro = ""
+                shiny::actionButton(
+                  inputId = "guide3",
+                  label = list(shiny::icon("info-circle")),
+                  style = "color: black; background-color: transparent; border-color: black;"
                 ),
               ),
               style = "text-align:center;"
@@ -547,24 +526,17 @@ ui <- shiny::fluidPage(
               shiny::column(
                 9,
                 shiny::actionButton(
-                  inputId = "guide4",
-                  icon = shiny::icon("info-circle"),
-                  label = shiny::HTML("<strong>Ordinal outcome</strong>"),
+                  inputId = "guide4label",
+                  label = shiny::HTML("<strong>Ordinal outcome (Table 3)</strong>"),
                   style = "color: black; background-color: transparent; border-color: transparent;"
                 ),
               ),
               shiny::column(
                 3,
-                rintrojs::introBox(
-                  # add button to run analysis
-                  shiny::actionButton(
-                    inputId = "runTable3",
-                    icon = shiny::icon("play"),
-                    label = "Table 3",
-                    style = "color: #FFFFFF; background-color: #2C3E50; border-color: #2C3E50; width: 100%;"
-                  ),
-                  data.step = 3,
-                  data.intro = ""
+                shiny::actionButton(
+                  inputId = "guide4",
+                  label = list(shiny::icon("info-circle")),
+                  style = "color: black; background-color: transparent; border-color: black;"
                 ),
               ),
               style = "text-align:center;"
@@ -879,21 +851,21 @@ server <- function(input, output, session) {
   # for multiple tabsets
   guidelist <- shiny::reactive(data.table::data.table(
     tab = c("guide1", "guide1", "guide1", "guide1", "guide1", "guide1", "guide1", "guide1",
-            "guide2", "guide2", "guide2", "guide2",
-            "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3",
-            "guide4", "guide4", "guide4"),
+            "guide2", "guide2", "guide2",
+            "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3", "guide3",
+            "guide4", "guide4"),
     step = c(1,2,3,4,5,6,7,8,
-             1,2,3,4,
-             1,2,3,4,5,6,7,8,9,10,
-             1,2,3),
+             1,2,3,
+             1,2,3,4,5,6,7,8,
+             1,2),
     element = c("#BGF", "#endpointN", "#endpointValues", "#alpha", "#effectSize", "#treatmentNames", "#controlgroup", "#endpointNames",
-                "#BV", "#showPvalue", "#maxlevels", "#runTable1",
-                "#OV", "#hasBaseline", "#COV", "#missing", "#MICEresamples", "#regressionDiag", "#OutcomeName", "#legendOptions", "#runTable2", "#runFigure2", 
-                "#OVRidit", "#OutcomeNameRidit", "#runTable3"),
+                "#BV", "#showPvalue", "#maxlevels",
+                "#OV", "#hasBaseline", "#COV", "#missing", "#MICEresamples", "#regressionDiag", "#OutcomeName", "#legendOptions", 
+                "#OVRidit", "#OutcomeNameRidit"),
     intro = c("Select the between-group factor. The list of variables comprises all columns in your dataset.", "Select the number of endpoints, including the baseline.", "Report all the endpoints in the same time unit (e.g., days or months), starting baseline at 0. Use comma separated values.", "Select the pre-specified type-I error.", "Select the rule for interpreting Cohen's d.", "Edit the group labels. These labels appear in tables and figure, and as options to select the control group below. Use comma separated values.", "Select the control group. This group is used as reference for between-group comparisons.", "Edit the endpoint names. These labels appears in tables and figure. Use comma separated values.",
-              "Select the variables (all types included: numeric, ordinal, categorical) measured at baseline for between-group reporting.", "Check this box to report P-values for between-group baseline comparisons.", "Indicate the maximum number of levels for a variable to be considered as categorical.", "Run 'Table 1!' to get the sample's baseline summary.",
-              "Select the numeric outcome variable, one per endpoint. The number of selected columns must match the number of endpoint names and values.", "Check this box to indicate that baseline values are available. Alternatively, uncheck this box.", "Select the covariates (all types included: numeric, ordinal, categorical), if any.", "Select how to handle missing data in analysis.", "If multiple imputation is selected, indicate the number of resamples for the multiple imputation by chained equations.", "Select diagnostic analysis of missing data, model fit and multiple imputation, if any.", "Edit the outcome label. This label appears in tables and figure.", "Select the position of the plot legend, if any.", "Run 'Table 2!' to get the linear mixed model (interaction, between- and within-group comparisons) summary.", "Run 'Figure 2' to get the interaction plot for the linear mixed model.",
-              "Select the ordinal outcome variable, one per endpoint. The number of selected columns must match the number of endpoint names and values.", "Edit the outcome label. This label appears in table.", "Run 'Table 3' to get the summary of the Ridit analysis.")
+              "Select the variables (all types included: numeric, ordinal, categorical) measured at baseline for between-group reporting.", "Check this box to report P-values for between-group baseline comparisons.", "Indicate the maximum number of levels for a variable to be considered as categorical.",
+              "Select the numeric outcome variable, one per endpoint. The number of selected columns must match the number of endpoint names and values.", "Check this box to indicate that baseline values are available. Alternatively, uncheck this box.", "Select the covariates (all types included: numeric, ordinal, categorical), if any.", "Select how to handle missing data in analysis.", "If multiple imputation is selected, indicate the number of resamples for the multiple imputation by chained equations.", "Select diagnostic analysis of missing data, model fit and multiple imputation, if any.", "Edit the outcome label. This label appears in tables and figure.", "Select the position of the plot legend, if any.",
+              "Select the ordinal outcome variable, one per endpoint. The number of selected columns must match the number of endpoint names and values.", "Edit the outcome label. This label appears in table.")
   ))
   
   # start introjs when button is pressed with custom options and events
@@ -1122,34 +1094,6 @@ server <- function(input, output, session) {
     )
   })
   
-  # change tab on runTable1 click
-  shiny::observeEvent(input[["runTable1"]], {
-    shiny::updateTabsetPanel(session = session,
-                             inputId = "tabs",
-                             selected = "Table 1")
-  })
-  
-  # change tab on runTable2 click
-  shiny::observeEvent(input[["runTable2"]], {
-    shiny::updateTabsetPanel(session = session,
-                             inputId = "tabs",
-                             selected = "Table 2")
-  })
-  
-  # change tab on runFigure 2 click
-  shiny::observeEvent(input[["runFigure2"]], {
-    shiny::updateTabsetPanel(session = session,
-                             inputId = "tabs",
-                             selected = "Figure 2")
-  })
-  
-  # change tab on runTable 3 click
-  shiny::observeEvent(input[["runTable3"]], {
-    shiny::updateTabsetPanel(session = session,
-                             inputId = "tabs",
-                             selected = "Table 3")
-  })
-  
   # Report generation -----------------------------------------------------------
   output[["SAP"]] <- shiny::renderUI({
     shiny::req(rawdata())
@@ -1221,7 +1165,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # run table 1 on runTable1 click ------------------------------------------------
+  # run table 1  ------------------------------------------------
   output[["table1"]] <- DT::renderDT({
     shiny::req(rawdata())
     shiny::req(input[["BV"]])
@@ -1298,6 +1242,9 @@ server <- function(input, output, session) {
       results %>%
       as.data.frame(check.names = FALSE, row.names = NULL) %>%
       flextable::regulartable() %>%
+      flextable::bold(bold = TRUE, part = "header") %>%
+      flextable::bold(i = 1:nrow(results), j = 1, bold = TRUE, part = "body") %>%
+      flextable::italic(i = 1:nrow(results), j = 2, italic = TRUE, part = "body") %>%
       FitFlextableToPage() %>%
       flextable::font(fontname = "Times New Roman", part = "all") %>%
       flextable::fontsize(size = 12, part = "all")
@@ -1351,7 +1298,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # run table 2 on runTable2 click ------------------------------------------------
+  # run table 2  ------------------------------------------------
   table2 <- shiny::reactive({
     shiny::req(rawdata())
     shiny::req(input[["BGF"]])
@@ -1577,7 +1524,11 @@ server <- function(input, output, session) {
       results %>%
       as.data.frame(check.names = FALSE, row.names = NULL) %>%
       flextable::regulartable() %>%
-      flextable::set_header_labels(values = c("Analysis", sprintf("Endpoint %0d", 1:(ncol(results) - 1)))) %>%
+      flextable::delete_part(part = "header") %>%
+      flextable::hline_top() %>%
+      flextable::bold(i = which(results[, 1] == "Within-subjects"), j = 1:ncol(results), bold = TRUE, part = "body") %>%
+      flextable::bold(i = which(results[, 1] == "Between-subjects"), j = 1:ncol(results), bold = TRUE, part = "body") %>%
+      flextable::bold(i = which(results[, 1] == "N"), j = 1:ncol(results), bold = TRUE, part = "body") %>%
       FitFlextableToPage() %>%
       flextable::font(fontname = "Times New Roman", part = "all") %>%
       flextable::fontsize(size = 12, part = "all")
@@ -1757,7 +1708,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # run table 3 on runTable3 click ------------------------------------------------
+  # run table 3  ------------------------------------------------
   table3 <- shiny::reactive({
     shiny::req(rawdata())
     shiny::req(input[["BGF"]])
