@@ -152,7 +152,7 @@ ui <- shiny::fluidPage(
               # add checkbox for between-subject factors (BGF)
               shinyWidgets::virtualSelectInput(
                 inputId = "BGF",
-                label = "Treatment groups",
+                label = "Groups",
                 choices = NULL,
                 selected = NA,
                 showValueAsTags = TRUE,
@@ -166,8 +166,8 @@ ui <- shiny::fluidPage(
             rintrojs::introBox(
               # number of endpoits
               shiny::numericInput(
-                inputId = "endpointN",
-                label = "Endpoints",
+                inputId = "timepointN",
+                label = "Timepoints",
                 value = 2,
                 min = 2,
                 step = 1,
@@ -177,10 +177,10 @@ ui <- shiny::fluidPage(
               data.intro = ""
             ),
             rintrojs::introBox(
-              # show text for endpoint
+              # show text for timepoint
               shiny::textInput(
-                inputId = "endpointValues",
-                label = "Endpoint value (csv)",
+                inputId = "timepointValues",
+                label = "Timepoints (csv)",
                 value = "0,1",
                 width = "100%"
               ),
@@ -230,7 +230,7 @@ ui <- shiny::fluidPage(
               # show text input to change treatment group names
               shiny::textInput(
                 inputId = "treatmentNames",
-                label = "Treatment labels (csv)",
+                label = "Group labels (csv)",
                 value = "Control,Intervention",
                 width = "100%"
               ),
@@ -253,10 +253,10 @@ ui <- shiny::fluidPage(
               data.intro = ""
             ),
             rintrojs::introBox(
-              # show text for endpoint names
+              # show text for timepoint names
               shiny::textInput(
-                inputId = "endpointNames",
-                label = "Endpoint labels (csv)",
+                inputId = "timepointNames",
+                label = "Timepoint labels (csv)",
                 value = "Baseline,Follow-up",
                 width = "100%"
               ),
@@ -858,14 +858,14 @@ server <- function(input, output, session) {
              1,2,3,
              1,2,3,4,5,6,7,8,
              1,2),
-    element = c("#BGF", "#endpointN", "#endpointValues", "#alpha", "#effectSize", "#treatmentNames", "#controlgroup", "#endpointNames",
+    element = c("#BGF", "#timepointN", "#timepointValues", "#alpha", "#effectSize", "#treatmentNames", "#controlgroup", "#timepointNames",
                 "#BV", "#showPvalue", "#maxlevels",
                 "#OV", "#hasBaseline", "#COV", "#missing", "#MICEresamples", "#regressionDiag", "#OutcomeName", "#legendOptions", 
                 "#OVRidit", "#OutcomeNameRidit"),
-    intro = c("Select the between-group factor. The list of variables comprises all columns in your dataset.", "Select the number of endpoints, including the baseline.", "Report all the endpoints in the same time unit (e.g., days or months), starting baseline at 0. Use comma separated values.", "Select the pre-specified type-I error.", "Select the rule for interpreting Cohen's d.", "Edit the group labels. These labels appear in tables and figure, and as options to select the control group below. Use comma separated values.", "Select the control group. This group is used as reference for between-group comparisons.", "Edit the endpoint names. These labels appears in tables and figure. Use comma separated values.",
+    intro = c("Select the between-group factor. The list of variables comprises all columns in your dataset.", "Select the number of timepoints, including the baseline.", "Report all the timepoints in the same time unit (e.g., days or months), starting baseline at 0. Use comma separated values (e.g., 0, 3, 12, 48).", "Select the pre-specified type-I error.", "Select the rule for interpreting Cohen's d.", "Edit the group labels. These labels appear in tables and figure, and as options to select the control group below. Use comma separated values.", "Select the control group. This group is used as reference for between-group comparisons.", "Edit the timepoint names. These labels appears in tables and figure. Use comma separated values (e.g., Baseline, 3 weeks, 12 weeks).",
               "Select the variables (all types included: numeric, ordinal, categorical) measured at baseline for between-group reporting.", "Check this box to report P-values for between-group baseline comparisons.", "Indicate the maximum number of levels for a variable to be considered as categorical.",
-              "Select the numeric outcome variable, one per endpoint. The number of selected columns must match the number of endpoint names and values.", "Check this box to indicate that baseline values are available. Alternatively, uncheck this box.", "Select the covariates (all types included: numeric, ordinal, categorical), if any.", "Select how to handle missing data in analysis.", "If multiple imputation is selected, indicate the number of resamples for the multiple imputation by chained equations.", "Select diagnostic analysis of missing data, model fit and multiple imputation, if any.", "Edit the outcome label. This label appears in tables and figure.", "Select the position of the plot legend, if any.",
-              "Select the ordinal outcome variable, one per endpoint. The number of selected columns must match the number of endpoint names and values.", "Edit the outcome label. This label appears in table.")
+              "Select the numeric outcome variable, one per timepoint. The number of selected columns must match the number of timepoint names and values.", "Check this box to indicate that baseline values are available. Alternatively, uncheck this box.", "Select the covariates (all types included: numeric, ordinal, categorical), if any.", "Select how to handle missing data in analysis.", "If multiple imputation is selected, indicate the number of resamples for the multiple imputation by chained equations.", "Select diagnostic analysis of missing data, model fit and multiple imputation, if any.", "Edit the outcome label. This label appears in tables and figure.", "Select the position of the plot legend, if any.",
+              "Select the ordinal outcome variable, one per timepoint. The number of selected columns must match the number of timepoint names and values.", "Edit the outcome label. This label appears in table.")
   ))
   
   # start introjs when button is pressed with custom options and events
@@ -938,14 +938,14 @@ server <- function(input, output, session) {
     }
   })
   
-  # create automatic endopoint names and values based on endpointN
-  shiny::observeEvent(input$endpointN, {
+  # create automatic endopoint names and values based on timepointN
+  shiny::observeEvent(input$timepointN, {
     shiny::updateTextInput(session,
-                           "endpointNames",
-                           value = paste0("T", 1:input$endpointN, collapse = ","))
+                           "timepointNames",
+                           value = paste0("T", 1:input$timepointN, collapse = ","))
     shiny::updateTextInput(session,
-                           "endpointValues",
-                           value = paste0(0:(input$endpointN - 1), collapse = ","))
+                           "timepointValues",
+                           value = paste0(0:(input$timepointN - 1), collapse = ","))
   })
   
   shiny::observeEvent(input$BGF, {
@@ -1100,8 +1100,8 @@ server <- function(input, output, session) {
     results <- sap(BGF = input[["BGF"]],
                    treatmentNames = input[["treatmentNames"]],
                    controlgroup = input[["controlgroup"]],
-                   endpointNames = input[["endpointNames"]],
-                   endpointValues = input[["endpointValues"]],
+                   timepointNames = input[["timepointNames"]],
+                   timepointValues = input[["timepointValues"]],
                    alpha = input[["alpha"]],
                    showPvalue = input[["showPvalue"]],
                    effectSize = input[["effectSize"]],
@@ -1305,7 +1305,7 @@ server <- function(input, output, session) {
     shiny::req(input[["OV"]])
     shiny::req(input[["treatmentNames"]])
     shiny::req(input[["controlgroup"]])
-    shiny::req(input[["endpointNames"]])
+    shiny::req(input[["timepointNames"]])
     shiny::req(input[["missing"]])
     shiny::req(input[["alpha"]])
     
@@ -1341,8 +1341,8 @@ server <- function(input, output, session) {
         covariate = rawdata[input[["COV"]]],
         bw.factor = rawdata$TREATMENT,
         control.g = input[["controlgroup"]],
-        wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
-        wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
+        wt.labels = strsplit(trimws(input[["timepointNames"]], which = "both"), ",")[[1]],
+        wt.values = as.numeric(strsplit(trimws(input[["timepointValues"]], which = "both"), ",")[[1]]),
         missing = input[["missing"]],
         m.imputations = as.numeric(input[["MICEresamples"]]),
         alpha = as.numeric(input[["alpha"]]),
@@ -1356,9 +1356,9 @@ server <- function(input, output, session) {
         bw.factor = rawdata$TREATMENT,
         control.g = input[["controlgroup"]],
         # drop 1 (no baseline)
-        wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
+        wt.labels = strsplit(trimws(input[["timepointNames"]], which = "both"), ",")[[1]][-1],
         # drop 1 (no baseline)
-        wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]][-1]),
+        wt.values = as.numeric(strsplit(trimws(input[["timepointValues"]], which = "both"), ",")[[1]][-1]),
         missing = input[["missing"]],
         m.imputations = as.numeric(input[["MICEresamples"]]),
         alpha = as.numeric(input[["alpha"]]),
@@ -1376,8 +1376,8 @@ server <- function(input, output, session) {
     shiny::req(input[["treatmentNames"]])
     shiny::req(input[["controlgroup"]])
     shiny::req(input[["OutcomeName"]])
-    shiny::req(input[["endpointNames"]])
-    shiny::req(input[["endpointValues"]])
+    shiny::req(input[["timepointNames"]])
+    shiny::req(input[["timepointValues"]])
     shiny::req(input[["missing"]])
     shiny::req(input[["MICEresamples"]])
     shiny::req(input[["alpha"]])
@@ -1414,8 +1414,8 @@ server <- function(input, output, session) {
         ov.name <- input[["OutcomeName"]],
         covariate = rawdata[input[["COV"]]],
         bw.factor = rawdata$TREATMENT,
-        wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
-        wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
+        wt.labels = strsplit(trimws(input[["timepointNames"]], which = "both"), ",")[[1]],
+        wt.values = as.numeric(strsplit(trimws(input[["timepointValues"]], which = "both"), ",")[[1]]),
         missing = input[["missing"]],
         m.imputations = as.numeric(input[["MICEresamples"]]),
         alpha = as.numeric(input[["alpha"]]),
@@ -1430,9 +1430,9 @@ server <- function(input, output, session) {
         covariate = rawdata[input[["COV"]]],
         bw.factor = rawdata$TREATMENT,
         # drop 1 (no baseline)
-        wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
+        wt.labels = strsplit(trimws(input[["timepointNames"]], which = "both"), ",")[[1]][-1],
         # drop 1 (no baseline)
-        wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]][-1]),
+        wt.values = as.numeric(strsplit(trimws(input[["timepointValues"]], which = "both"), ",")[[1]][-1]),
         missing = input[["missing"]],
         m.imputations = as.numeric(input[["MICEresamples"]]),
         alpha = as.numeric(input[["alpha"]]),
@@ -1463,7 +1463,7 @@ server <- function(input, output, session) {
     
     # convert table to multiline text
     results.model <- paste(table2()$f.test.res[, 1], table2()$f.test.res[, 2], sep = " ", collapse = ", ")
-
+    
     results <- dplyr::bind_rows(results.mix, results.wt, results.bw) %>% as.data.frame(check.names = FALSE)
     
     # last column first, then the others
@@ -1475,7 +1475,7 @@ server <- function(input, output, session) {
     # drop rows where all n-1 columns are empty (i.e. only the 1st column value is N)
     remove <- which(results[, 1] == "N" & is.na(results[, 2]))
     results <- results[-remove, ]
-
+    
     # use outcome names
     results[, 1] <- gsub("Outcome", input[["OutcomeName"]], results[, 1])
     
@@ -1618,8 +1618,8 @@ server <- function(input, output, session) {
     shiny::req(input[["OV"]])
     shiny::req(input[["treatmentNames"]])
     shiny::req(input[["controlgroup"]])
-    shiny::req(input[["endpointNames"]])
-    shiny::req(input[["endpointValues"]])
+    shiny::req(input[["timepointNames"]])
+    shiny::req(input[["timepointValues"]])
     shiny::req(input[["missing"]])
     shiny::req(input[["alpha"]])
     shiny::req(input[["OutcomeName"]])
@@ -1656,11 +1656,11 @@ server <- function(input, output, session) {
         variables = input[["OV"]],
         covariate = rawdata[input[["COV"]]],
         bw.factor = rawdata$TREATMENT,
-        wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]],
-        wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]]),
+        wt.labels = strsplit(trimws(input[["timepointNames"]], which = "both"), ",")[[1]],
+        wt.values = as.numeric(strsplit(trimws(input[["timepointValues"]], which = "both"), ",")[[1]]),
         missing = input[["missing"]],
         m.imputations = as.numeric(input[["MICEresamples"]]),
-        xlabs = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
+        xlabs = strsplit(trimws(input[["timepointValues"]], which = "both"), ",")[[1]],
         ylab = input[["OutcomeName"]],
         legend.opt = input[["legendOptions"]],
         alpha = as.numeric(input[["alpha"]]),
@@ -1673,12 +1673,12 @@ server <- function(input, output, session) {
         covariate = rawdata[input[["COV"]]],
         bw.factor = rawdata$TREATMENT,
         # drop 1 (no baseline)
-        wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
+        wt.labels = strsplit(trimws(input[["timepointNames"]], which = "both"), ",")[[1]][-1],
         # drop 1 (no baseline)
-        wt.values = as.numeric(strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]][-1]),
+        wt.values = as.numeric(strsplit(trimws(input[["timepointValues"]], which = "both"), ",")[[1]][-1]),
         missing = input[["missing"]],
         m.imputations = as.numeric(input[["MICEresamples"]]),
-        xlabs = strsplit(trimws(input[["endpointValues"]], which = "both"), ",")[[1]],
+        xlabs = strsplit(trimws(input[["timepointValues"]], which = "both"), ",")[[1]],
         ylab = input[["OutcomeName"]],
         legend.opt = input[["legendOptions"]],
         alpha = as.numeric(input[["alpha"]]),
@@ -1715,7 +1715,7 @@ server <- function(input, output, session) {
     shiny::req(input[["OVRidit"]])
     shiny::req(input[["treatmentNames"]])
     shiny::req(input[["controlgroup"]])
-    shiny::req(input[["endpointNames"]])
+    shiny::req(input[["timepointNames"]])
     shiny::req(input[["alpha"]])
     
     # read file
@@ -1749,7 +1749,7 @@ server <- function(input, output, session) {
       bw.factor = rawdata$TREATMENT,
       control.g = input[["controlgroup"]],
       # drop 1
-      wt.labels = strsplit(trimws(input[["endpointNames"]], which = "both"), ",")[[1]][-1],
+      wt.labels = strsplit(trimws(input[["timepointNames"]], which = "both"), ",")[[1]][-1],
       alpha = as.numeric(input[["alpha"]]),
       n.digits = 2
     )
@@ -1930,7 +1930,7 @@ server <- function(input, output, session) {
       regression()$Comp_Plus_Res,
       partial.residual = list(lty = "dashed"),
       main = "Component-plus-residual plot for the interaction effect",
-      xlab = "Time (endpoints)",
+      xlab = "Time (timepoints)",
       ylab = input[["OutcomeName"]]
     )
   })
