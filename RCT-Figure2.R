@@ -282,7 +282,7 @@ FIGURE.2 <-
     plot(
       NA,
       xaxt = "n",
-      xlab = "Endpoint",
+      xlab = "Time points",
       ylab = ylab,
       xlim = c(min(wt.values) - 1.5, max(wt.values) + 1.5),
       ylim = c(min(myCI[, 5]) - min(myCI[, 5]) *

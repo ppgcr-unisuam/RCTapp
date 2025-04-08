@@ -355,7 +355,7 @@ ui <- shiny::fluidPage(
                 9,
                 shiny::actionButton(
                   inputId = "guide3label",
-                  label = shiny::HTML("<strong>Numerical outcome (Table 2, FIgure 2)</strong>"),
+                  label = shiny::HTML("<strong>Numerical outcome (Table 2, Figure 2)</strong>"),
                   style = "color: black; background-color: transparent; border-color: transparent;"
                 ),
               ),
@@ -1076,7 +1076,7 @@ server <- function(input, output, session) {
       options = list(
         searching = FALSE,
         colReorder = FALSE,
-        pageLength = 30,
+        pageLength = 24,
         width = "100%",
         fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender();}'),
         scrollX = TRUE,

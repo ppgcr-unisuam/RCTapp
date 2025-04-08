@@ -103,7 +103,7 @@ test.model.fit <- function(dataset,
         pch = c(1, 20),
         layout = c(1, length(unique(GROUP_M))),
         main = "Imputed Data",
-        xlab = "Time (endpoints)",
+        xlab = "Time",
         ylab = ov.name
       )
     }
