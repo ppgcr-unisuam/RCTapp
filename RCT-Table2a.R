@@ -193,6 +193,7 @@ TABLE.2a <- function(dataset,
         print = FALSE,
         maxit = 50
       )
+    
     if (!sjmisc::is_empty(covariate)) {
       mod1 <-
         with(data = imp,
@@ -409,7 +410,7 @@ TABLE.2a <- function(dataset,
   bw.diff[4, ] <- bw
   bw.diff[5, ] <- bw.pvalues
   bw.diff[6, ] <- smd.values
-
+  
   # apresenta os resultados na tela
   print(
     paste(
