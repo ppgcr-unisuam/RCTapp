@@ -193,7 +193,6 @@ TABLE.2a <- function(dataset,
         print = FALSE,
         maxit = 50
       )
-    
     if (!sjmisc::is_empty(covariate)) {
       mod1 <-
         with(data = imp,
@@ -351,57 +350,104 @@ TABLE.2a <- function(dataset,
   bw.pvalues <- c()
   smd.values <- c()
   
-  for (i in 2:(length(wt.labels))) {
-    ID <- seq(1:length(bw.factor))
-    BASELINE_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, 1]
-    FOLLOWUP_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, i]
-    CHANGE_M <- FOLLOWUP_M - BASELINE_M
-    COVARIATE_M <- COVARIATE_M[1:length(ID), ]
-    
-    if (!sjmisc::is_empty(covariate)) {
-      df <- data.frame(ID, bw.factor, BASELINE_M, CHANGE_M, COVARIATE_M, check.names = FALSE)
-      mod2 <- nlme::lme(
-        as.formula(paste0("CHANGE_M ~ bw.factor * BASELINE_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))),
-        random = ~ 1 | ID,
-        data = df
-      )
-    } else {
-      df <- data.frame(ID, bw.factor, BASELINE_M, CHANGE_M, check.names = FALSE)
-      mod2 <- nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M, random = ~ 1 | ID, data = df)
+  if (missing != "Multiple imputation") {
+    for (i in 2:(length(wt.labels))) {
+      ID <- seq(1:length(bw.factor))
+      BASELINE_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, 1]
+      FOLLOWUP_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, i]
+      CHANGE_M <- FOLLOWUP_M - BASELINE_M
+      COVARIATE_M <- COVARIATE_M[1:length(ID), ]
+      
+      if (!sjmisc::is_empty(covariate)) {
+        df <- data.frame(ID, bw.factor, BASELINE_M, CHANGE_M, COVARIATE_M, check.names = FALSE)
+        mod2 <- nlme::lme(
+          as.formula(paste0("CHANGE_M ~ bw.factor * BASELINE_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))),
+          random = ~ 1 | ID,
+          data = df
+        )
+      } else {
+        df <- data.frame(ID, bw.factor, BASELINE_M, CHANGE_M, check.names = FALSE)
+        mod2 <- nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M, random = ~ 1 | ID, data = df)
+      }
+      
+      mod2.sum <- summary(multcomp::glht(mod2, linfct = multcomp::mcp(bw.factor = "Tukey")),
+                          test = multcomp::adjusted("holm"))
+      
+      confint_vals <- confint(mod2.sum, level = 1 - alpha)$confint
+      group_comparisons <- rownames(confint_vals)
+      
+      # obter efeitos marginais e IC
+      emm <- emmeans::emmeans(mod2, ~ bw.factor)
+      pairs_emm <- summary(pairs(emm), infer = c(TRUE, TRUE), level = 1 - alpha)
+      
+      # Calcular desvio padrão residual diretamente do modelo ajustado
+      residual_sd <- stats::sigma(mod2)
+      
+      # Dentro do loop de comparações entre grupos:
+      for (comp in seq_len(nrow(confint_vals))) {
+        est <- confint_vals[comp, "Estimate"]
+        lwr <- confint_vals[comp, "lwr"]
+        upr <- confint_vals[comp, "upr"]
+        pval <- summary(mod2.sum)$test$pvalues[comp]
+        
+        # Estimativas e IC
+        bw <- rbind(bw, paste0(round(est, n.digits), " (", round(lwr, n.digits), " to ", round(upr, n.digits), ")"))
+        
+        # Valores-p
+        bw.pvalues <- rbind(bw.pvalues, ifelse(pval < 0.001, "<0.001*", 
+                                               ifelse(pval < alpha, paste0(round(pval, 3), "*"), round(pval, 3))))
+        
+        # SMD (Cohen's d) corretamente calculado
+        smd_d     <- est / residual_sd
+        smd_lower <- lwr / residual_sd
+        smd_upper <- upr / residual_sd
+        smd.values <- rbind(smd.values, paste0(round(smd_d, n.digits), " (", round(smd_lower, n.digits), " to ", round(smd_upper, n.digits), ")"))
+      }
     }
-    
-    mod2.sum <- summary(multcomp::glht(mod2, linfct = multcomp::mcp(bw.factor = "Tukey")),
-                        test = multcomp::adjusted("holm"))
-    
-    confint_vals <- confint(mod2.sum, level = 1 - alpha)$confint
-    group_comparisons <- rownames(confint_vals)
-    
-    # obter efeitos marginais e IC
-    emm <- emmeans::emmeans(mod2, ~ bw.factor)
-    pairs_emm <- summary(pairs(emm), infer = c(TRUE, TRUE), level = 1 - alpha)
-    
-    # Calcular desvio padrão residual diretamente do modelo ajustado
-    residual_sd <- stats::sigma(mod2)
-    
-    # Dentro do loop de comparações entre grupos:
-    for (comp in seq_len(nrow(confint_vals))) {
-      est <- confint_vals[comp, "Estimate"]
-      lwr <- confint_vals[comp, "lwr"]
-      upr <- confint_vals[comp, "upr"]
-      pval <- summary(mod2.sum)$test$pvalues[comp]
+  } else {
+    for (i in 2:(length(wt.labels))) {
+      # Define a função que será aplicada a cada imputação
+      mod2_models <- with(imp, {
+        BASELINE_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, 1]
+        FOLLOWUP_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, i]
+        CHANGE_M <- FOLLOWUP_M - BASELINE_M
+        if (!sjmisc::is_empty(covariate)) {
+          df <- data.frame(ID_M, bw.factor = GROUP_M, BASELINE_M, CHANGE_M, COVARIATE_M)
+          nlme::lme(
+            fixed = as.formula(paste0("CHANGE_M ~ bw.factor * BASELINE_M + ", paste0(names(COVARIATE_M), collapse = " + "))),
+            random = ~1 | ID_M,
+            data = df
+          )
+        } else {
+          df <- data.frame(ID_M, bw.factor = GROUP_M, BASELINE_M, CHANGE_M)
+          nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M, random = ~1 | ID_M, data = df)
+        }
+      })
       
-      # Estimativas e IC
-      bw <- rbind(bw, paste0(round(est, n.digits), " (", round(lwr, n.digits), " to ", round(upr, n.digits), ")"))
+      # Usar emmeans::mi.emm_list para calcular os efeitos marginais e pares
+      emmeans_obj <- emmeans::emmeans(mod2_models, ~ bw.factor)
+      pairs_emm <- summary(pairs(emmeans_obj), infer = c(TRUE, TRUE), level = 1 - alpha)
+      # group_comparisons <- pairs_emm$contrast
+      group_comparisons <- apply(combn(levels(bw.factor), 2), 2, function(x) paste0(x[2], " - ", x[1]))
+
+      # Obter estimativas e ICs
+      est <- pairs_emm$estimate
+      lwr <- pairs_emm$lower.CL
+      upr <- pairs_emm$upper.CL
+      pval <- pairs_emm$p.value
       
-      # Valores-p
-      bw.pvalues <- rbind(bw.pvalues, ifelse(pval < 0.001, "<0.001*", 
-                                             ifelse(pval < alpha, paste0(round(pval, 3), "*"), round(pval, 3))))
+      # SMD (usando erro padrão médio como aproximação)
+      pooled_sd <- mean(pairs_emm$SE) * sqrt(2)  # ou usar sigma médio de mod2_models
+      smd_d     <- est / pooled_sd
+      smd_lower <- lwr / pooled_sd
+      smd_upper <- upr / pooled_sd
       
-      # SMD (Cohen's d) corretamente calculado
-      smd_d     <- est / residual_sd
-      smd_lower <- lwr / residual_sd
-      smd_upper <- upr / residual_sd
-      smd.values <- rbind(smd.values, paste0(round(smd_d, n.digits), " (", round(smd_lower, n.digits), " to ", round(smd_upper, n.digits), ")"))
+      for (comp in seq_along(est)) {
+        bw <- rbind(bw, paste0(round(est[comp], n.digits), " (", round(lwr[comp], n.digits), " to ", round(upr[comp], n.digits), ")"))
+        bw.pvalues <- rbind(bw.pvalues, ifelse(pval[comp] < 0.001, "<0.001*", 
+                                               ifelse(pval[comp] < alpha, paste0(round(pval[comp], 3), "*"), round(pval[comp], 3))))
+        smd.values <- rbind(smd.values, paste0(round(smd_d[comp], n.digits), " (", round(smd_lower[comp], n.digits), " to ", round(smd_upper[comp], n.digits), ")"))
+      }
     }
   }
   
