@@ -379,37 +379,28 @@ TABLE.2a <- function(dataset,
     emm <- emmeans::emmeans(mod2, ~ bw.factor)
     pairs_emm <- summary(pairs(emm), infer = c(TRUE, TRUE), level = 1 - alpha)
     
+    # Calcular desvio padrão residual diretamente do modelo ajustado
+    residual_sd <- stats::sigma(mod2)
+    
+    # Dentro do loop de comparações entre grupos:
     for (comp in seq_len(nrow(confint_vals))) {
-      est <- round(confint_vals[comp, "Estimate"], digits = n.digits)
-      lwr <- round(confint_vals[comp, "lwr"], digits = n.digits)
-      upr <- round(confint_vals[comp, "upr"], digits = n.digits)
+      est <- confint_vals[comp, "Estimate"]
+      lwr <- confint_vals[comp, "lwr"]
+      upr <- confint_vals[comp, "upr"]
       pval <- summary(mod2.sum)$test$pvalues[comp]
       
-      bw <- rbind(bw, paste0(est, " (", lwr, " to ", upr, ")"))
+      # Estimativas e IC
+      bw <- rbind(bw, paste0(round(est, n.digits), " (", round(lwr, n.digits), " to ", round(upr, n.digits), ")"))
       
-      if (pval < alpha) {
-        flag <- "*"
-      } else {
-        flag <- ""
-      }
-      if (pval < 0.001) {
-        pval <- "<0.001"
-      } else {
-        pval <- format(round(pval, digits = 3), nsmall = 3)
-      }
-      bw.pvalues <- rbind(bw.pvalues, paste0(pval, flag))
+      # Valores-p
+      bw.pvalues <- rbind(bw.pvalues, ifelse(pval < 0.001, "<0.001*", 
+                                             ifelse(pval < alpha, paste0(round(pval, 3), "*"), round(pval, 3))))
       
-      # calcular SMD com base nas estimativas marginais
-      smd_est <- pairs_emm[comp, "estimate"]
-      smd_sd <- pairs_emm[comp, "SE"] * sqrt(2)  # pooled SD
-      smd_d <- as.numeric(smd_est / smd_sd)
-      smd_lower <- as.numeric(pairs_emm[comp, "lower.CL"] / smd_sd)
-      smd_upper <- as.numeric(pairs_emm[comp, "upper.CL"] / smd_sd)
-      
-      estimate <- round(smd_d, digits = n.digits)
-      lower <- round(smd_lower, digits = n.digits)
-      upper <- round(smd_upper, digits = n.digits)
-      smd.values <- rbind(smd.values, paste0(estimate, " (", lower, " to ", upper, ")"))
+      # SMD (Cohen's d) corretamente calculado
+      smd_d     <- est / residual_sd
+      smd_lower <- lwr / residual_sd
+      smd_upper <- upr / residual_sd
+      smd.values <- rbind(smd.values, paste0(round(smd_d, n.digits), " (", round(smd_lower, n.digits), " to ", round(smd_upper, n.digits), ")"))
     }
   }
   
