@@ -349,132 +349,80 @@ TABLE.2a <- function(dataset,
   bw <- c()
   bw.pvalues <- c()
   smd.values <- c()
+  
   for (i in 2:(length(wt.labels))) {
     ID <- seq(1:length(bw.factor))
-    BASELINE_M <-
-      matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, 1]
-    FOLLOWUP_M <-
-      matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, i]
+    BASELINE_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, 1]
+    FOLLOWUP_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, i]
     CHANGE_M <- FOLLOWUP_M - BASELINE_M
     COVARIATE_M <- COVARIATE_M[1:length(ID), ]
-    if (missing != "Multiple imputation") {
-      if (!sjmisc::is_empty(covariate)) {
-        df <-
-          data.frame(ID,
-                     bw.factor,
-                     BASELINE_M,
-                     CHANGE_M,
-                     COVARIATE_M,
-                     check.names = FALSE)
-        mod2 <-
-          nlme::lme(as.formula(paste0(
-            "CHANGE_M ~ bw.factor * BASELINE_M + ",
-            paste0(colnames(COVARIATE_M), collapse = " + ")
-          )),
-          random = ~ 1 | ID,
-          data = df)
-      } else {
-        df <- data.frame(ID, bw.factor, BASELINE_M, CHANGE_M, check.names = FALSE)
-        mod2 <-
-          nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M,
-                    random = ~ 1 | ID,
-                    data = df)
-      }
-      mod2.sum <-
-        summary(multcomp::glht(mod2, linfct = multcomp::mcp(bw.factor = "Tukey")),
-                test = multcomp::adjusted("holm"))
-      names <- names(coef(mod2.sum))
-      estimate <-
-        round(confint(mod2.sum, level = 1 - alpha)$confint[, "Estimate"], digits = n.digits)
-      low.ci <-
-        round(confint(mod2.sum, level = 1 - alpha)$confint[, "lwr"], digits = n.digits)
-      upp.ci <-
-        round(confint(mod2.sum, level = 1 - alpha)$confint[, "upr"], digits = n.digits)
-      p.value <- summary(mod2)$tTable[, "p-value"][2]
-    } else {
-      if (!sjmisc::is_empty(covariate)) {
-        df <-
-          data.frame(ID,
-                     bw.factor,
-                     BASELINE_M,
-                     CHANGE_M,
-                     COVARIATE_M,
-                     check.names = FALSE)
-      } else {
-        df <- data.frame(ID, bw.factor, BASELINE_M, CHANGE_M, check.names = FALSE)
-      }
-      # https://simongrund1.github.io/posts/anova-with-multiply-imputed-data-sets/
-      ini <- mice::mice(data = df, maxit = 0)
-      pred <- ini$pred
-      pred["CHANGE_M", "ID"] <- -2
-      imp <-
-        mice::mice(
-          data = df,
-          pred = pred,
-          method = "pmm",
-          m = m.imputations,
-          seed = 0,
-          print = FALSE,
-          maxit = 50
-        )
-      # create a list of completed data sets
-      implist <- mitml::mids2mitml.list(imp)
-      mod2 <- lapply(implist, function(data) {
-        nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M,
-                  random = ~ 1 | ID,
-                  data = data)
-      })
-      
-      # NOT WORKING
-      fit2.pairwise <-
-        lapply(mod2, multcomp::glht, linfct = multcomp::mcp(bw.factor = "Tukey"))
-      
-      fit2.pairwise <- mice::as.mitml.result(fit2.pairwise)
-      mod2.sum <- mitml::testEstimates(fit2.pairwise)
-      names <- rownames(mitml::confint.mitml.testEstimates(mod2.sum, level = 1 - alpha))
-      estimate <- round(unlist(mod2.sum)$estimates1, digits = n.digits)
-      low.ci <- round(mitml::confint.mitml.testEstimates(mod2.sum, level = 1 - alpha)[1, 1],
-                      digits = n.digits)
-      upp.ci <- round(mitml::confint.mitml.testEstimates(mod2.sum, level = 1 - alpha)[1, 2],
-                      digits = n.digits)
-      p.value <- unlist(mod2.sum)$estimates5
-    }
-    bw <-
-      rbind(bw, t(paste(
-        estimate, " (", low.ci, " to ", upp.ci, ")", sep = ""
-      )))
-    if (p.value < alpha) {
-      flag <- "*"
-    } else {
-      flag <- ""
-    }
-    if (p.value < 0.001) {
-      p.value <- "<0.001"
-    } else {
-      p.value <- format(round(p.value, digits = 3), nsmall = 3)
-    }
-    bw.pvalues <-
-      rbind(bw.pvalues, paste(p.value, flag, sep = ""))
     
-    group_data <- as.character(bw.factor)
-    group_data[bw.factor == bw.factor] <- 0
-    group_data[bw.factor != control.g] <- 1
-    group_data <- as.numeric(group_data)
-    data <- data.frame(group_data, CHANGE_M, check.names = FALSE)
-    smd <- stddiff::stddiff.numeric(data = data,
-                                    gcol = 1,
-                                    vcol = 2)
-    estimate <- round(smd[7], digits = n.digits)
-    lower <- round(smd[8], digits = n.digits)
-    upper <- round(smd[9], digits = n.digits)
-    smd.values <-
-      rbind(smd.values, t(paste(
-        estimate, " (", lower, " to ", upper, ")", sep = ""
-      )))
+    if (!sjmisc::is_empty(covariate)) {
+      df <- data.frame(ID, bw.factor, BASELINE_M, CHANGE_M, COVARIATE_M, check.names = FALSE)
+      mod2 <- nlme::lme(
+        as.formula(paste0("CHANGE_M ~ bw.factor * BASELINE_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))),
+        random = ~ 1 | ID,
+        data = df
+      )
+    } else {
+      df <- data.frame(ID, bw.factor, BASELINE_M, CHANGE_M, check.names = FALSE)
+      mod2 <- nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M, random = ~ 1 | ID, data = df)
+    }
+    
+    mod2.sum <- summary(multcomp::glht(mod2, linfct = multcomp::mcp(bw.factor = "Tukey")),
+                        test = multcomp::adjusted("holm"))
+    
+    confint_vals <- confint(mod2.sum, level = 1 - alpha)$confint
+    group_comparisons <- rownames(confint_vals)
+    
+    for (comp in seq_len(nrow(confint_vals))) {
+      est <- round(confint_vals[comp, "Estimate"], digits = n.digits)
+      lwr <- round(confint_vals[comp, "lwr"], digits = n.digits)
+      upr <- round(confint_vals[comp, "upr"], digits = n.digits)
+      pval <- summary(mod2.sum)$test$pvalues[comp]
+      
+      bw <- rbind(bw, paste0(est, " (", lwr, " to ", upr, ")"))
+      
+      if (pval < alpha) {
+        flag <- "*"
+      } else {
+        flag <- ""
+      }
+      if (pval < 0.001) {
+        pval <- "<0.001"
+      } else {
+        pval <- format(round(pval, digits = 3), nsmall = 3)
+      }
+      bw.pvalues <- rbind(bw.pvalues, paste0(pval, flag))
+      
+      # calcular SMD corretamente entre os dois grupos envolvidos na comparação
+      groups <- unlist(strsplit(group_comparisons[comp], " - "))
+      g2 <- groups[1]  # grupo intervenção
+      g1 <- groups[2]  # grupo controle
+      
+      subset_idx <- which(bw.factor %in% c(g1, g2))
+      group_sub <- bw.factor[subset_idx]
+      change_sub <- CHANGE_M[subset_idx]
+      
+      group_numeric <- ifelse(group_sub == g2, 1, 0)
+      
+      smd_group_data <- data.frame(
+        group_data = group_numeric,
+        CHANGE_M = change_sub
+      )
+      
+      smd <- stddiff::stddiff.numeric(data = smd_group_data,
+                                      gcol = 1,
+                                      vcol = 2)
+      estimate <- round(smd[7], digits = n.digits)
+      lower <- round(smd[8], digits = n.digits)
+      upper <- round(smd[9], digits = n.digits)
+      smd.values <- rbind(smd.values, paste0(estimate, " (", lower, " to ", upper, ")"))
+    }
   }
-  bw.diff[1, ] <-
-    rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), by = length(wt.labels) - 1)
-  bw.diff[2, ] <- rep(names, length(wt.labels) - 1)
+  
+  bw.diff[1, ] <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), each = choose(nlevels(bw.factor), 2))
+  bw.diff[2, ] <- rep(group_comparisons, times = length(wt.labels) - 1)
   bw.diff[4, ] <- bw
   bw.diff[5, ] <- bw.pvalues
   bw.diff[6, ] <- smd.values
