@@ -349,14 +349,14 @@ TABLE.2a <- function(dataset,
   bw <- c()
   bw.pvalues <- c()
   smd.values <- c()
-
+  
   for (i in 2:(length(wt.labels))) {
     ID <- seq(1:length(bw.factor))
     BASELINE_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, 1]
     FOLLOWUP_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, i]
     CHANGE_M <- FOLLOWUP_M - BASELINE_M
     COVARIATE_M <- COVARIATE_M[1:length(ID), ]
-
+    
     if (!sjmisc::is_empty(covariate)) {
       df <- data.frame(ID, bw.factor, BASELINE_M, CHANGE_M, COVARIATE_M, check.names = FALSE)
       mod2 <- nlme::lme(
@@ -368,21 +368,25 @@ TABLE.2a <- function(dataset,
       df <- data.frame(ID, bw.factor, BASELINE_M, CHANGE_M, check.names = FALSE)
       mod2 <- nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M, random = ~ 1 | ID, data = df)
     }
-
+    
     mod2.sum <- summary(multcomp::glht(mod2, linfct = multcomp::mcp(bw.factor = "Tukey")),
                         test = multcomp::adjusted("holm"))
-
+    
     confint_vals <- confint(mod2.sum, level = 1 - alpha)$confint
     group_comparisons <- rownames(confint_vals)
-
+    
+    # obter efeitos marginais e IC
+    emm <- emmeans::emmeans(mod2, ~ bw.factor)
+    pairs_emm <- summary(pairs(emm), infer = c(TRUE, TRUE), level = 1 - alpha)
+    
     for (comp in seq_len(nrow(confint_vals))) {
       est <- round(confint_vals[comp, "Estimate"], digits = n.digits)
       lwr <- round(confint_vals[comp, "lwr"], digits = n.digits)
       upr <- round(confint_vals[comp, "upr"], digits = n.digits)
       pval <- summary(mod2.sum)$test$pvalues[comp]
-
+      
       bw <- rbind(bw, paste0(est, " (", lwr, " to ", upr, ")"))
-
+      
       if (pval < alpha) {
         flag <- "*"
       } else {
@@ -394,33 +398,21 @@ TABLE.2a <- function(dataset,
         pval <- format(round(pval, digits = 3), nsmall = 3)
       }
       bw.pvalues <- rbind(bw.pvalues, paste0(pval, flag))
-
-      # calcular SMD corretamente entre os dois grupos envolvidos na comparação
-      groups <- unlist(strsplit(group_comparisons[comp], " - "))
-      g2 <- groups[1]  # grupo intervenção
-      g1 <- groups[2]  # grupo controle
-
-      subset_idx <- which(bw.factor %in% c(g1, g2))
-      group_sub <- bw.factor[subset_idx]
-      change_sub <- CHANGE_M[subset_idx]
-
-      group_numeric <- ifelse(group_sub == g2, 1, 0)
-
-      smd_group_data <- data.frame(
-        group_data = group_numeric,
-        CHANGE_M = change_sub
-      )
-
-      smd <- stddiff::stddiff.numeric(data = smd_group_data,
-                                      gcol = 1,
-                                      vcol = 2)
-      estimate <- round(smd[7], digits = n.digits)
-      lower <- round(smd[8], digits = n.digits)
-      upper <- round(smd[9], digits = n.digits)
+      
+      # calcular SMD com base nas estimativas marginais
+      smd_est <- pairs_emm[comp, "estimate"]
+      smd_sd <- pairs_emm[comp, "SE"] * sqrt(2)  # pooled SD
+      smd_d <- as.numeric(smd_est / smd_sd)
+      smd_lower <- as.numeric(pairs_emm[comp, "lower.CL"] / smd_sd)
+      smd_upper <- as.numeric(pairs_emm[comp, "upper.CL"] / smd_sd)
+      
+      estimate <- round(smd_d, digits = n.digits)
+      lower <- round(smd_lower, digits = n.digits)
+      upper <- round(smd_upper, digits = n.digits)
       smd.values <- rbind(smd.values, paste0(estimate, " (", lower, " to ", upper, ")"))
     }
   }
-
+  
   bw.diff[1, ] <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), each = choose(nlevels(bw.factor), 2))
   bw.diff[2, ] <- rep(group_comparisons, times = length(wt.labels) - 1)
   bw.diff[4, ] <- bw
