@@ -438,20 +438,39 @@ TABLE.2a <- function(dataset,
         emm_pairs_list <- lapply(mod2_models$analyses, function(fit) {
           pairs(emmeans::emmeans(fit, specs = ~ GROUP_M))
         })
-        
         pairs_df <- lapply(emm_pairs_list, broom::tidy)
         
-        estimates <- lapply(pairs_df, \(df) df$estimate)
-        variances <- lapply(pairs_df, \(df) (df$std.error)^2)
-        
-        pooled <- mitools::MIcombine(estimates, variances, pvalues)
-        summary_pooled <- summary(pooled)
-        
-        # Adiciona contrastes (supondo mesma ordem em todos)
-        summary_pooled$contrast <- pairs_df[[1]]$contrast
-        pairs_emm <- summary_pooled
-        names(pairs_emm) <- c("estimate", "std.error", "lower", "upper", "missInfo", "contrast")
-        
+        # Number of imputations
+        m <- length(pairs_df)
+        # Extract estimate matrix and std.error matrix
+        est_matrix <- do.call(cbind, lapply(pairs_df, \(x) x$estimate))
+        se_matrix  <- do.call(cbind, lapply(pairs_df, \(x) x$std.error))
+        # Within-imputation variance (ubar): average of variances
+        ubar <- rowMeans(se_matrix^2)  # variance = (std.error)^2
+        # Between-imputation variance (b): variance of the point estimates
+        b <- apply(est_matrix, 1, var)
+        # Total variance for each contrast
+        T_var <- ubar + (1 + 1/m) * b
+        # Degrees of freedom (Rubin's rules)
+        df <- (m - 1) * (1 + ubar / ((1 + 1/m) * b))^2   
+        # Get the mean estimates and std.errors across imputations
+        pooled_estimates <- rowMeans(est_matrix)
+        pooled_se <- sqrt(T_var)
+        # Calculate t-values and p-values
+        t_values <- pooled_estimates / pooled_se
+        p_values <- 2 * pt(-abs(t_values), df)
+        # Build your summary_pooled table
+        summary_pooled <- data.frame(
+          estimate = pooled_estimates,
+          std.error = pooled_se,
+          lower = pooled_estimates - qt(1 - alpha / 2, df) * pooled_se,
+          upper = pooled_estimates + qt(1 - alpha / 2, df) * pooled_se,
+          df = df,
+          contrast = pairs_df[[1]]$contrast,
+          p.value = p_values
+        )
+        # Final data frame
+        pairs_emm <- summary_pooled[, c("estimate", "std.error", "lower", "upper", "df", "p.value")]
       } else {
         # Caso sem covariáveis: aplicar emmeans diretamente
         emmeans_obj <- emmeans::emmeans(mod2_models, specs = ~ GROUP_M)
