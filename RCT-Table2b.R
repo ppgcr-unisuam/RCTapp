@@ -10,16 +10,17 @@ TABLE.2b <- function(dataset,
                      alpha,
                      n.digits) {
   # This function outputs a comparison table for two-way mixed-models
-  # dataset: a 2D dataframe (rows: participants, columns: variables)
-  # variables: a 1D variable labels (within-group)
-  # covariate: a 2D dataframe (rows: participants, columns: covariates)
-  # bw.factor: a 1D between-group factor
-  # wt.labels: a 1D variable labels for each level
-  # wt.values: a 1D variable values for each level
-  # missing: method for handling missing balues (complete.cases, mean inputation, multiple imputation)
-  # m.imputations: number of imputations
-  # alpha: the type-I error level
-  # n.digits: number of decimal places to be presented for continuous variables
+  # dataset: Dataframe of outcomes (columns = timepoints)
+  # variables: Names of outcome variables
+  # covariate: Optional covariates (dataframe)
+  # bw.factor: Between-group factor (vector)
+  # control.g: Label for the control group
+  # wt.labels: Labels for timepoints
+  # wt.values: Values of timepoints
+  # missing: Missing data handling ("Complete cases", "Mean imputation", "Multiple imputation")
+  # m.imputations: Number of imputations for multiple imputation
+  # alpha: Significance level (default = 0.05)
+  # n.digits: Number of decimals
   
   quiet <- function(x) {
     sink(tempfile())
@@ -183,37 +184,37 @@ TABLE.2b <- function(dataset,
     ini <- mice::mice(data = data_M, maxit = 0)
     pred <- ini$pred
     pred["OUTCOME_M", "ID_M"] <- -2
-    imp <-
-      mice::mice(
-        data_M,
-        pred = pred,
-        method = "pmm",
-        m = m.imputations,
-        seed = 0,
-        print = FALSE,
-        maxit = 50
-      )
+    
+    imp <- mice::mice(
+      data_M,
+      pred = pred,
+      method = "pmm",
+      m = m.imputations,
+      seed = 0,
+      print = FALSE,
+      maxit = 50
+    )
     if (!sjmisc::is_empty(covariate)) {
-      mod1 <-
-        with(data = imp,
-             nlme::lme(
-               fixed = as.formula(paste0(
-                 "OUTCOME_M ~ TIME_M * GROUP_M + ",
-                 paste0(names(COVARIATE_M), collapse = " + ")
-               )),
-               random = ~ 1 | ID_M / TIME_M
-             ))
+      mod1 <- with(data = imp,
+                   nlme::lme(
+                     fixed = as.formula(paste0(
+                       "OUTCOME_M ~ TIME_M * GROUP_M + ",
+                       paste0(names(COVARIATE_M), collapse = " + ")
+                     )),
+                     random = ~ 1 | ID_M / TIME_M
+                   ))
+      
       mod1.aov <- quiet(miceadds::mi.anova(imp, formula = paste0(
         "OUTCOME_M ~ TIME_M * GROUP_M + ",
         paste0(names(COVARIATE_M), collapse = " + ")
       )))
     } else {
-      mod1 <-
-        with(data = imp,
-             nlme::lme(
-               fixed = OUTCOME_M ~ TIME_M * GROUP_M,
-               random = ~ 1 | ID_M / TIME_M
-             ))
+      mod1 <- with(data = imp,
+                   nlme::lme(
+                     fixed = OUTCOME_M ~ TIME_M * GROUP_M,
+                     random = ~ 1 | ID_M / TIME_M
+                   ))
+      
       mod1.aov <- quiet(miceadds::mi.anova(imp, formula = "OUTCOME_M ~ TIME_M * GROUP_M"))
     }
     mod1.aov <- mod1.aov$anova.table[1:3, 2:5]
