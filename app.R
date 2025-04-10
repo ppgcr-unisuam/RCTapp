@@ -1651,7 +1651,7 @@ server <- function(input, output, session) {
     
     # check if data has baseline from checkbox
     if (input[["hasBaseline"]]) {
-      FIGURE.2(
+      fig <- FIGURE.2(
         dataset = rawdata,
         variables = input[["OV"]],
         covariate = rawdata[input[["COV"]]],
@@ -1667,7 +1667,7 @@ server <- function(input, output, session) {
         n.digits = 2
       )
     } else {
-      FIGURE.2(
+      fig <- FIGURE.2(
         dataset = rawdata,
         variables = input[["OV"]],
         covariate = rawdata[input[["COV"]]],
@@ -1685,6 +1685,9 @@ server <- function(input, output, session) {
         n.digits = 2
       )
     }
+    
+    # plort figure
+    print(fig)
     
     # save plot
     dev.copy(
