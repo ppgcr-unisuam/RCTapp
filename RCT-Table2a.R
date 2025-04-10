@@ -353,31 +353,32 @@ TABLE.2a <- function(dataset,
   if (missing != "Multiple imputation") {
     for (i in 2:(length(wt.labels))) {
       ID <- seq(1:length(bw.factor))
+      GROUP_M <- GROUP_M[1:length(bw.factor)]
       BASELINE_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, 1]
       FOLLOWUP_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, i]
       CHANGE_M <- FOLLOWUP_M - BASELINE_M
       COVARIATE_M <- COVARIATE_M[1:length(ID), ]
       
       if (!sjmisc::is_empty(covariate)) {
-        df <- data.frame(ID, bw.factor, BASELINE_M, CHANGE_M, COVARIATE_M, check.names = FALSE)
+        df <- data.frame(ID, GROUP_M, BASELINE_M, CHANGE_M, COVARIATE_M, check.names = FALSE)
         mod2 <- nlme::lme(
-          as.formula(paste0("CHANGE_M ~ bw.factor * BASELINE_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))),
+          as.formula(paste0("CHANGE_M ~ GROUP_M * BASELINE_M + ", paste0(colnames(COVARIATE_M), collapse = " + "))),
           random = ~ 1 | ID,
           data = df
         )
       } else {
-        df <- data.frame(ID, bw.factor, BASELINE_M, CHANGE_M, check.names = FALSE)
-        mod2 <- nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M, random = ~ 1 | ID, data = df)
+        df <- data.frame(ID, GROUP_M, BASELINE_M, CHANGE_M, check.names = FALSE)
+        mod2 <- nlme::lme(CHANGE_M ~ GROUP_M + BASELINE_M, random = ~ 1 | ID, data = df)
       }
       
-      mod2.sum <- summary(multcomp::glht(mod2, linfct = multcomp::mcp(bw.factor = "Tukey")),
+      mod2.sum <- summary(multcomp::glht(mod2, linfct = multcomp::mcp(GROUP_M = "Tukey")),
                           test = multcomp::adjusted("holm"))
       
       confint_vals <- confint(mod2.sum, level = 1 - alpha)$confint
       group_comparisons <- rownames(confint_vals)
       
       # obter efeitos marginais e IC
-      emm <- emmeans::emmeans(mod2, ~ bw.factor)
+      emm <- emmeans::emmeans(mod2, ~ GROUP_M)
       pairs_emm <- summary(pairs(emm), infer = c(TRUE, TRUE), level = 1 - alpha)
       
       # Calcular desvio padrão residual diretamente do modelo ajustado
@@ -408,36 +409,66 @@ TABLE.2a <- function(dataset,
     for (i in 2:(length(wt.labels))) {
       # Define a função que será aplicada a cada imputação
       mod2_models <- with(imp, {
+        ID <- seq(1:length(bw.factor))
+        GROUP_M <- GROUP_M[1:length(bw.factor)]
         BASELINE_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, 1]
         FOLLOWUP_M <- matrix(OUTCOME_M, ncol = length(wt.labels), byrow = FALSE)[, i]
         CHANGE_M <- FOLLOWUP_M - BASELINE_M
+        COVARIATE_M <- COVARIATE_M[1:length(ID), ]
+        
         if (!sjmisc::is_empty(covariate)) {
-          df <- data.frame(ID_M, bw.factor = GROUP_M, BASELINE_M, CHANGE_M, COVARIATE_M)
+          df <- data.frame(ID, GROUP_M, BASELINE_M, CHANGE_M, COVARIATE_M)
           nlme::lme(
-            fixed = as.formula(paste0("CHANGE_M ~ bw.factor * BASELINE_M + ", paste0(names(COVARIATE_M), collapse = " + "))),
-            random = ~1 | ID_M,
+            fixed = as.formula(paste0("CHANGE_M ~ GROUP_M * BASELINE_M + ", paste0(names(COVARIATE_M), collapse = " + "))),
+            random = ~1 | ID,
             data = df
           )
         } else {
-          df <- data.frame(ID_M, bw.factor = GROUP_M, BASELINE_M, CHANGE_M)
-          nlme::lme(CHANGE_M ~ bw.factor + BASELINE_M, random = ~1 | ID_M, data = df)
+          df <- data.frame(ID, GROUP_M, BASELINE_M, CHANGE_M)
+          nlme::lme(CHANGE_M ~ GROUP_M + BASELINE_M, random = ~1 | ID, data = df)
         }
       })
       
-      # Usar emmeans::mi.emm_list para calcular os efeitos marginais e pares
-      emmeans_obj <- emmeans::emmeans(mod2_models, ~ bw.factor)
-      pairs_emm <- summary(pairs(emmeans_obj), infer = c(TRUE, TRUE), level = 1 - alpha)
-      # group_comparisons <- pairs_emm$contrast
-      group_comparisons <- apply(combn(levels(bw.factor), 2), 2, function(x) paste0(x[2], " - ", x[1]))
-
-      # Obter estimativas e ICs
-      est <- pairs_emm$estimate
-      lwr <- pairs_emm$lower.CL
-      upr <- pairs_emm$upper.CL
-      pval <- pairs_emm$p.value
+      # Inicializar objetos para armazenar resultados
+      emmeans_obj <- NULL
+      pairs_emm <- NULL
       
-      # SMD (usando erro padrão médio como aproximação)
-      pooled_sd <- mean(pairs_emm$SE) * sqrt(2)  # ou usar sigma médio de mod2_models
+      if (!sjmisc::is_empty(covariate)) {
+        # emmeans e pairs em cada modelo
+        emm_pairs_list <- lapply(mod2_models$analyses, function(fit) {
+          pairs(emmeans::emmeans(fit, specs = ~ GROUP_M))
+        })
+        
+        pairs_df <- lapply(emm_pairs_list, broom::tidy)
+        
+        estimates <- lapply(pairs_df, \(df) df$estimate)
+        variances <- lapply(pairs_df, \(df) (df$std.error)^2)
+        
+        pooled <- mitools::MIcombine(estimates, variances, pvalues)
+        summary_pooled <- summary(pooled)
+        
+        # Adiciona contrastes (supondo mesma ordem em todos)
+        summary_pooled$contrast <- pairs_df[[1]]$contrast
+        pairs_emm <- summary_pooled
+        names(pairs_emm) <- c("estimate", "std.error", "lower", "upper", "missInfo", "contrast")
+        
+      } else {
+        # Caso sem covariáveis: aplicar emmeans diretamente
+        emmeans_obj <- emmeans::emmeans(mod2_models, specs = ~ GROUP_M)
+        pairs_emm <- summary(pairs(emmeans_obj), infer = c(TRUE, TRUE), level = 1 - alpha)
+        names(pairs_emm) <- c("contrast", "estimate", "std.error", "df", "lower", "upper", "t.ratio", "p.value")
+      }
+      group_comparisons <- apply(combn(levels(GROUP_M), 2), 2, function(x) paste0(x[2], " - ", x[1]))
+      
+      # Coletar estimativas
+      est <- pairs_emm$estimate
+      lwr <- pairs_emm$lower
+      upr <- pairs_emm$upper
+      pval <- pairs_emm$p.value
+      se <- pairs_emm$std.error
+      
+      # Cálculo do SMD
+      pooled_sd <- mean(se) * sqrt(2)
       smd_d     <- est / pooled_sd
       smd_lower <- lwr / pooled_sd
       smd_upper <- upr / pooled_sd
@@ -453,9 +484,9 @@ TABLE.2a <- function(dataset,
   
   bw.diff[1, ] <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), each = choose(nlevels(bw.factor), 2))
   bw.diff[2, ] <- rep(group_comparisons, times = length(wt.labels) - 1)
-  bw.diff[4, ] <- bw
-  bw.diff[5, ] <- bw.pvalues
-  bw.diff[6, ] <- smd.values
+  bw.diff[4, ] <- as.vector(bw)
+  try(bw.diff[5, ] <- as.vector(bw.pvalues), silent = TRUE)
+  bw.diff[6, ] <- as.vector(smd.values)
   
   # apresenta os resultados na tela
   print(
