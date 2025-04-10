@@ -497,15 +497,10 @@ ui <- shiny::fluidPage(
                 label = "Legend position",
                 choices = c(
                   "none",
-                  "top",
-                  "topleft",
-                  "topright",
-                  "bottom",
-                  "bottomleft",
-                  "bottomright",
                   "left",
+                  "top",
                   "right",
-                  "center"
+                  "bottom"
                 ),
                 selected = "top",
                 showValueAsTags = TRUE,
@@ -1207,9 +1202,9 @@ server <- function(input, output, session) {
       n.digits = 2
     )
     
-    # show p-value if checkbox is true
+    # show p-value and test if checkbox is true
     if (!input[["showPvalue"]]) {
-      results <- results[, -ncol(results)]
+      results <- results[, c(-(ncol(results)-1), -ncol(results))]
     }
     
     caption <- "Table 1: Between-group descriptive analysis."

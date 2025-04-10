@@ -91,7 +91,7 @@ FIGURE.2 <- function(dataset,
       maxit = 50
     )
     
-    data_M <- complete(imp, 1)  # usa a 1ª imputação
+    data_M <- tidyr::complete(imp, 1)  # usa a 1ª imputação
     TIME_M <- data_M$TIME_M
     GROUP_M <- data_M$GROUP_M
     OUTCOME_M <- data_M$OUTCOME_M
@@ -139,7 +139,7 @@ FIGURE.2 <- function(dataset,
     ggplot2::geom_errorbar(ggplot2::aes(ymin = emmean - SE * qnorm(1 - alpha / 2),
                                         ymax = emmean + SE * qnorm(1 - alpha / 2)),
                            width = 0.2, position = ggplot2::position_dodge(0.2)) +
-    ggplot2::labs(x = xlabs, y = ylab, color = "Group") +
+    ggplot2::labs(x = "Time points", y = ylab, color = "Group") +
     ggplot2::scale_color_grey(start = 0.2, end = 0.8) +
     ggplot2::scale_x_continuous(breaks = wt.values, labels = wt.labels) +
     ggplot2::theme_minimal() +

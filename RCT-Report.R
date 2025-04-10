@@ -35,7 +35,7 @@ sap <- function(BGF,
     "Descriptive statistics were calculated for categorical variables using frequency tables with counts and percentages, and for continuous variables by reporting the mean and standard deviation across groups (",
     paste0(treatmentNames, collapse = ", "), ").",
     if(showPvalue){
-      " Inferential statistics involved chi-square tests for categorical variables and one-way ANOVA (t-test) for continuous variables to assess differences across groups."
+      " Inferential statistics involved Fisher or chi-square tests for categorical variables and Welch or one-way analysis of variance for continuous variables to assess differences across groups."
     },
     " Missing data was reported as the total number and percentage of missing values for each variable."
   )
