@@ -271,11 +271,11 @@ TABLE.2b <- function(dataset,
   }
   interaction <- paste(
     "F(",
-    format(round(mod1.aov[4, 1], digits = 0), nsmall = 0),
+    format(round(mod1.aov[3, 1], digits = 0), nsmall = 0),
     ",",
-    format(round(mod1.aov[4, 2], digits = 0), nsmall = 0),
+    format(round(mod1.aov[3, 2], digits = 0), nsmall = 0),
     ")=",
-    format(round(mod1.aov[4, 3], digits = 3), nsmall = 3),
+    format(round(mod1.aov[3, 3], digits = 3), nsmall = 3),
     ", p",
     p.value,
     flag,
@@ -308,6 +308,7 @@ TABLE.2b <- function(dataset,
       sep = ""
     )
   }
+  model.res[3, 1] <- interaction
   
   # calcula e preenche a subtabela WITHIN-GROUP (SAME LINEAR MIXED MODEL)
   mult.within <- summary(pairs(emmeans::emmeans(mod1, ~ TIME_M |
@@ -372,11 +373,10 @@ TABLE.2b <- function(dataset,
       p.values, digits = 3
     ), nsmall = 3)), "")
     
-    group_data <- as.character(bw.factor)
-    group_data[bw.factor == bw.factor] <- 0
-    group_data[bw.factor != control.g] <- 1
-    group_data <- as.numeric(group_data)
-    data <- data.frame(group_data, OUTCOME_M[TIME_M == i])
+    data <- data.frame(
+      group_data = as.numeric(bw.factor != control.g),
+      OUTCOME = OUTCOME_M[TIME_M == i]
+    )
     smd <- stddiff::stddiff.numeric(data = data,
                                     gcol = 1,
                                     vcol = 2)
@@ -393,6 +393,13 @@ TABLE.2b <- function(dataset,
   bw.diff[4, ] <- bw
   bw.diff[5, ] <- bw.pvalues
   bw.diff[6, ] <- smd.values
+  
+  # Dunnett-like comparisons (equivalente ao TABLE.2a)
+  if (!sjmisc::is_empty(control.g)) {
+    group_comparisons <- bw.diff[2, ]  # usa as comparações já calculadas
+    keep <- grepl(paste0("\\b", trimws(control.g), "\\b"), group_comparisons)
+    bw.diff <- bw.diff[, keep, drop = FALSE]
+  }
   
   # apresenta os resultados na tela
   print(

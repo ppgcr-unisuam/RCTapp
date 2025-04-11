@@ -158,6 +158,7 @@ ui <- shiny::fluidPage(
                 showValueAsTags = TRUE,
                 search = TRUE,
                 multiple = FALSE,
+                hideClearButton = FALSE,
                 width = "100%"
               ),
               data.step = 1,
@@ -217,6 +218,7 @@ ui <- shiny::fluidPage(
                     showValueAsTags = TRUE,
                     search = FALSE,
                     multiple = FALSE,
+                    hideClearButton = FALSE,
                     width = "100%"
                   ),
                   data.step = 5,
@@ -247,6 +249,7 @@ ui <- shiny::fluidPage(
                 showValueAsTags = TRUE,
                 search = TRUE,
                 multiple = FALSE,
+                hideClearButton = FALSE,
                 width = "100%"
               ),
               data.step = 7,
@@ -312,6 +315,7 @@ ui <- shiny::fluidPage(
                 showValueAsTags = TRUE,
                 search = TRUE,
                 multiple = TRUE,
+                hideClearButton = FALSE,
                 width = "100%"
               ),
               data.step = 1,
@@ -380,6 +384,7 @@ ui <- shiny::fluidPage(
                 showValueAsTags = TRUE,
                 search = TRUE,
                 multiple = TRUE,
+                hideClearButton = FALSE,
                 width = "100%"
               ),
               data.step = 1,
@@ -406,6 +411,7 @@ ui <- shiny::fluidPage(
                 showValueAsTags = TRUE,
                 search = TRUE,
                 multiple = TRUE,
+                hideClearButton = FALSE,
                 width = "100%"
               ),
               data.step = 3,
@@ -424,6 +430,7 @@ ui <- shiny::fluidPage(
                     showValueAsTags = TRUE,
                     search = TRUE,
                     multiple = FALSE,
+                    hideClearButton = FALSE,
                     width = "100%"
                   ),
                   data.step = 4,
@@ -472,6 +479,7 @@ ui <- shiny::fluidPage(
                 showValueAsTags = TRUE,
                 search = TRUE,
                 multiple = TRUE,
+                hideClearButton = FALSE,
                 width = "100%"
               ),
               data.step = 6,
@@ -506,6 +514,7 @@ ui <- shiny::fluidPage(
                 showValueAsTags = TRUE,
                 search = TRUE,
                 multiple = FALSE,
+                hideClearButton = FALSE,
                 width = "100%"
               ),
               data.step = 8,
@@ -547,6 +556,7 @@ ui <- shiny::fluidPage(
                 showValueAsTags = TRUE,
                 search = TRUE,
                 multiple = TRUE,
+                hideClearButton = FALSE,
                 width = "100%"
               ),
               data.step = 1,
@@ -1299,7 +1309,6 @@ server <- function(input, output, session) {
     shiny::req(input[["BGF"]])
     shiny::req(input[["OV"]])
     shiny::req(input[["treatmentNames"]])
-    shiny::req(input[["controlgroup"]])
     shiny::req(input[["timepointNames"]])
     shiny::req(input[["missing"]])
     shiny::req(input[["alpha"]])
@@ -1369,7 +1378,6 @@ server <- function(input, output, session) {
     shiny::req(input[["BGF"]])
     shiny::req(input[["OV"]])
     shiny::req(input[["treatmentNames"]])
-    shiny::req(input[["controlgroup"]])
     shiny::req(input[["OutcomeName"]])
     shiny::req(input[["timepointNames"]])
     shiny::req(input[["timepointValues"]])
@@ -1612,7 +1620,6 @@ server <- function(input, output, session) {
     shiny::req(input[["BGF"]])
     shiny::req(input[["OV"]])
     shiny::req(input[["treatmentNames"]])
-    shiny::req(input[["controlgroup"]])
     shiny::req(input[["timepointNames"]])
     shiny::req(input[["timepointValues"]])
     shiny::req(input[["missing"]])

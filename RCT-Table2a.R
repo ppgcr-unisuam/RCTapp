@@ -477,7 +477,7 @@ TABLE.2a <- function(dataset,
         pairs_emm <- summary(pairs(emmeans_obj), infer = c(TRUE, TRUE), level = 1 - alpha)
         names(pairs_emm) <- c("contrast", "estimate", "std.error", "df", "lower", "upper", "t.ratio", "p.value")
       }
-      group_comparisons <- apply(combn(levels(GROUP_M), 2), 2, function(x) paste0(x[2], " - ", x[1]))
+      group_comparisons <- pairs_emm$contrast
       
       # Coletar estimativas
       est <- pairs_emm$estimate
@@ -501,10 +501,25 @@ TABLE.2a <- function(dataset,
     }
   }
   
-  bw.diff[1, ] <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), each = choose(nlevels(bw.factor), 2))
-  bw.diff[2, ] <- rep(group_comparisons, times = length(wt.labels) - 1)
+  # Ajustar os nomes das colunas
+  bw.diff.names <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), each = choose(nlevels(bw.factor), 2))
+  bw.diff.comparisons <- rep(group_comparisons, times = length(wt.labels) - 1)
+  
+  # Dunnet-like comparisons
+  if(!sjmisc::is_empty(control.g)){
+    keep <- grepl(paste0("\\b", trimws(control.g), "\\b"), group_comparisons)
+    bw.diff <- bw.diff[, keep]
+    bw.diff.names <- bw.diff.names[keep]
+    bw.diff.comparisons <- bw.diff.comparisons[keep]
+    bw <- bw[keep]
+    bw.pvalues <- bw.pvalues[keep]
+    smd.values <- smd.values[keep]
+  }
+  
+  bw.diff[1, ] <- bw.diff.names
+  bw.diff[2, ] <- bw.diff.comparisons
   bw.diff[4, ] <- as.vector(bw)
-  try(bw.diff[5, ] <- as.vector(bw.pvalues), silent = TRUE)
+  bw.diff[5, ] <- as.vector(bw.pvalues)
   bw.diff[6, ] <- as.vector(smd.values)
   
   # apresenta os resultados na tela
