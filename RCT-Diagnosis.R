@@ -62,9 +62,7 @@ test.model.fit <- function(dataset,
   OUTCOME_M <- c(as.matrix(dataset))
   COVARIATE_M <- c()
   if (!sjmisc::is_empty(covariate)) {
-    for (i in 1:length(wt.labels)) {
-      COVARIATE_M <- rbind(COVARIATE_M, covariate)
-    }
+    COVARIATE_M <- do.call(rbind, replicate(length(wt.labels), covariate, simplify = FALSE))
   }
   
   # cria o dataset com os valores após imputação ou não de dados
@@ -76,6 +74,9 @@ test.model.fit <- function(dataset,
   # change TIME_M to numeric
   data_M$TIME_M <- as.numeric(as.character(data_M$TIME_M))
   
+  # Atenção: nos diagnósticos, não é aplicado pooling estatístico das imputações.
+  # Os gráficos e outputs usam apenas as imputações diretamente (sem pooling),
+  # portanto devem ser interpretados apenas como ferramentas exploratórias.
   Imp_Data <- NULL
   Convergence <- NULL
   if(missing == "Multiple imputation"){
