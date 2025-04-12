@@ -487,19 +487,19 @@ TABLE.2a <- function(dataset,
       }
     }
   }
+  # remove "GROUP_M" from contrats with GROUP_M
+  group_comparisons <- gsub("GROUP_M", "", group_comparisons)
   
   # Ajustar os nomes das colunas
-  bw.diff.names <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), each = choose(nlevels(bw.factor), 2))
-  
-  bw.diff[1, ] <- bw.diff.names
-  bw.diff[2, ] <- rep(paste(levels(bw.factor)[2], levels(bw.factor)[1], sep = " - "), length(wt.labels) - 1)
+  bw.diff[1, ] <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), each = choose(nlevels(bw.factor), 2))
+  bw.diff[2, ] <- rep(group_comparisons, times = length(wt.labels) - 1)
   bw.diff[4, ] <- as.vector(bw)
   bw.diff[5, ] <- as.vector(bw.pvalues)
   bw.diff[6, ] <- as.vector(smd.values)
   
-  # Dunnett-like comparisons (equivalente ao TABLE.2a)
+  # Dunnett-like comparisons
   if (!sjmisc::is_empty(control.g)) {
-    group_comparisons <- bw.diff[2, ]  # usa as comparações já calculadas
+    group_comparisons <- bw.diff[2, ]
     keep <- grepl(paste0("\\b", trimws(control.g), "\\b"), group_comparisons)
     bw.diff <- bw.diff[, keep, drop = FALSE]
   }

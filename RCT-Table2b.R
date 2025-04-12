@@ -388,7 +388,7 @@ TABLE.2b <- function(dataset,
   bw.diff[5, ] <- bw.pvalues
   bw.diff[6, ] <- smd.values
   
-  # Dunnett-like comparisons (equivalente ao TABLE.2a)
+  # Dunnett-like comparisons
   if (!sjmisc::is_empty(control.g)) {
     group_comparisons <- bw.diff[2, ]  # usa as comparações já calculadas
     keep <- grepl(paste0("\\b", trimws(control.g), "\\b"), group_comparisons)
