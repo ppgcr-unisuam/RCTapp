@@ -61,11 +61,6 @@ TABLE.3 <- function(
                                                                               control.g], table(dataset[, i], bw.factor)[levels(bw.factor) != control.g])
         z.score <- abs((r2 - r1)/se.diff)
         p.value <- 2 * pnorm(abs(z.score), lower.tail = F)
-        if (p.value < alpha) {
-            flag <- "*"
-        } else {
-            flag <- ""
-        }
         if (p.value < 0.001) {
             p.value <- "<0.001"
         } else {

@@ -265,11 +265,6 @@ TABLE.2b <- function(dataset,
   
   # p-valores para efeito de interação
   p.value <- mod1.aov[4, 4]
-  if (p.value < alpha) {
-    flag <- "*"
-  } else {
-    flag <- ""
-  }
   if (p.value < 0.001) {
     p.value <- "<0.001"
   } else {
@@ -284,18 +279,12 @@ TABLE.2b <- function(dataset,
     format(round(mod1.aov[3, 3], digits = 3), nsmall = 3),
     ", p",
     p.value,
-    flag,
     sep = ""
   )
   
   # p-valores para efeitos principais
   for (i in 2:3) {
     p.value <- mod1.aov[i, 4]
-    if (p.value < alpha) {
-      flag <- "*"
-    } else {
-      flag <- ""
-    }
     if (p.value < 0.001) {
       p.value <- "<0.001"
     } else {
@@ -310,7 +299,6 @@ TABLE.2b <- function(dataset,
       format(round(mod1.aov[i, 3], digits = 3), nsmall = 3),
       ", p",
       p.value,
-      flag,
       sep = ""
     )
   }
@@ -334,13 +322,13 @@ TABLE.2b <- function(dataset,
     p.values <- as.numeric(group.data[, 9])
     for (k in 1:(length(wt.labels) - 1)) {
       ifelse(p.values[k] < 0.001,
-             wt.pvalues <- c(wt.pvalues, "<0.001*"),
+             wt.pvalues <- c(wt.pvalues, "<0.001"),
              "")
       ifelse(p.values[k] > 0.001 &
                p.values[k] < alpha,
              wt.pvalues <- c(wt.pvalues, paste(format(
                round(p.values[k], digits = 3), nsmall = 3
-             ), "*", sep = "")),
+             ), sep = "")),
              "")
       ifelse(p.values[k] > alpha, wt.pvalues <- c(wt.pvalues, format(
         round(p.values[k], digits = 3), nsmall = 3
@@ -368,12 +356,12 @@ TABLE.2b <- function(dataset,
       estimate, " (", low.ci, " to ", upp.ci, ")", sep = ""
     )))
     p.values <- as.numeric(group.data[, 9])
-    ifelse(p.values < 0.001, bw.pvalues <- c(bw.pvalues, "<0.001*"), "")
+    ifelse(p.values < 0.001, bw.pvalues <- c(bw.pvalues, "<0.001"), "")
     ifelse(p.values > 0.001 &
              p.values < alpha,
            bw.pvalues <- c(bw.pvalues, paste(format(
              round(p.values, digits = 3), nsmall = 3
-           ), "*", sep = "")),
+           ), sep = "")),
            "")
     ifelse(p.values > alpha, bw.pvalues <- c(bw.pvalues, format(round(
       p.values, digits = 3

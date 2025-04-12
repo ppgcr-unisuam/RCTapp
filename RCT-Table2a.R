@@ -262,13 +262,6 @@ TABLE.2a <- function(dataset,
   mix.mod.res[3, ] <- N
   mix.mod.res[4, ] <- desfecho
   
-  # p-valores para efeito de interação
-  p.value <- mod1.aov[4, 4]
-  if (p.value < alpha) {
-    flag <- "*"
-  } else {
-    flag <- ""
-  }
   if (p.value < 0.001) {
     p.value <- "<0.001"
   } else {
@@ -283,18 +276,12 @@ TABLE.2a <- function(dataset,
     format(round(mod1.aov[4, 3], digits = 3), nsmall = 3),
     ", p",
     p.value,
-    flag,
     sep = ""
   )
   
   # p-valores para efeitos principais
   for (i in 2:3) {
     p.value <- mod1.aov[i, 4]
-    if (p.value < alpha) {
-      flag <- "*"
-    } else {
-      flag <- ""
-    }
     if (p.value < 0.001) {
       p.value <- "<0.001"
     } else {
@@ -309,7 +296,6 @@ TABLE.2a <- function(dataset,
       format(round(mod1.aov[i, 3], digits = 3), nsmall = 3),
       ", p",
       p.value,
-      flag,
       sep = ""
     )
   }
@@ -333,13 +319,13 @@ TABLE.2a <- function(dataset,
     p.values <- as.numeric(group.data[, 9])
     for (k in 1:(length(wt.labels) - 1)) {
       ifelse(p.values[k] < 0.001,
-             wt.pvalues <- c(wt.pvalues, "<0.001*"),
+             wt.pvalues <- c(wt.pvalues, "<0.001"),
              "")
       ifelse(p.values[k] > 0.001 &
                p.values[k] < alpha,
              wt.pvalues <- c(wt.pvalues, paste(format(
                round(p.values[k], digits = 3), nsmall = 3
-             ), "*", sep = "")),
+             ), sep = "")),
              "")
       ifelse(p.values[k] > alpha, wt.pvalues <- c(wt.pvalues, format(
         round(p.values[k], digits = 3), nsmall = 3
@@ -402,8 +388,8 @@ TABLE.2a <- function(dataset,
         bw <- rbind(bw, paste0(round(est, n.digits), " (", round(lwr, n.digits), " to ", round(upr, n.digits), ")"))
         
         # Valores-p
-        bw.pvalues <- rbind(bw.pvalues, ifelse(pval < 0.001, "<0.001*", 
-                                               ifelse(pval < alpha, paste0(round(pval, 3), "*"), round(pval, 3))))
+        bw.pvalues <- rbind(bw.pvalues, ifelse(pval < 0.001, "<0.001", 
+                                               ifelse(pval < alpha, paste0(round(pval, 3)), round(pval, 3))))
         
         # SMD (Cohen's d) corretamente calculado
         smd_d     <- est / residual_sd
@@ -502,8 +488,8 @@ TABLE.2a <- function(dataset,
       
       for (comp in seq_along(est)) {
         bw <- rbind(bw, paste0(round(est[comp], n.digits), " (", round(lwr[comp], n.digits), " to ", round(upr[comp], n.digits), ")"))
-        bw.pvalues <- rbind(bw.pvalues, ifelse(pval[comp] < 0.001, "<0.001*", 
-                                               ifelse(pval[comp] < alpha, paste0(round(pval[comp], 3), "*"), round(pval[comp], 3))))
+        bw.pvalues <- rbind(bw.pvalues, ifelse(pval[comp] < 0.001, "<0.001", 
+                                               ifelse(pval[comp] < alpha, paste0(round(pval[comp], 3)), round(pval[comp], 3))))
         smd.values <- rbind(smd.values, paste0(round(smd_d[comp], n.digits), " (", round(smd_lower[comp], n.digits), " to ", round(smd_upper[comp], n.digits), ")"))
       }
     }

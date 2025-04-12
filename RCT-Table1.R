@@ -33,7 +33,11 @@ TABLE.1 <- function(dataset, variables, bw.factor, max.levels = 2, alpha = 0.05,
         p.value <- suppressWarnings(chisq.test(freq_table, simulate.p.value = TRUE)$p.value)
         test_type <- "Chi-squared"
       }
-      if (p.value < 0.001) { p.value <- "<0.001" } else {p.value <- format(p.value, nsmall = 3)}
+      if (p.value < 0.001) {
+        p.value <- "<0.001"
+      } else {
+        p.value <- sprintf("%.3f", p.value)
+      }
       
       # Preencher a tabela (sem linha "Missing")
       for (lvl in levels_data) {
@@ -48,7 +52,7 @@ TABLE.1 <- function(dataset, variables, bw.factor, max.levels = 2, alpha = 0.05,
         }
         
         if (lvl == head(levels_data[levels_data != "Missing"], 1)) {
-          descript.res[row_idx, ] <- c(var, lvl, freq_row, total_missing, format(p.value, nsmall = 3), test_type)
+          descript.res[row_idx, ] <- c(var, lvl, freq_row, total_missing, p.value, test_type)
         } else {
           descript.res[row_idx, ] <- c("", lvl, freq_row, "", "", "")
         }
@@ -73,9 +77,13 @@ TABLE.1 <- function(dataset, variables, bw.factor, max.levels = 2, alpha = 0.05,
         p.value <- anova(lm(val ~ grp, data = df))$`Pr(>F)`[1]
         test_type <- "ANOVA"
       }
-      if (p.value < 0.001) { p.value <- "<0.001" }
+      if (p.value < 0.001) {
+        p.value <- "<0.001"
+      } else {
+        p.value <- sprintf("%.3f", p.value)
+      }
       
-      descript.res[row_idx, ] <- c(var, "", mean_sd, total_missing, format(p.value, nsmall = 3), test_type)
+      descript.res[row_idx, ] <- c(var, "", mean_sd, total_missing, p.value, test_type)
       row_idx <- row_idx + 1
     }
   }
