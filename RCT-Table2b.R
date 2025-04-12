@@ -379,10 +379,17 @@ TABLE.2b <- function(dataset,
       p.values, digits = 3
     ), nsmall = 3)), "")
     
-    data <- data.frame(
-      group_data = as.numeric(bw.factor != control.g),
-      OUTCOME = OUTCOME_M[TIME_M == i]
-    )
+    if(!sjmisc::is_empty(control.g)){
+      data <- data.frame(
+        group_data = as.numeric(bw.factor != control.g),
+        OUTCOME = OUTCOME_M[TIME_M == i]
+      )
+    } else {
+      data <- data.frame(
+        group_data = as.numeric(bw.factor),
+        OUTCOME = OUTCOME_M[TIME_M == i]
+      )
+    }
     smd <- stddiff::stddiff.numeric(data = data,
                                     gcol = 1,
                                     vcol = 2)

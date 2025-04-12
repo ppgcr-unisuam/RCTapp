@@ -511,10 +511,9 @@ TABLE.2a <- function(dataset,
   
   # Ajustar os nomes das colunas
   bw.diff.names <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), each = choose(nlevels(bw.factor), 2))
-  bw.diff.comparisons <- rep(group_comparisons, times = length(wt.labels) - 1)
-  
+
   bw.diff[1, ] <- bw.diff.names
-  bw.diff[2, ] <- bw.diff.comparisons
+  bw.diff[2, ] <- rep(paste(levels(bw.factor)[2], levels(bw.factor)[1], sep = " - "), length(wt.labels) - 1)
   bw.diff[4, ] <- as.vector(bw)
   bw.diff[5, ] <- as.vector(bw.pvalues)
   bw.diff[6, ] <- as.vector(smd.values)
