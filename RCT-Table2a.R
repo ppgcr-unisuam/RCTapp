@@ -262,6 +262,7 @@ TABLE.2a <- function(dataset,
   mix.mod.res[3, ] <- N
   mix.mod.res[4, ] <- desfecho
   
+  p.value <- mod1.aov[4, 4]
   if (p.value < 0.001) {
     p.value <- "<0.001"
   } else {
@@ -318,21 +319,14 @@ TABLE.2a <- function(dataset,
     )))
     p.values <- as.numeric(group.data[, 9])
     for (k in 1:(length(wt.labels) - 1)) {
-      ifelse(p.values[k] < 0.001,
-             wt.pvalues <- c(wt.pvalues, "<0.001"),
-             "")
-      ifelse(p.values[k] > 0.001 &
-               p.values[k] < alpha,
-             wt.pvalues <- c(wt.pvalues, paste(format(
-               round(p.values[k], digits = 3), nsmall = 3
-             ), sep = "")),
-             "")
-      ifelse(p.values[k] > alpha, wt.pvalues <- c(wt.pvalues, format(
-        round(p.values[k], digits = 3), nsmall = 3
-      )), "")
+      if(p.values[k] < 0.001){
+             wt.pvalues <- c(wt.pvalues, "<0.001")
+      } else {
+             wt.pvalues <- c(wt.pvalues, format(round(p.values[k], digits = 3), nsmall = 3))
+      }
     }
   }
-
+  
   wt.diff[1, ] <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), times = nlevels(bw.factor))
   wt.diff[2, ] <- rep(levels(bw.factor), each = length(wt.labels) - 1)
   wt.diff[4, ] <- wt
@@ -488,8 +482,7 @@ TABLE.2a <- function(dataset,
       
       for (comp in seq_along(est)) {
         bw <- rbind(bw, paste0(round(est[comp], n.digits), " (", round(lwr[comp], n.digits), " to ", round(upr[comp], n.digits), ")"))
-        bw.pvalues <- rbind(bw.pvalues, ifelse(pval[comp] < 0.001, "<0.001", 
-                                               ifelse(pval[comp] < alpha, paste0(round(pval[comp], 3)), round(pval[comp], 3))))
+        bw.pvalues <- rbind(bw.pvalues, ifelse(pval[comp] < 0.001, "<0.001", format(round(pval[comp], 3), nsmall = 3)))
         smd.values <- rbind(smd.values, paste0(round(smd_d[comp], n.digits), " (", round(smd_lower[comp], n.digits), " to ", round(smd_upper[comp], n.digits), ")"))
       }
     }
@@ -497,7 +490,7 @@ TABLE.2a <- function(dataset,
   
   # Ajustar os nomes das colunas
   bw.diff.names <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), each = choose(nlevels(bw.factor), 2))
-
+  
   bw.diff[1, ] <- bw.diff.names
   bw.diff[2, ] <- rep(paste(levels(bw.factor)[2], levels(bw.factor)[1], sep = " - "), length(wt.labels) - 1)
   bw.diff[4, ] <- as.vector(bw)

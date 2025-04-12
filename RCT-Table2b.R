@@ -321,18 +321,11 @@ TABLE.2b <- function(dataset,
     )))
     p.values <- as.numeric(group.data[, 9])
     for (k in 1:(length(wt.labels) - 1)) {
-      ifelse(p.values[k] < 0.001,
-             wt.pvalues <- c(wt.pvalues, "<0.001"),
-             "")
-      ifelse(p.values[k] > 0.001 &
-               p.values[k] < alpha,
-             wt.pvalues <- c(wt.pvalues, paste(format(
-               round(p.values[k], digits = 3), nsmall = 3
-             ), sep = "")),
-             "")
-      ifelse(p.values[k] > alpha, wt.pvalues <- c(wt.pvalues, format(
-        round(p.values[k], digits = 3), nsmall = 3
-      )), "")
+      if(p.values[k] < 0.001){
+        wt.pvalues <- c(wt.pvalues, "<0.001")
+      } else {
+        wt.pvalues <- c(wt.pvalues, format(round(p.values[k], digits = 3), nsmall = 3))
+      }
     }
   }
   wt.diff[1, ] <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), times = nlevels(bw.factor))
