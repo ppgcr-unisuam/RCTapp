@@ -153,6 +153,7 @@ TABLE.2a <- function(dataset,
   
   if(!sjmisc::is_empty(control.g)){
     # reorder levels of GROUP_M so control.g is first
+    bw.factor <- factor(bw.factor, levels = c(control.g, setdiff(levels(bw.factor), control.g)))
     GROUP_M <- factor(GROUP_M, levels = c(control.g, setdiff(levels(GROUP_M), control.g)))
   }
   
@@ -345,6 +346,7 @@ TABLE.2a <- function(dataset,
       )), "")
     }
   }
+
   wt.diff[1, ] <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), times = nlevels(bw.factor))
   wt.diff[2, ] <- rep(levels(bw.factor), each = length(wt.labels) - 1)
   wt.diff[4, ] <- wt
@@ -510,22 +512,18 @@ TABLE.2a <- function(dataset,
   bw.diff.names <- rep(paste(wt.labels[-1], wt.labels[1], sep = " - "), each = choose(nlevels(bw.factor), 2))
   bw.diff.comparisons <- rep(group_comparisons, times = length(wt.labels) - 1)
   
-  # Dunnet-like comparisons
-  if(!sjmisc::is_empty(control.g)){
-    keep <- grepl(paste0("\\b", trimws(control.g), "\\b"), group_comparisons)
-    bw.diff <- bw.diff[, keep]
-    bw.diff.names <- bw.diff.names[keep]
-    bw.diff.comparisons <- bw.diff.comparisons[keep]
-    bw <- bw[keep]
-    bw.pvalues <- bw.pvalues[keep]
-    smd.values <- smd.values[keep]
-  }
-  
   bw.diff[1, ] <- bw.diff.names
   bw.diff[2, ] <- bw.diff.comparisons
   bw.diff[4, ] <- as.vector(bw)
   bw.diff[5, ] <- as.vector(bw.pvalues)
   bw.diff[6, ] <- as.vector(smd.values)
+  
+  # Dunnett-like comparisons (equivalente ao TABLE.2a)
+  if (!sjmisc::is_empty(control.g)) {
+    group_comparisons <- bw.diff[2, ]  # usa as comparações já calculadas
+    keep <- grepl(paste0("\\b", trimws(control.g), "\\b"), group_comparisons)
+    bw.diff <- bw.diff[, keep, drop = FALSE]
+  }
   
   # apresenta os resultados na tela
   print(

@@ -154,6 +154,7 @@ TABLE.2b <- function(dataset,
   
   if(!sjmisc::is_empty(control.g)){
     # reorder levels of GROUP_M so control.g is first
+    bw.factor <- factor(bw.factor, levels = c(control.g, setdiff(levels(bw.factor), control.g)))
     GROUP_M <- factor(GROUP_M, levels = c(control.g, setdiff(levels(GROUP_M), control.g)))
   }
   
