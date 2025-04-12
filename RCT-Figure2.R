@@ -30,12 +30,6 @@ FIGURE.2 <- function(dataset,
     COVARIATE_M <- do.call(rbind, replicate(length(wt.labels), covariate, simplify = FALSE))
   }
   
-  if(!sjmisc::is_empty(control.g)){
-    # reorder levels of GROUP_M so control.g is first
-    bw.factor <- factor(bw.factor, levels = c(control.g, setdiff(levels(bw.factor), control.g)))
-    GROUP_M <- factor(GROUP_M, levels = c(control.g, setdiff(levels(GROUP_M), control.g)))
-  }
-  
   # decide como lidar com os dados perdidos
   if (missing == "Complete cases") {
     if (!sjmisc::is_empty(covariate)) {

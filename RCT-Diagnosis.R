@@ -203,7 +203,7 @@ test.model.fit <- function(dataset,
       paste(
         paste(
           names(Shapiro_Wilk_out),
-          format(Shapiro_Wilk_out, digits = 3),
+          format(Shapiro_Wilk_out, nsmall = 3),
           sep = " = "
         ),
         collapse = ", "
