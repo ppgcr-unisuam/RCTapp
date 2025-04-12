@@ -478,13 +478,14 @@ TABLE.2a <- function(dataset,
         )
         # Final data frame
         pairs_emm <- summary_pooled[, c("estimate", "std.error", "lower", "upper", "df", "p.value")]
+        group_comparisons <- pairs_df[[1]]$contrast
       } else {
         # Caso sem covariáveis: aplicar emmeans diretamente
         emmeans_obj <- emmeans::emmeans(mod2_models, specs = ~ GROUP_M)
         pairs_emm <- summary(pairs(emmeans_obj), infer = c(TRUE, TRUE), level = 1 - alpha)
         names(pairs_emm) <- c("contrast", "estimate", "std.error", "df", "lower", "upper", "t.ratio", "p.value")
+        group_comparisons <- pairs_emm$contrast
       }
-      group_comparisons <- pairs_emm$contrast
       
       # Coletar estimativas
       est <- pairs_emm$estimate
