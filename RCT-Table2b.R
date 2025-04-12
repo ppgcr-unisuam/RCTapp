@@ -152,6 +152,9 @@ TABLE.2b <- function(dataset,
     }
   }
   
+  # reorder levels of GROUP_M so control.g is first
+  GROUP_M <- factor(GROUP_M, levels = c(control.g, setdiff(levels(GROUP_M), control.g)))
+  
   # cria o dataset com os valores após imputação ou não de dados
   if (!sjmisc::is_empty(covariate)) {
     data_M <- data.frame(ID_M, TIME_M, GROUP_M, OUTCOME_M, COVARIATE_M, check.names = FALSE)
