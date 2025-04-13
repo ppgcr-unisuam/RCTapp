@@ -6,12 +6,12 @@ if (!dir.exists(dir.name)) {
 shiny::addResourcePath(prefix = "www", directoryPath = "www")
 
 # create file with citations
-grateful::cite_packages(
-  output = "file",
-  out.dir = file.path(getwd(), "www"),
-  out.format = "html",
-  pkgs = "All"
-)
+# grateful::cite_packages(
+#   output = "file",
+#   out.dir = file.path(getwd(), "www"),
+#   out.format = "html",
+#   pkgs = "All"
+# )
 
 # copy favicon folder to the www dir
 R.utils::copyDirectory(from = "favicon_io", to = file.path(dir.name, "favicon_io"))

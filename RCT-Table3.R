@@ -14,6 +14,13 @@ TABLE.3 <- function(
     # the type-I error level n.digits: number of decimal places to be presented
     # for continuous variables
     
+    source("meanridit.R", local = TRUE)
+    source("meanridits.R", local = TRUE)
+    source("riditsrefgroup.R", local = TRUE)
+    source("seridit.R", local = TRUE)
+    source("seriditdiff.R", local = TRUE)
+    source("seridits.R", local = TRUE)
+    
     # default values
     if (alpha == "") {
         alpha = 0.05
@@ -53,11 +60,11 @@ TABLE.3 <- function(
             desfecho <- cbind(desfecho, t(paste(N, " (", N.perc, "%)", sep = "")))
         }
         # ridit analysis
-        r1 <- ridittools::meanridits(table(dataset[, i], bw.factor), margin = 2, ref = control.g)[levels(bw.factor) ==
+        r1 <- meanridits(table(dataset[, i], bw.factor), margin = 2, ref = control.g)[levels(bw.factor) ==
                                                                                                       control.g]
-        r2 <- ridittools::meanridits(table(dataset[, i], bw.factor), margin = 2, ref = control.g)[levels(bw.factor) !=
+        r2 <- meanridits(table(dataset[, i], bw.factor), margin = 2, ref = control.g)[levels(bw.factor) !=
                                                                                                       control.g]
-        se.diff <- ridittools::seriditdiff(table(dataset[, i], bw.factor)[levels(bw.factor) ==
+        se.diff <- seriditdiff(table(dataset[, i], bw.factor)[levels(bw.factor) ==
                                                                               control.g], table(dataset[, i], bw.factor)[levels(bw.factor) != control.g])
         z.score <- abs((r2 - r1)/se.diff)
         p.value <- 2 * pnorm(abs(z.score), lower.tail = F)
