@@ -1,4 +1,4 @@
 seridits <-
-function(x, margin, ref=NULL) {
-  apply(x, margin, seridit, riditsrefgroup(x,margin,ref))
-}
+  function(x, margin, ref=NULL) {
+    apply(x, margin, seridit, riditsrefgroup(x,margin,ref))
+  }

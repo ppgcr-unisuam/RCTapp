@@ -5,7 +5,7 @@ account: sciencer
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 12850532
-bundleId: 10107333
+bundleId: 10143589
 url: https://sciencer.shinyapps.io/RCTapp/
 version: 1
 asMultiple: FALSE

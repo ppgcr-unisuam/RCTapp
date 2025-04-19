@@ -320,9 +320,9 @@ TABLE.2a <- function(dataset,
     p.values <- as.numeric(group.data[, 9])
     for (k in 1:(length(wt.labels) - 1)) {
       if(p.values[k] < 0.001){
-             wt.pvalues <- c(wt.pvalues, "<0.001")
+        wt.pvalues <- c(wt.pvalues, "<0.001")
       } else {
-             wt.pvalues <- c(wt.pvalues, format(round(p.values[k], digits = 3), nsmall = 3))
+        wt.pvalues <- c(wt.pvalues, format(round(p.values[k], digits = 3), nsmall = 3))
       }
     }
   }

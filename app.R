@@ -1102,6 +1102,7 @@ server <- function(input, output, session) {
   # Report generation -----------------------------------------------------------
   output[["SAP"]] <- shiny::renderUI({
     shiny::req(rawdata())
+    
     results <- sap(BGF = input[["BGF"]],
                    treatmentNames = input[["treatmentNames"]],
                    controlgroup = input[["controlgroup"]],

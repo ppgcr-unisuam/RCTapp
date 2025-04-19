@@ -69,79 +69,81 @@ sap <- function(BGF,
       paste0(" Regression diagnostics were performed to check the assumptions of the linear mixed model, specifically regarding ",
              tolower(paste0(regressionDiag, collapse = ", ")), ".")
     }
-    )
-    
-    figure2 <- paste0(
-      "Interaction plot was constructed to present the outcome variable (",
-      OutcomeName,
-      ") across groups (",
-      paste0(treatmentNames, collapse = ", "),
-      ") at baseline and follow-up time points (",
-      paste0(timepointNames, collapse = ", "),
-      ").",
-      " Dots and vertical bars represent the mean and ", round((1-alpha)*100, digits = 0), "% confidence intervals, respectively."
-    )
-    
+  )
+  
+  figure2 <- paste0(
+    "Interaction plot was constructed to present the outcome variable (",
+    OutcomeName,
+    ") across groups (",
+    paste0(treatmentNames, collapse = ", "),
+    ") at baseline and follow-up time points (",
+    paste0(timepointNames, collapse = ", "),
+    ").",
+    " Dots and vertical bars represent the mean and ", round((1-alpha)*100, digits = 0), "% confidence intervals, respectively."
+  )
+  
+  if(!sjmisc::is_empty(OutcomeNameRidit)){
     table3 <- paste0(
       "Categorical variables (",
       OutcomeNameRidit,
       ") were analyzed using the Ridit method to estimate the probability of a participant in a treatment group having a different outcome value than a participant in the control group."
     )
-    
-    p.value <- paste0(
-      "Two-sided P values < ", format(round(alpha, digits = 3), nsmall = 3), " were considered to indicate statistical evidence of significance."
-    )
-    
-    # gsub to remove parentesis of a text
-    rule <- gsub("\\(", "", effectSize)
-    rule <- gsub("\\)", "", rule)
-    rule <- gsub(" ", "", rule)
-    rule <- tolower(rule)
-    
-    e.size <- paste0(
-      "Effect sizes for primary outcomes were calculated as Cohen's <i>d</i> (standardized mean difference, SMD) from estimated marginal means and standard error (SE) estimates from the primary adjusted analysis.",
-      " According to ", effectSize, ", effect sizes were interpreted as ",
-      esize_inter(rule),
-      "."
-    )
-    
-    report <- paste0(
-      "<b>Software</b>",
-      "<br>",
-      software,
-      "<br>",
-      "<br>",
-      "<b>Descriptive analysis</b>",
-      "<br>",
-      table1,
-      "<br>",
-      "<br>",
-      "<b>Inferencial analysis</b>",
-      "<br>",
-      table2,
-      "<br>",
-      "<br>",
-      figure2,
-      "<br>",
-      "<br>",
-      table3,
-      "<br>",
-      "<br>",
-      "<b>Significance and interpretation</b>",
-      "<br>",
-      p.value,
-      "<br>",
-      e.size
-    )
-    
-    return(list(
-      'software' = software,
-      'table1' = table1,
-      'table2' = table2,
-      'figure2' = figure2,
-      'table3' = table3,
-      'p.value' = p.value,
-      'e.size' = e.size,
-      'report' = report
-    ))
+  }
+  
+  p.value <- paste0(
+    "Two-sided P values < ", format(round(alpha, digits = 3), nsmall = 3), " were considered to indicate statistical evidence of significance."
+  )
+  
+  # gsub to remove parentesis of a text
+  rule <- gsub("\\(", "", effectSize)
+  rule <- gsub("\\)", "", rule)
+  rule <- gsub(" ", "", rule)
+  rule <- tolower(rule)
+  
+  e.size <- paste0(
+    "Effect sizes for primary outcomes were calculated as Cohen's <i>d</i> (standardized mean difference, SMD) from estimated marginal means and standard error (SE) estimates from the primary adjusted analysis.",
+    " According to ", effectSize, ", effect sizes were interpreted as ",
+    esize_inter(rule),
+    "."
+  )
+  
+  report <- paste0(
+    "<b>Software</b>",
+    "<br>",
+    software,
+    "<br>",
+    "<br>",
+    "<b>Descriptive analysis</b>",
+    "<br>",
+    table1,
+    "<br>",
+    "<br>",
+    "<b>Inferencial analysis</b>",
+    "<br>",
+    table2,
+    "<br>",
+    "<br>",
+    figure2,
+    "<br>",
+    "<br>",
+    table3,
+    "<br>",
+    "<br>",
+    "<b>Significance and interpretation</b>",
+    "<br>",
+    p.value,
+    "<br>",
+    e.size
+  )
+  
+  return(list(
+    'software' = software,
+    'table1' = table1,
+    'table2' = table2,
+    'figure2' = figure2,
+    'table3' = table3,
+    'p.value' = p.value,
+    'e.size' = e.size,
+    'report' = report
+  ))
 }
