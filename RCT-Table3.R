@@ -20,6 +20,7 @@ TABLE.3 <- function(
     source("seridit.R", local = TRUE)
     source("seriditdiff.R", local = TRUE)
     source("seridits.R", local = TRUE)
+    source("toridit.R", local = TRUE)
     
     # default values
     if (alpha == "") {

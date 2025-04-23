@@ -17,9 +17,7 @@ sap <- function(BGF,
                 OutcomeNameRidit) {
   
   # get package names
-  packages <- grateful::cite_packages(
-    output = "table",
-    out.dir = getwd(),
+  packages <- grateful::scan_packages(
     pkgs = "All"
   )
   
